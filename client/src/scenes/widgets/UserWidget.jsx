@@ -17,6 +17,7 @@ const UserWidget = ({ userId, picturePath }) => {
   const { palette } = useTheme();
   const navigate = useNavigate();
   const token = useSelector((state) => state.token);
+  const loggedInUser = useSelector((state) => state.user);
   const dark = palette.neutral.dark;
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
@@ -48,6 +49,10 @@ const UserWidget = ({ userId, picturePath }) => {
     friends,
   } = user;
 
+  // If this is the logged-in user's widget, use Redux friends data
+  // This ensures the friends count updates immediately when friends are added/removed
+  const displayFriends = userId === loggedInUser?._id ? loggedInUser.friends : friends;
+
   return (
     <WidgetWrapper>
       {/* FIRST ROW */}
@@ -72,7 +77,9 @@ const UserWidget = ({ userId, picturePath }) => {
             >
               {firstName} {lastName}
             </Typography>
-            <Typography color={medium}>{friends.length} friends</Typography>
+            <Typography color={medium}>
+              {displayFriends?.length || 0} friends
+            </Typography>
           </Box>
         </FlexBetween>
         <ManageAccountsOutlined />

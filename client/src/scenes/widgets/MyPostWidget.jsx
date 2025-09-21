@@ -30,31 +30,63 @@ const MyPostWidget = ({ picturePath }) => {
   const [isImage, setIsImage] = useState(false);
   const [image, setImage] = useState(null);
   const [post, setPost] = useState("");
+  const [isPosting, setIsPosting] = useState(false);
   const { palette } = useTheme();
   const { _id } = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
+  const posts = useSelector((state) => state.posts);
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
 
   const handlePost = async () => {
-    const formData = new FormData();
-    formData.append("userId", _id);
-    formData.append("description", post);
-    if (image) {
-      formData.append("picture", image);
-      formData.append("picturePath", image.name);
-    }
+    if (isPosting) return; // Prevent multiple submissions
+    
+    setIsPosting(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append("userId", _id);
+      formData.append("description", post);
+      if (image) {
+        formData.append("picture", image);
+        formData.append("picturePath", image.name);
+      }
 
-    const response = await fetch(`http://localhost:3001/posts`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-    const posts = await response.json();
-    dispatch(setPosts({ posts }));
-    setImage(null);
-    setPost("");
+      const response = await fetch(`http://localhost:3001/posts`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create post: ${response.status}`);
+      }
+
+      const newPost = await response.json();
+      console.log('New post created:', newPost);
+      
+      // Option 1: If backend returns just the new post, add it to existing posts
+      if (newPost && !Array.isArray(newPost)) {
+        const updatedPosts = [newPost, ...posts];
+        dispatch(setPosts({ posts: updatedPosts }));
+      }
+      // Option 2: If backend returns all posts array, use it directly
+      else if (Array.isArray(newPost)) {
+        dispatch(setPosts({ posts: newPost }));
+      }
+      
+      // Reset form
+      setImage(null);
+      setPost("");
+      setIsImage(false);
+      
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Failed to create post. Please try again.');
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   return (
@@ -155,15 +187,16 @@ const MyPostWidget = ({ picturePath }) => {
         )}
 
         <Button
-          disabled={!post}
+          disabled={!post || isPosting}
           onClick={handlePost}
           sx={{
             color: palette.background.alt,
             backgroundColor: palette.primary.main,
             borderRadius: "3rem",
+            opacity: isPosting ? 0.7 : 1,
           }}
         >
-          POST
+          {isPosting ? "POSTING..." : "POST"}
         </Button>
       </FlexBetween>
     </WidgetWrapper>
