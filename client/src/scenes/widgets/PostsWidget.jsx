@@ -10,19 +10,17 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const token = useSelector((state) => state.token);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
 
-  const getPosts = useCallback(async () => {
+const getPosts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`, { /* ... */ });
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
       dispatch(setPosts({ posts: data }));
     } catch (error) {
-      console.error("Failed to fetch posts:", error);
-      dispatch(setPosts({ posts: [] })); // Clear posts on error
+      console.error("Failed to refresh posts:", error);
+      // FIX: DO NOT clear the posts here. Just log the error.
+      // The user will continue to see the old posts instead of a blank screen.
     } finally {
       setIsLoading(false);
     }
@@ -33,22 +31,18 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/posts/${userId}/posts`,
-        {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { /* ... */ }
       );
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
       dispatch(setPosts({ posts: data }));
     } catch (error) {
-      console.error("Failed to fetch user posts:", error);
-      dispatch(setPosts({ posts: [] }));
+      console.error("Failed to refresh user posts:", error);
+      // FIX: DO NOT clear the posts here either.
     } finally {
       setIsLoading(false);
     }
   }, [dispatch, token, userId]);
-
   useEffect(() => {
     if (isProfile) {
       getUserPosts();
