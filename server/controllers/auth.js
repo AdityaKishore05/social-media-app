@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import cloudinary from "cloudinary";
+
 
 /* REGISTER USER */
 export const register = async (req, res) => {
@@ -18,7 +20,18 @@ export const register = async (req, res) => {
     // This is the critical part. Multer processes the file upload
     // and places all the file's information into the `req.file` object.
     // We get the unique filename from `req.file.filename`.
-    const picturePath = req.file.filename;
+    
+    let picturePath = "";
+    if (req.file) {
+      // Upload to Cloudinary
+      const result = await cloudinary.v2.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString(
+          "base64"
+        )}`,
+        { folder: "social_media_app/avatars" } // Optional folder in Cloudinary
+      );
+      picturePath = result.secure_url; // Get the URL from Cloudinary
+    }
 
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(password, salt);

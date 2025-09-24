@@ -65,13 +65,12 @@ const UserImage = ({ image, size = "60px", userName = "" }) => {
           style={{
             objectFit: "cover",
             borderRadius: "50%",
-            opacity: imageLoaded ? 1 : 0.5,
-            transition: "opacity 0.3s ease-in-out",
+            transition: "0.3s ease-in-out",
           }}
           width={size}
           height={size}
           alt={userName}
-          src={`${process.env.REACT_APP_API_URL}/assets/${image}`}
+          src={{image}}
           onError={handleImageError}
           onLoad={handleImageLoad}
         />

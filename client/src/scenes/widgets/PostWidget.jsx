@@ -140,7 +140,7 @@ const handleComment = async () => {
               width="100%"
               height="100%"
               controls
-              src={`${process.env.REACT_APP_API_URL}/assets/${videoPath}`}
+              src={{videoPath}}
               onError={() => setMediaError(true)}
               style={{
                 position: "absolute",
@@ -156,7 +156,7 @@ const handleComment = async () => {
             // Otherwise, render the image
             <img
               alt={description}
-              src={`${process.env.REACT_APP_API_URL}/assets/${picturePath}`}
+              src={{picturePath}}
               onError={() => setMediaError(true)}
               style={{
                 position: "absolute",

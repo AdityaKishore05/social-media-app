@@ -1,5 +1,7 @@
 import Post from "../models/Post.js";
 import User from "../models/User.js";
+import cloudinary from "cloudinary";
+
 
 // 1. CREATE A REUSABLE HELPER FUNCTION
 const getPopulatedPosts = async () => {
@@ -50,12 +52,25 @@ export const createPost = async (req, res) => {
       comments: [],
     });
 
-    if (mediaPath && mediaType === "image") newPost.picturePath = mediaPath;
-    if (mediaPath && mediaType === "video") newPost.videoPath = mediaPath;
+    if (req.file) {
+      const result = await cloudinary.v2.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString(
+          "base64"
+        )}`,
+        {
+          resource_type: mediaType === "video" ? "video" : "image", // Tell Cloudinary if it's a video
+          folder: "social_media_app/posts",
+        }
+      );
+
+      if (mediaType === "image") {
+        newPost.picturePath = result.secure_url;
+      } else if (mediaType === "video") {
+        newPost.videoPath = result.secure_url;
+      }
+    }
 
     await newPost.save();
-
-    // 2. USE THE HELPER FUNCTION
     const allPosts = await getPopulatedPosts();
     res.status(201).json(allPosts);
   } catch (err) {
