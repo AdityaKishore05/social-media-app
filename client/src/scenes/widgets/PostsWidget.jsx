@@ -6,9 +6,10 @@ import { Typography } from "@mui/material";
 
 const PostsWidget = ({ userId, isProfile = false }) => {
   const dispatch = useDispatch();
-  const posts = useSelector((state) => state.posts);
-  const token = useSelector((state) => state.token);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  // FIX #1: Select state from the 'auth' slice to match your store configuration
+  const posts = useSelector((state) => state.auth.posts);
+  const token = useSelector((state) => state.auth.token);
+  const [isLoading, setIsLoading] = useState(true);
 
   const getPosts = useCallback(async () => {
     setIsLoading(true);
@@ -17,15 +18,24 @@ const PostsWidget = ({ userId, isProfile = false }) => {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      // FIX #2: Add the same 304 check to this function
+      if (response.status === 304) {
+        setIsLoading(false);
+        return;
+      }
+      
       if (!response.ok) throw new Error("Network response was not ok");
+
       const data = await response.json();
       dispatch(setPosts({ posts: data }));
     } catch (error) {
       console.error("Failed to fetch posts:", error);
-      dispatch(setPosts({ posts: [] })); // Clear posts on error
+      // Also remove the line that clears posts on error for better UX
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, token]);
 
   const getUserPosts = useCallback(async () => {
@@ -38,9 +48,9 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
+      
       if (response.status === 304) {
-        setIsLoading(false); // Stop loading, but don't change the data
+        setIsLoading(false);
         return;
       }
       
@@ -62,7 +72,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     } else {
       getPosts();
     }
-  }, [isProfile, userId, getPosts, getUserPosts]); // ✅ Correct dependencies
+  }, [isProfile, userId, getPosts, getUserPosts]);
 
   if (isLoading) {
     return <Typography sx={{ mt: 2, textAlign: 'center' }}>Loading posts...</Typography>;
@@ -77,13 +87,13 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       {posts.map(
         ({
           _id,
-          userId,
+          userId: postUserId,
           firstName,
           lastName,
           description,
           location,
           picturePath,
-          videoPath, // 1. Destructure videoPath here
+          videoPath,
           userPicturePath,
           likes,
           comments,
@@ -91,12 +101,12 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           <PostWidget
             key={_id}
             postId={_id}
-            postUserId={userId}
+            postUserId={postUserId}
             name={`${firstName} ${lastName}`}
             description={description}
             location={location}
             picturePath={picturePath}
-            videoPath={videoPath} // 2. Pass videoPath as a prop here
+            videoPath={videoPath}
             userPicturePath={userPicturePath}
             likes={likes}
             comments={comments}
