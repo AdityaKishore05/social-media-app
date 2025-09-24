@@ -111,7 +111,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [handleRefresh]);
 
   if (isLoading) {
     return (
