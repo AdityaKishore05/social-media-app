@@ -13,7 +13,11 @@ const PostsWidget = ({ userId, isProfile = false }) => {
 const getPosts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`, { /* ... */ });
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`,
+      {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
       dispatch(setPosts({ posts: data }));
@@ -42,7 +46,7 @@ const getPosts = useCallback(async () => {
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch, token, userId]);
+  }, [dispatch, token,  userId]);
   useEffect(() => {
     if (isProfile) {
       getUserPosts();
