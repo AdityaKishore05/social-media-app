@@ -44,7 +44,7 @@ const ProfilePage = () => {
     if (userId) {
       getUser();
     }
-  }, [userId, token]); // FIXED: Add proper dependencies
+  }, [userId, token, getUser]); // FIXED: Add proper dependencies
 
   if (!user) {
     return (
