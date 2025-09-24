@@ -56,44 +56,68 @@ const Form = () => {
   const isRegister = pageType === "register";
 
   const register = async (values, onSubmitProps) => {
-    // this allows us to send form info with image
-    const formData = new FormData();
-    for (let value in values) {
-      formData.append(value, values[value]);
-    }
-    formData.append("picturePath", values.picture.name);
-
-    const savedUserResponse = await fetch(
-      "process.env.REACT_APP_API_URL/auth/register",
-      {
-        method: "POST",
-        body: formData,
+    try {
+      const formData = new FormData();
+      for (let value in values) {
+        formData.append(value, values[value]);
       }
-    );
-    const savedUser = await savedUserResponse.json();
-    onSubmitProps.resetForm();
+      formData.append("picturePath", values.picture.name);
 
-    if (savedUser) {
-      setPageType("login");
+      // FIX: Use backticks (`) for the URL to correctly insert the environment variable
+      const savedUserResponse = await fetch(
+        `${process.env.REACT_APP_API_URL}/auth/register`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+      
+      if (!savedUserResponse.ok) {
+          const errorData = await savedUserResponse.json();
+          throw new Error(errorData.message || "Registration failed.");
+      }
+      
+      const savedUser = await savedUserResponse.json();
+      onSubmitProps.resetForm();
+
+      if (savedUser) {
+        setPageType("login");
+      }
+    } catch (error) {
+        console.error("Registration Error:", error);
+        alert(error.message); // Show a user-friendly error
     }
   };
 
-  const login = async (values, onSubmitProps) => {
-    const loggedInResponse = await fetch("process.env.REACT_APP_API_URL/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-    const loggedIn = await loggedInResponse.json();
-    onSubmitProps.resetForm();
-    if (loggedIn) {
-      dispatch(
-        setLogin({
-          user: loggedIn.user,
-          token: loggedIn.token,
-        })
-      );
-      navigate("/home");
+ const login = async (values, onSubmitProps) => {
+    try {
+      // FIX: Use backticks (`) for the URL to correctly insert the environment variable
+      const loggedInResponse = await fetch(
+        `${process.env.REACT_APP_API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+
+      if (!loggedInResponse.ok) {
+        const errorData = await loggedInResponse.json();
+        throw new Error(errorData.message || "Login failed. Please check your credentials.");
+      }
+
+      const loggedIn = await loggedInResponse.json();
+      onSubmitProps.resetForm();
+      if (loggedIn) {
+        dispatch(
+          setLogin({
+            user: loggedIn.user,
+            token: loggedIn.token,
+          })
+        );
+        navigate("/home");
+      }
+    } catch (error) {
+      console.error("Login Error:", error);
+      alert(error.message); // Show a user-friendly error
     }
   };
 
