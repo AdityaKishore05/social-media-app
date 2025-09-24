@@ -7,8 +7,8 @@ import { Typography } from "@mui/material";
 const PostsWidget = ({ userId, isProfile = false }) => {
   const dispatch = useDispatch();
   // FIX #1: Select state from the 'auth' slice to match your store configuration
-  const posts = useSelector((state) => state.auth.posts);
-  const token = useSelector((state) => state.auth.token);
+  const posts = useSelector((state) => state.posts);
+  const token = useSelector((state) => state.token);
   const [isLoading, setIsLoading] = useState(true);
 
   const getPosts = useCallback(async () => {
@@ -72,7 +72,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     } else {
       getPosts();
     }
-  }, [isProfile, userId, getPosts, getUserPosts]);
+  }, [isProfile, userId]);
 
   if (isLoading) {
     return <Typography sx={{ mt: 2, textAlign: 'center' }}>Loading posts...</Typography>;
