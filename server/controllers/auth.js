@@ -10,11 +10,14 @@ export const register = async (req, res) => {
       lastName,
       email,
       password,
-      picturePath,
       friends,
       location,
       occupation,
     } = req.body;
+
+    // FIX #1: Get the filename from `req.file`.
+    // Multer processes the uploaded file and puts its information here.
+    const picturePath = req.file.filename;
 
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(password, salt);
@@ -24,6 +27,7 @@ export const register = async (req, res) => {
       lastName,
       email,
       password: passwordHash,
+      // FIX #2: Use the `picturePath` variable defined above from req.file.
       picturePath,
       friends,
       location,
