@@ -1,13 +1,10 @@
-import { Box, useMediaQuery, Typography } from "@mui/material";
+import { Box, useMediaQuery } from "@mui/material";
 import { useSelector } from "react-redux";
 import Navbar from "scenes/navbar";
+import UserWidget from "scenes/widgets/UserWidget";
 import MyPostWidget from "scenes/widgets/MyPostWidget";
 import PostsWidget from "scenes/widgets/PostsWidget";
 import FriendListWidget from "scenes/widgets/FriendListWidget";
-import {ManageAccountsOutlined} from "@mui/icons-material";
-import UserImage from "components/UserImage";
-import FlexBetween from "components/FlexBetween";
-
 
 const HomePage = () => {
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
@@ -24,34 +21,7 @@ const HomePage = () => {
         justifyContent="space-between"
       >
         <Box flexBasis={isNonMobileScreens ? "26%" : undefined}>
-          <FlexBetween
-            gap="0.5rem"
-            pb="1.1rem"
-            onClick={() => navigate(`/profile/${userId}`)}
-          >
-            <FlexBetween gap="1rem">
-              <UserImage image={picturePath} />
-              <Box>
-                <Typography
-                  variant="h4"
-                  color={dark}
-                  fontWeight="500"
-                  sx={{
-                    "&:hover": {
-                      color: palette.primary.light,
-                      cursor: "pointer",
-                    },
-                  }}
-                >
-                  {firstName} {lastName}
-                </Typography>
-                <Typography color={medium}>
-                  {displayFriends?.length || 0} friends
-                </Typography>
-              </Box>
-            </FlexBetween>
-            <ManageAccountsOutlined />
-          </FlexBetween>
+          <UserWidget userId={_id} picturePath={picturePath} />
         </Box>
         <Box
           flexBasis={isNonMobileScreens ? "42%" : undefined}

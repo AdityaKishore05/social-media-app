@@ -12,7 +12,7 @@ import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const UserWidget = ({ userId, picturePath }) => {
+const UserWidget = ({ userId, picturePath, isProfile = false }) => { 
   const [user, setUser] = useState(null);
   const { palette } = useTheme();
   const navigate = useNavigate();
@@ -55,7 +55,7 @@ const UserWidget = ({ userId, picturePath }) => {
 
   return (
     <WidgetWrapper>
-      {/* FIRST ROW */}
+      {/* FIRST ROW (Always visible) */}
       <FlexBetween
         gap="0.5rem"
         pb="1.1rem"
