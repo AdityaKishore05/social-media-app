@@ -1,5 +1,5 @@
 import { Box, useMediaQuery } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react"; // Add useCallback import
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import Navbar from "scenes/navbar";
@@ -15,7 +15,8 @@ const ProfilePage = () => {
   const loggedInUserId = useSelector((state) => state.user._id);
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
 
-  const getUser = async () => {
+  // FIXED: Wrap getUser in useCallback to prevent infinite re-renders
+  const getUser = useCallback(async () => {
     try {
       // FIXED: Add cache-busting headers and use hardcoded URL
       const response = await fetch(`https://getsocialnow.onrender.com/users/${userId}`, {
@@ -38,13 +39,13 @@ const ProfilePage = () => {
     } catch (error) {
       console.error('Error fetching user:', error);
     }
-  };
+  }, [userId, token]); // Dependencies: only values used inside the function
 
   useEffect(() => {
     if (userId) {
       getUser();
     }
-  }, [userId, token, getUser]); // FIXED: Add proper dependencies
+  }, [userId, getUser]); // Now getUser is stable and won't cause infinite loops
 
   if (!user) {
     return (
