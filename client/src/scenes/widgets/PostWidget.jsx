@@ -41,7 +41,7 @@ const PostWidget = ({
 
   useEffect(() => {
     setMediaError(false);
-  }, [picturePath, videoPath]);
+  }, [picturePath, videoPath, setMediaError]);
 
 const patchLike = async () => {
     try {
