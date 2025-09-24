@@ -86,14 +86,14 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     }
   }, [dispatch, token, userId]);
 
-  // Force refresh function
-  const handleRefresh = () => {
+  // Force refresh function - wrapped in useCallback to prevent useEffect re-runs
+  const handleRefresh = useCallback(() => {
     if (isProfile) {
       getUserPosts(true);
     } else {
       getPosts(true);
     }
-  };
+  }, [isProfile, getUserPosts, getPosts]);
 
   useEffect(() => {
     if (isProfile && userId) {
@@ -111,7 +111,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [handleRefresh]);
+  }, [handleRefresh]); // Now handleRefresh is stable thanks to useCallback
 
   if (isLoading) {
     return (
