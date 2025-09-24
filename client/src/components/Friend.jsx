@@ -8,24 +8,31 @@ import UserImage from "./UserImage";
 import { useState, useMemo } from "react";
 
 const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
+  // 1. All Hook calls must be at the top level, before any returns or conditions.
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.user); // Get the whole user object first
-  const token = useSelector((state) => state.auth.token);
-  const [isLoading, setIsLoading] = useState(false);
   const { palette } = useTheme();
+  const [isLoading, setIsLoading] = useState(false);
+  const user = useSelector((state) => state.auth.user);
+  const token = useSelector((state) => state.auth.token);
+
+  // 2. Safely get data from the hooks. Provide default values if user is null.
+  const friends = user ? user.friends : [];
+  const _id = user ? user._id : null;
+
+  // 3. Now that `friends` is safely defined, you can call useMemo.
+  const friendIdSet = useMemo(() => new Set(friends.map((friend) => friend._id)), [friends]);
+  const isFriend = friendIdSet.has(friendId);
   
-  // FIX: Add a guard clause to prevent crash if user is not yet loaded
-  if (!user) {
+  // 4. The conditional return now comes AFTER all hook calls.
+  if (!_id) {
     return null;
   }
-  const { _id, friends } = user; // Destructure _id and friends after confirming user exists
+  
   const primaryLight = palette.primary.light;
   const primaryDark = palette.primary.dark;
   const main = palette.neutral.main;
   const medium = palette.neutral.medium;
-  const friendIdSet = useMemo(() => new Set(friends.map((friend) => friend._id)), [friends]);
-  const isFriend = friendIdSet.has(friendId);
 
   const patchFriend = async () => {
     if (isLoading) return;
@@ -60,7 +67,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
       setIsLoading(false);
     }
   };
-  
+
  return (
     <FlexBetween>
       <FlexBetween gap="1rem">
