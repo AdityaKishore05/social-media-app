@@ -40,8 +40,8 @@ const PostWidget = ({
 
   useEffect(() => {
     setMediaError(false);
-  }, [picturePath, videoPath, setMediaError]);
-  
+  }, [picturePath, videoPath]);
+
 const patchLike = async () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/posts/${postId}/like`, {
@@ -122,10 +122,11 @@ const handleComment = async () => {
         {description}
       </Typography>
 
-      <Box
+      {(picturePath || videoPath) && !mediaError && (
+        <Box
           sx={{
             width: "100%",
-            paddingTop: "75%", // Maintain 1:1 aspect ratio
+            paddingTop: "100%", // Maintain 1:1 aspect ratio
             position: "relative",
             backgroundColor: "black",
             borderRadius: "0.75rem",
@@ -138,7 +139,7 @@ const handleComment = async () => {
               width="100%"
               height="100%"
               controls
-              src={`${process.env.REACT_APP_API_URL}/assets/${videoPath}`}
+              src={`http://localhost:3001/assets/${videoPath}`}
               onError={() => setMediaError(true)}
               style={{
                 position: "absolute",
@@ -154,7 +155,7 @@ const handleComment = async () => {
             // Otherwise, render the image
             <img
               alt={description}
-              src={`${process.env.REACT_APP_API_URL}/assets/${picturePath}`}
+              src={`http://localhost:3001/assets/${picturePath}`}
               onError={() => setMediaError(true)}
               style={{
                 position: "absolute",
@@ -168,6 +169,8 @@ const handleComment = async () => {
             />
           )}
         </Box>
+      )}
+
       <FlexBetween mt="0.25rem">
         <FlexBetween gap="1rem">
           <FlexBetween gap="0.3rem">
