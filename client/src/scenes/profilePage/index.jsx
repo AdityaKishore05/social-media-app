@@ -12,22 +12,50 @@ const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const { userId } = useParams();
   const token = useSelector((state) => state.token);
+  const loggedInUserId = useSelector((state) => state.user._id);
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
 
   const getUser = async () => {
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/users/${userId}`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    setUser(data);
+    try {
+      // FIXED: Add cache-busting headers and use hardcoded URL
+      const response = await fetch(`https://getsocialnow.onrender.com/users/${userId}`, {
+        method: "GET",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('User data loaded for profile:', data.firstName, data.lastName);
+      setUser(data);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    }
   };
 
   useEffect(() => {
-    getUser();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (userId) {
+      getUser();
+    }
+  }, [userId, token]); // FIXED: Add proper dependencies
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <Box>
+        <Navbar />
+        <Box sx={{ textAlign: 'center', mt: 4 }}>
+          Loading user profile...
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -44,13 +72,25 @@ const ProfilePage = () => {
           <Box m="2rem 0" />
           <FriendListWidget userId={userId} />
         </Box>
+        
         <Box
           flexBasis={isNonMobileScreens ? "42%" : undefined}
           mt={isNonMobileScreens ? undefined : "2rem"}
         >
-          <MyPostWidget picturePath={user.picturePath} />
-          <Box m="2rem 0" />
-          <PostsWidget userId={userId} isProfile />
+          {/* FIXED: Only show MyPostWidget if viewing own profile */}
+          {loggedInUserId === userId && (
+            <>
+              <MyPostWidget picturePath={user.picturePath} />
+              <Box m="2rem 0" />
+            </>
+          )}
+          
+          {/* FIXED: Pass key prop to force re-render when userId changes */}
+          <PostsWidget 
+            key={`profile-posts-${userId}`} 
+            userId={userId} 
+            isProfile={true} 
+          />
         </Box>
       </Box>
     </Box>

@@ -3,7 +3,7 @@ import {
   getFeedPosts,
   getUserPosts,
   likePost,
-  addComment,
+  commentPost, // FIXED: Use commentPost instead of addComment
   deletePost,
 } from "../controllers/posts.js";
 import { verifyToken } from "../middleware/auth.js";
@@ -16,11 +16,9 @@ router.get("/:userId/posts", verifyToken, getUserPosts);
 
 /* UPDATE */
 router.patch("/:id/like", verifyToken, likePost);
-router.patch("/:id/comment", verifyToken, addComment);
+router.patch("/:id/comment", verifyToken, commentPost); // FIXED: Use commentPost
 
 /* DELETE */
 router.delete("/:id/delete", verifyToken, deletePost);
-
-// DO NOT include the post creation route here. Keep it in index.js.
 
 export default router;
