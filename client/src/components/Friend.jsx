@@ -28,13 +28,8 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
     
     setIsLoading(true);
     
-    // Debug logging
-    console.log('=== DEBUG INFO ===');
-    console.log('User ID (_id):', _id);
-    console.log('Friend ID:', friendId);
-    console.log('Token exists:', !!token);
-    console.log('Is currently friend:', !!isFriend);
-    console.log('API URL:', `http://localhost:3001/users/${_id}/${friendId}`);
+    // Store original friends for rollback
+    const originalFriends = [...friends];
     
     // Optimistic update - update UI immediately
     const optimisticFriends = isFriend 
@@ -44,7 +39,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
           firstName: name.split(' ')[0], 
           lastName: name.split(' ')[1] || '',
           picturePath: userPicturePath,
-          occupation: subtitle // assuming subtitle is occupation
+          occupation: subtitle
         }];
     
     // Update state immediately for instant UI feedback
@@ -62,37 +57,27 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
         }
       );
       
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-      
       if (!response.ok) {
         const errorText = await response.text();
-        console.log('Error response:', errorText);
-        throw new Error(`API Error: ${response.status} - ${errorText}`);
+        console.error('API Error:', response.status, errorText);
+        throw new Error(`API Error: ${response.status}`);
       }
       
       // Get the actual updated friends list from server
       const actualUpdatedFriends = await response.json();
-      console.log('Successfully updated friends:', actualUpdatedFriends.length);
+      console.log('Friend update successful. New friends count:', actualUpdatedFriends.length);
       
       // Update with the real data from server
       dispatch(setFriends({ friends: actualUpdatedFriends }));
       
     } catch (error) {
-      console.error('=== ERROR DETAILS ===');
-      console.error('Error message:', error.message);
-      console.error('Full error:', error);
+      console.error('Friend update failed:', error);
       
       // Revert the optimistic update on error
-      dispatch(setFriends({ friends: friends })); // Revert to original state
+      dispatch(setFriends({ friends: originalFriends }));
       
       // More helpful error message
-      const errorMessage = error.message.includes('Failed to fetch') 
-        ? 'Cannot connect to server. Is your backend running on port 3001?'
-        : `Server error: ${error.message}`;
-        
-      console.log('Showing alert:', errorMessage);
-      alert(errorMessage);
+      alert(`Failed to ${isFriend ? 'remove' : 'add'} friend. Please try again.`);
       
     } finally {
       setIsLoading(false);
@@ -106,7 +91,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   return (
     <FlexBetween>
       <FlexBetween gap="1rem">
-        <UserImage image={userPicturePath} size="55px" />
+        <UserImage image={userPicturePath} size="55px" userName={name} />
         <Box
           onClick={handleProfileClick}
           sx={{ cursor: "pointer" }}
