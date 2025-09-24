@@ -1,8 +1,8 @@
-import { Box, Typography, useTheme } from "@mui/material";
+// FIX: 'Typography' was removed from this import line
+import { Box, useTheme } from "@mui/material";
 import { useState, useEffect } from "react";
 
-// Add disableLoadingEffect prop, defaulting to false
-const UserImage = ({ image, size = "60px", userName = "", disableLoadingEffect = false }) => {
+const UserImage = ({ image, size = "60px", userName = "" }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const { palette } = useTheme();
@@ -65,9 +65,8 @@ const UserImage = ({ image, size = "60px", userName = "", disableLoadingEffect =
           style={{
             objectFit: "cover",
             borderRadius: "50%",
-            // MODIFIED: Apply opacity based on disableLoadingEffect
-            opacity: disableLoadingEffect || imageLoaded ? 1 : 0.5,
-            transition: disableLoadingEffect ? "none" : "opacity 0.3s ease-in-out", // Disable transition if effect is off
+            opacity: imageLoaded ? 1 : 0.5,
+            transition: "opacity 0.3s ease-in-out",
           }}
           width={size}
           height={size}
