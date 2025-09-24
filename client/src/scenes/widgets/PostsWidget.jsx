@@ -72,7 +72,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     } else {
       getPosts();
     }
-  }, [isProfile, userId]);
+  }, [isProfile, userId, getPosts, getUserPosts]);
 
   if (isLoading) {
     return <Typography sx={{ mt: 2, textAlign: 'center' }}>Loading posts...</Typography>;
