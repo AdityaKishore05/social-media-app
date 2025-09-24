@@ -1,24 +1,20 @@
-// FIX: 'Typography' was removed from this import line
 import { Box, useTheme } from "@mui/material";
 import { useState, useEffect } from "react";
 
 const UserImage = ({ image, size = "60px", userName = "" }) => {
   const [imageError, setImageError] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  // REMOVED: 'imageLoaded' state is no longer needed.
   const { palette } = useTheme();
 
   useEffect(() => {
     setImageError(false);
-    setImageLoaded(false);
   }, [image]);
 
   const handleImageError = () => {
     setImageError(true);
   };
 
-  const handleImageLoad = () => {
-    setImageLoaded(true);
-  };
+  // REMOVED: 'handleImageLoad' function is no longer needed.
 
   const initials = userName
     ? userName
@@ -65,14 +61,14 @@ const UserImage = ({ image, size = "60px", userName = "" }) => {
           style={{
             objectFit: "cover",
             borderRadius: "50%",
-            transition: "0.3s ease-in-out",
+            // REMOVED: 'opacity' and 'transition' properties.
           }}
           width={size}
           height={size}
           alt={userName}
-          src={{image}}
+          src={image}
           onError={handleImageError}
-          onLoad={handleImageLoad}
+          // REMOVED: 'onLoad' handler.
         />
       )}
     </Box>
