@@ -66,7 +66,7 @@ const UserWidget = ({ userId, picturePath }) => {
           <Box>
             <Typography
               variant="h4"
-              color={dark}
+              color={dark}a
               fontWeight="500"
               sx={{
                 "&:hover": {
