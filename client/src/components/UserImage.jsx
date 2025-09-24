@@ -1,4 +1,4 @@
-import { Box, Typography, useTheme } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 import { useState, useEffect } from "react";
 
 const UserImage = ({ image, size = "60px", userName = "" }) => {
