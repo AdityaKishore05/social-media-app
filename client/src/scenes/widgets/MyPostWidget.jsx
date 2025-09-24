@@ -46,19 +46,28 @@ const MyPostWidget = ({ picturePath }) => {
     try {
       const formData = new FormData();
       formData.append("userId", _id);
-      formData.append("description", post);
+      formData.append("description", post.trim());
       
       if (mediaFile) {
         // FIXED: Use 'media' as field name to match backend multer config
         formData.append("media", mediaFile);
         formData.append("mediaType", mediaType);
+        
+        // Debug: Log file details
+        console.log('Uploading file:', {
+          name: mediaFile.name,
+          type: mediaFile.type,
+          size: mediaFile.size,
+          mediaType: mediaType
+        });
       }
 
-      // FIXED: Add cache-busting headers and use hardcoded URL
+      // FIXED: Remove Content-Type header - let browser set it automatically for FormData
       const response = await fetch(`https://getsocialnow.onrender.com/posts`, {
         method: "POST",
         headers: { 
           Authorization: `Bearer ${token}`,
+          // Removed Content-Type - browser will set multipart/form-data automatically
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
           'Expires': '0'
@@ -68,6 +77,7 @@ const MyPostWidget = ({ picturePath }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('Server response:', response.status, errorText);
         throw new Error(`Failed to create post: ${response.status} - ${errorText}`);
       }
 
@@ -81,6 +91,9 @@ const MyPostWidget = ({ picturePath }) => {
       setPost("");
       setIsMediaUpload(false);
       
+      // Show success message
+      alert("Post created successfully!");
+      
     } catch (error) {
       console.error('Error creating post:', error);
       alert(`Failed to create post: ${error.message}`);
@@ -89,12 +102,31 @@ const MyPostWidget = ({ picturePath }) => {
     }
   };
 
-  const handleDrop = (acceptedFiles, type) => {
+  // FIXED: Better file validation and handling
+  const handleDrop = (acceptedFiles, rejectedFiles) => {
+    if (rejectedFiles.length > 0) {
+      console.error('Rejected files:', rejectedFiles);
+      alert('File type not supported. Please select a valid image or video file.');
+      return;
+    }
+
     const file = acceptedFiles[0];
     if (file) {
-      console.log('File selected:', file.name, 'Type:', type, 'Size:', file.size);
+      // Validate file size (50MB limit to match backend)
+      const maxSize = 50 * 1024 * 1024; // 50MB
+      if (file.size > maxSize) {
+        alert('File is too large. Maximum size is 50MB.');
+        return;
+      }
+
+      console.log('File selected:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        mediaType: mediaType
+      });
+      
       setMediaFile(file);
-      setMediaType(type);
     }
   };
 
@@ -106,6 +138,8 @@ const MyPostWidget = ({ picturePath }) => {
           placeholder="What's on your mind..."
           onChange={(e) => setPost(e.target.value)}
           value={post}
+          multiline
+          maxRows={4}
           sx={{
             width: "100%",
             backgroundColor: palette.neutral.light,
@@ -123,24 +157,38 @@ const MyPostWidget = ({ picturePath }) => {
           p="1rem"
         >
           <Dropzone
-            acceptedFiles={mediaType === 'image' ? ".jpg,.jpeg,.png,.gif,.webp" : ".mp4,.mov,.avi,.mkv,.webm"}
+            accept={
+              mediaType === 'image' 
+                ? {
+                    'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+                  }
+                : {
+                    'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.webm']
+                  }
+            }
             multiple={false}
-            onDrop={(acceptedFiles) => handleDrop(acceptedFiles, mediaType)}
+            maxSize={50 * 1024 * 1024} // 50MB
+            onDrop={handleDrop}
           >
-            {({ getRootProps, getInputProps }) => (
+            {({ getRootProps, getInputProps, isDragActive }) => (
               <FlexBetween>
                 <Box
                   {...getRootProps()}
-                  border={`2px dashed ${palette.primary.main}`}
+                  border={`2px dashed ${isDragActive ? palette.primary.dark : palette.primary.main}`}
                   p="1rem"
                   width="100%"
-                  sx={{ "&:hover": { cursor: "pointer" } }}
+                  sx={{ 
+                    "&:hover": { cursor: "pointer" },
+                    backgroundColor: isDragActive ? palette.primary.light : 'transparent'
+                  }}
                 >
                   <input {...getInputProps()} />
                   {!mediaFile ? (
-                    <p>
-                      {mediaType === 'image' ? "Add Image Here" : "Add Video Here"}
-                    </p>
+                    <Typography sx={{ textAlign: 'center' }}>
+                      {isDragActive 
+                        ? `Drop ${mediaType} here...`
+                        : `Click or drag ${mediaType} here`}
+                    </Typography>
                   ) : (
                     <FlexBetween>
                       <Typography>{mediaFile.name}</Typography>
@@ -150,9 +198,11 @@ const MyPostWidget = ({ picturePath }) => {
                 </Box>
                 {mediaFile && (
                   <IconButton
-                    onClick={() => { 
+                    onClick={(e) => { 
+                      e.stopPropagation();
                       setMediaFile(null); 
-                      setMediaType(null); 
+                      setMediaType(null);
+                      setIsMediaUpload(false);
                     }}
                     sx={{ width: "15%" }}
                   >
@@ -171,10 +221,11 @@ const MyPostWidget = ({ picturePath }) => {
         <FlexBetween 
           gap="0.25rem" 
           onClick={() => {
-            setIsMediaUpload(true);
+            setIsMediaUpload(!isMediaUpload || mediaType !== 'image');
             setMediaType('image');
             setMediaFile(null);
           }}
+          sx={{ "&:hover": { cursor: "pointer" } }}
         >
           <ImageOutlined sx={{ color: mediumMain }} />
           <Typography
@@ -188,10 +239,11 @@ const MyPostWidget = ({ picturePath }) => {
         <FlexBetween 
           gap="0.25rem" 
           onClick={() => {
-            setIsMediaUpload(true);
+            setIsMediaUpload(!isMediaUpload || mediaType !== 'video');
             setMediaType('video');
             setMediaFile(null);
           }}
+          sx={{ "&:hover": { cursor: "pointer" } }}
         >
           <VideoCameraFrontOutlined sx={{ color: mediumMain }} />
           <Typography

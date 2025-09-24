@@ -11,13 +11,15 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Add cache-busting and better error handling
+  // FIXED: Stabilize getPosts function
   const getPosts = useCallback(async (forceRefresh = false) => {
+    if (!token) return;
+    
     setIsLoading(true);
     setError(null);
     
     try {
-      // Add timestamp to prevent caching
+      // Add timestamp for cache busting only when needed
       const timestamp = forceRefresh ? `?_t=${Date.now()}` : '';
       const response = await fetch(`https://getsocialnow.onrender.com/posts${timestamp}`, {
         method: "GET",
@@ -34,21 +36,22 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       }
       
       const data = await response.json();
-      
-      // Ensure data is an array
       const postsArray = Array.isArray(data) ? data : [];
-      dispatch(setPosts({ posts: postsArray }));
       
+      dispatch(setPosts({ posts: postsArray }));
       console.log('Posts fetched successfully:', postsArray.length);
+      
     } catch (error) {
       console.error("Failed to fetch posts:", error);
       setError(error.message);
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch, token]);
+  }, [dispatch, token]); // Remove forceRefresh from dependencies
 
   const getUserPosts = useCallback(async (forceRefresh = false) => {
+    if (!token || !userId) return;
+    
     setIsLoading(true);
     setError(null);
     
@@ -72,46 +75,38 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       }
       
       const data = await response.json();
-      
-      // Ensure data is an array
       const postsArray = Array.isArray(data) ? data : [];
-      dispatch(setPosts({ posts: postsArray }));
       
+      dispatch(setPosts({ posts: postsArray }));
       console.log('User posts fetched successfully:', postsArray.length);
+      
     } catch (error) {
       console.error("Failed to fetch user posts:", error);
       setError(error.message);
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch, token, userId]);
+  }, [dispatch, token, userId]); // Remove forceRefresh from dependencies
 
-  // Force refresh function - wrapped in useCallback to prevent useEffect re-runs
+  // FIXED: Stabilize handleRefresh
   const handleRefresh = useCallback(() => {
-    if (isProfile) {
+    if (isProfile && userId) {
       getUserPosts(true);
-    } else {
+    } else if (!isProfile) {
       getPosts(true);
     }
-  }, [isProfile, getUserPosts, getPosts]);
+  }, [isProfile, userId, getUserPosts, getPosts]);
 
+  // FIXED: Only fetch once on mount/dependency change
   useEffect(() => {
     if (isProfile && userId) {
-      getUserPosts();
+      getUserPosts(false);
     } else if (!isProfile) {
-      getPosts();
+      getPosts(false);
     }
-  }, [isProfile, userId, getPosts, getUserPosts]);
+  }, [isProfile, userId, getUserPosts, getPosts]);
 
-  // Add effect to refresh when posts are updated (after creating/deleting)
-  useEffect(() => {
-    const handleStorageChange = () => {
-      handleRefresh();
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [handleRefresh]); // Now handleRefresh is stable thanks to useCallback
+  // REMOVED: Storage event listener (causing unnecessary refreshes)
 
   if (isLoading) {
     return (
@@ -137,7 +132,9 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   if (!posts || posts.length === 0) {
     return (
       <Box sx={{ mt: 2, textAlign: 'center' }}>
-        <Typography sx={{ mb: 2 }}>No posts to display.</Typography>
+        <Typography sx={{ mb: 2 }}>
+          {isProfile ? "No posts yet." : "No posts to display."}
+        </Typography>
         <Button onClick={handleRefresh} variant="outlined">
           Refresh
         </Button>
@@ -147,15 +144,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
 
   return (
     <Box>
-      {/* Add refresh button for debugging */}
-      <Box sx={{ mb: 2, textAlign: 'center' }}>
-        <Button onClick={handleRefresh} variant="outlined" size="small">
-          Refresh Posts ({posts.length})
-        </Button>
-      </Box>
-      
       {posts.map((post) => {
-        // Add validation to ensure post has required fields
         if (!post || !post._id) {
           console.warn('Invalid post data:', post);
           return null;
