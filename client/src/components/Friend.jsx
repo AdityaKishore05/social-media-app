@@ -5,38 +5,46 @@ import { useNavigate } from "react-router-dom";
 import { setFriends } from "state";
 import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 
 const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { palette } = useTheme();
+  const { _id } = useSelector((state) => state.user);
+  const token = useSelector((state) => state.token);
+  const friends = useSelector((state) => state.user.friends);
   const [isLoading, setIsLoading] = useState(false);
-  const user = useSelector((state) => state.auth.user);
-  const token = useSelector((state) => state.auth.token);
 
-  // FIX: Wrap the 'friends' array initialization in its own useMemo hook.
-  // This ensures the 'friends' variable has a stable reference across renders.
-  const friends = useMemo(() => (user ? user.friends : []), [user]);
-  const _id = user ? user._id : null;
-
-  // Now, the dependency 'friends' is stable, satisfying the linter.
-  const friendIdSet = useMemo(() => new Set(friends.map((friend) => friend._id)), [friends]);
-  const isFriend = friendIdSet.has(friendId);
-  
-  if (!_id) {
-    return null;
-  }
-  
+  const { palette } = useTheme();
   const primaryLight = palette.primary.light;
   const primaryDark = palette.primary.dark;
   const main = palette.neutral.main;
   const medium = palette.neutral.medium;
 
+  const isFriend = friends.find((friend) => friend._id === friendId);
+
   const patchFriend = async () => {
     if (isLoading) return;
+    
     setIsLoading(true);
-
+    
+    // Store original friends for rollback
+    const originalFriends = [...friends];
+    
+    // Optimistic update - update UI immediately
+    const optimisticFriends = isFriend 
+      ? friends.filter(friend => friend._id !== friendId)
+      : [...friends, { 
+          _id: friendId, 
+          firstName: name.split(' ')[0], 
+          lastName: name.split(' ')[1] || '',
+          picturePath: userPicturePath,
+          occupation: subtitle
+        }];
+    
+    // Update state immediately for instant UI feedback
+    dispatch(setFriends({ friends: optimisticFriends }));
+    
     try {
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/users/${_id}/${friendId}`,
@@ -50,33 +58,54 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
       );
       
       if (!response.ok) {
-        // Revert UI on API error
-        dispatch(setFriends({ friends }));
-        return;
+        const errorText = await response.text();
+        console.error('API Error:', response.status, errorText);
+        throw new Error(`API Error: ${response.status}`);
       }
       
-      const data = await response.json();
-      dispatch(setFriends({ friends: data }));
-
+      // Get the actual updated friends list from server
+      const actualUpdatedFriends = await response.json();
+      console.log('Friend update successful. New friends count:', actualUpdatedFriends.length);
+      
+      // Update with the real data from server
+      dispatch(setFriends({ friends: actualUpdatedFriends }));
+      
     } catch (error) {
-      // Revert UI on network error
-      dispatch(setFriends({ friends }));
       console.error('Friend update failed:', error);
+      
+      // Revert the optimistic update on error
+      dispatch(setFriends({ friends: originalFriends }));
+      
+      // More helpful error message
+      alert(`Failed to ${isFriend ? 'remove' : 'add'} friend. Please try again.`);
+      
     } finally {
       setIsLoading(false);
     }
   };
 
- return (
+  const handleProfileClick = () => {
+    navigate(`/profile/${friendId}`);
+  };
+
+  return (
     <FlexBetween>
       <FlexBetween gap="1rem">
         <UserImage image={userPicturePath} size="55px" userName={name} />
-        <Box onClick={() => navigate(`/profile/${friendId}`)} sx={{ cursor: "pointer" }}>
+        <Box
+          onClick={handleProfileClick}
+          sx={{ cursor: "pointer" }}
+        >
           <Typography
             color={main}
             variant="h5"
             fontWeight="500"
-            sx={{ "&:hover": { color: palette.primary.light } }}
+            sx={{
+              "&:hover": {
+                color: palette.primary.light,
+                cursor: "pointer",
+              },
+            }}
           >
             {name}
           </Typography>
@@ -85,24 +114,21 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
           </Typography>
         </Box>
       </FlexBetween>
-
-      {friendId !== _id && (
-        <IconButton
-          onClick={patchFriend}
-          disabled={isLoading}
-          sx={{ 
-            backgroundColor: primaryLight, 
-            p: "0.6rem",
-            opacity: isLoading ? 0.6 : 1
-          }}
-        >
-          {isFriend ? (
-            <PersonRemoveOutlined sx={{ color: primaryDark }} />
-          ) : (
-            <PersonAddOutlined sx={{ color: primaryDark }} />
-          )}
-        </IconButton>
-      )}
+      <IconButton
+        onClick={patchFriend}
+        disabled={isLoading}
+        sx={{ 
+          backgroundColor: primaryLight, 
+          p: "0.6rem",
+          opacity: isLoading ? 0.6 : 1
+        }}
+      >
+        {isFriend ? (
+          <PersonRemoveOutlined sx={{ color: primaryDark }} />
+        ) : (
+          <PersonAddOutlined sx={{ color: primaryDark }} />
+        )}
+      </IconButton>
     </FlexBetween>
   );
 };
