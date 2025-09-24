@@ -6,54 +6,56 @@ import { Typography } from "@mui/material";
 
 const PostsWidget = ({ userId, isProfile = false }) => {
   const dispatch = useDispatch();
-  const posts = useSelector((state) => state.posts);
-  const token = useSelector((state) => state.token);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const posts = useSelector((state) => state.auth.posts);
+  const token = useSelector((state) => state.auth.token);
+  const [isLoading, setIsLoading] = useState(true);
 
-const getPosts = useCallback(async () => {
+  const getPosts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`,
-      {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`, {
         method: "GET",
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
       dispatch(setPosts({ posts: data }));
     } catch (error) {
-      console.error("Failed to refresh posts:", error);
-      // FIX: DO NOT clear the posts here. Just log the error.
-      // The user will continue to see the old posts instead of a blank screen.
+      console.error("Failed to fetch posts:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, token]); // Keep token, disable warning
 
   const getUserPosts = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/posts/${userId}/posts`,
-        { /* ... */ }
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
       dispatch(setPosts({ posts: data }));
     } catch (error) {
-      console.error("Failed to refresh user posts:", error);
-      // FIX: DO NOT clear the posts here either.
+      console.error("Failed to fetch user posts:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch, token,  userId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, token, userId]); // Keep token, disable warning
+
   useEffect(() => {
     if (isProfile) {
       getUserPosts();
     } else {
       getPosts();
     }
-  }, [isProfile, userId, getPosts, getUserPosts]); // ✅ Correct dependencies
+  }, [isProfile, userId, getPosts, getUserPosts]); 
 
   if (isLoading) {
     return <Typography sx={{ mt: 2, textAlign: 'center' }}>Loading posts...</Typography>;
@@ -68,13 +70,13 @@ const getPosts = useCallback(async () => {
       {posts.map(
         ({
           _id,
-          userId,
+          userId: postUserId,
           firstName,
           lastName,
           description,
           location,
           picturePath,
-          videoPath, // 1. Destructure videoPath here
+          videoPath,
           userPicturePath,
           likes,
           comments,
@@ -82,12 +84,12 @@ const getPosts = useCallback(async () => {
           <PostWidget
             key={_id}
             postId={_id}
-            postUserId={userId}
+            postUserId={postUserId}
             name={`${firstName} ${lastName}`}
             description={description}
             location={location}
             picturePath={picturePath}
-            videoPath={videoPath} // 2. Pass videoPath as a prop here
+            videoPath={videoPath}
             userPicturePath={userPicturePath}
             likes={likes}
             comments={comments}
