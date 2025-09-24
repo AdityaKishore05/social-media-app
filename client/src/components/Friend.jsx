@@ -5,27 +5,28 @@ import { useNavigate } from "react-router-dom";
 import { setFriends } from "state";
 import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
-import { useState, useMemo } from "react"; // 1. Import useState
+import { useState, useMemo } from "react";
 
 const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user); // Get the whole user object first
   const token = useSelector((state) => state.auth.token);
-  const friends = useSelector((state) => state.auth.user.friends);
-
-  // 2. CRITICAL FIX: Declare the missing isLoading state
   const [isLoading, setIsLoading] = useState(false);
-
   const { palette } = useTheme();
+  
+  // FIX: Add a guard clause to prevent crash if user is not yet loaded
+  if (!user) {
+    return null;
+  }
+  const { _id, friends } = user; // Destructure _id and friends after confirming user exists
   const primaryLight = palette.primary.light;
   const primaryDark = palette.primary.dark;
   const main = palette.neutral.main;
   const medium = palette.neutral.medium;
-
-  // 3. PERFORMANCE IMPROVEMENT: Use a Set for instant O(1) lookups
   const friendIdSet = useMemo(() => new Set(friends.map((friend) => friend._id)), [friends]);
   const isFriend = friendIdSet.has(friendId);
-  
+
   const patchFriend = async () => {
     if (isLoading) return;
     setIsLoading(true);
@@ -59,8 +60,8 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
       setIsLoading(false);
     }
   };
-
-  return (
+  
+ return (
     <FlexBetween>
       <FlexBetween gap="1rem">
         <UserImage image={userPicturePath} size="55px" userName={name} />
