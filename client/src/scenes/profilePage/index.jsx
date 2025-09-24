@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
-import PostWidget from "./PostWidget";
+import PostWidget from "../widgets/PostWidget";
 import { Typography, Box, Button } from "@mui/material";
 
 const PostsWidget = ({ userId, isProfile = false }) => {
