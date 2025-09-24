@@ -10,7 +10,6 @@ import { useState, useMemo } from "react"; // 1. Import useState
 const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { _id } = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
   const friends = useSelector((state) => state.auth.user.friends);
 
