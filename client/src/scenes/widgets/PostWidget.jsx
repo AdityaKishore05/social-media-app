@@ -8,7 +8,7 @@ import { Box, Divider, IconButton, Typography, useTheme, InputBase, Button } fro
 import FlexBetween from "components/FlexBetween";
 import Friend from "components/Friend";
 import WidgetWrapper from "components/WidgetWrapper";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost, setPosts } from "state";
 
@@ -41,13 +41,28 @@ const PostWidget = ({
   const main = palette.neutral.main;
   const primary = palette.primary.main;
 
-  useEffect(() => {
-    setMediaError(false);
+  // FIXED: Memoize media URLs to prevent constant recalculation
+  const mediaUrls = useMemo(() => {
+    const getMediaUrl = (mediaPath) => {
+      if (!mediaPath) return null;
+      if (mediaPath.startsWith('http')) return mediaPath;
+      return `https://getsocialnow.onrender.com/assets/${mediaPath}`;
+    };
+
+    return {
+      imageUrl: getMediaUrl(picturePath),
+      videoUrl: getMediaUrl(videoPath)
+    };
   }, [picturePath, videoPath]);
 
-  // FIXED: Add cache-busting headers and better error handling
-  const patchLike = async () => {
-    if (isLiking) return; // Prevent double clicks
+  // FIXED: Only reset media error when URLs actually change
+  useEffect(() => {
+    setMediaError(false);
+  }, [mediaUrls.imageUrl, mediaUrls.videoUrl]);
+
+  // FIXED: Stabilize functions with useCallback to prevent parent re-renders
+  const patchLike = useCallback(async () => {
+    if (isLiking) return;
     
     setIsLiking(true);
     try {
@@ -69,17 +84,14 @@ const PostWidget = ({
       
       const updatedPost = await response.json();
       dispatch(setPost({ post: updatedPost }));
-      console.log('Like updated successfully');
     } catch (error) {
       console.error("Like action failed:", error);
-      alert('Failed to update like. Please try again.');
     } finally {
       setIsLiking(false);
     }
-  };
+  }, [postId, token, loggedInUserId, isLiking, dispatch]);
 
-  // FIXED: Add cache-busting headers and better error handling
-  const handleComment = async () => {
+  const handleComment = useCallback(async () => {
     if (!commentText.trim() || isCommenting) return;
     
     setIsCommenting(true);
@@ -106,17 +118,14 @@ const PostWidget = ({
       const updatedPost = await response.json();
       dispatch(setPost({ post: updatedPost }));
       setCommentText("");
-      console.log('Comment added successfully');
     } catch (error) {
       console.error("Error adding comment:", error);
-      alert('Failed to add comment. Please try again.');
     } finally {
       setIsCommenting(false);
     }
-  };
+  }, [postId, token, loggedInUserId, commentText, isCommenting, dispatch]);
 
-  // FIXED: Add cache-busting headers and better error handling
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!window.confirm("Are you sure you want to delete this post?") || isDeleting) return;
     
     setIsDeleting(true);
@@ -139,28 +148,22 @@ const PostWidget = ({
       
       const updatedPosts = await response.json();
       dispatch(setPosts({ posts: updatedPosts }));
-      console.log('Post deleted successfully');
     } catch (error) {
       console.error("Error deleting post:", error);
-      alert('Failed to delete post. Please try again.');
     } finally {
       setIsDeleting(false);
     }
-  };
+  }, [postId, token, loggedInUserId, isDeleting, dispatch]);
 
-  // FIXED: Better media URL construction
-  const getMediaUrl = (mediaPath) => {
-    if (!mediaPath) return null;
-    
-    // If it's already a full URL, return as is
-    if (mediaPath.startsWith('http')) return mediaPath;
-    
-    // Construct full URL with API base
-    return `https://getsocialnow.onrender.com/assets/${mediaPath}`;
-  };
+  // FIXED: Prevent media error loops with better error handling
+  const handleMediaError = useCallback((mediaType) => {
+    console.error(`${mediaType} load error for post ${postId}`);
+    setMediaError(true);
+  }, [postId]);
 
-  const imageUrl = getMediaUrl(picturePath);
-  const videoUrl = getMediaUrl(videoPath);
+  const handleMediaLoad = useCallback((mediaType) => {
+    console.log(`${mediaType} loaded successfully for post ${postId}`);
+  }, [postId]);
 
   return (
     <WidgetWrapper m="2rem 0">
@@ -175,29 +178,27 @@ const PostWidget = ({
         {description}
       </Typography>
 
-      {/* FIXED: Better media handling with error states */}
-      {(imageUrl || videoUrl) && !mediaError && (
+      {/* FIXED: Stabilize media rendering to prevent constant re-loading */}
+      {(mediaUrls.imageUrl || mediaUrls.videoUrl) && !mediaError && (
         <Box
           sx={{
             width: "100%",
-            paddingTop: "100%",
+            paddingTop: "56.25%", // 16:9 aspect ratio instead of square
             position: "relative",
             backgroundColor: "black",
             borderRadius: "0.75rem",
             marginTop: "0.75rem",
           }}
         >
-          {videoUrl ? (
+          {mediaUrls.videoUrl ? (
             <video
+              key={mediaUrls.videoUrl} // Force re-mount only when URL changes
               width="100%"
               height="100%"
               controls
-              src={videoUrl}
-              onError={(e) => {
-                console.error('Video load error:', e);
-                setMediaError(true);
-              }}
-              onLoadStart={() => console.log('Video loading started')}
+              src={mediaUrls.videoUrl}
+              onError={() => handleMediaError('Video')}
+              onLoadedData={() => handleMediaLoad('Video')}
               style={{
                 position: "absolute",
                 top: 0,
@@ -208,15 +209,13 @@ const PostWidget = ({
             >
               Your browser does not support the video tag.
             </video>
-          ) : imageUrl ? (
+          ) : mediaUrls.imageUrl ? (
             <img
+              key={mediaUrls.imageUrl} // Force re-mount only when URL changes
               alt={description || 'Post image'}
-              src={imageUrl}
-              onError={(e) => {
-                console.error('Image load error:', e);
-                setMediaError(true);
-              }}
-              onLoad={() => console.log('Image loaded successfully')}
+              src={mediaUrls.imageUrl}
+              onError={() => handleMediaError('Image')}
+              onLoad={() => handleMediaLoad('Image')}
               style={{
                 position: "absolute",
                 top: 0,
@@ -231,8 +230,8 @@ const PostWidget = ({
         </Box>
       )}
 
-      {/* Show error message if media fails to load */}
-      {mediaError && (imageUrl || videoUrl) && (
+      {/* FIXED: Better error state display */}
+      {mediaError && (mediaUrls.imageUrl || mediaUrls.videoUrl) && (
         <Box
           sx={{
             width: "100%",
@@ -241,13 +240,22 @@ const PostWidget = ({
             borderRadius: "0.75rem",
             marginTop: "0.75rem",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
+            gap: "0.5rem",
           }}
         >
           <Typography color={palette.neutral.medium}>
             Failed to load media content
           </Typography>
+          <Button
+            size="small"
+            onClick={() => setMediaError(false)}
+            sx={{ color: primary }}
+          >
+            Retry
+          </Button>
         </Box>
       )}
 
@@ -272,7 +280,6 @@ const PostWidget = ({
           </FlexBetween>
         </FlexBetween>
         
-        {/* Delete button - only show for post owner */}
         {loggedInUserId === postUserId && (
           <IconButton 
             onClick={handleDelete} 
@@ -284,13 +291,11 @@ const PostWidget = ({
         )}
       </FlexBetween>
 
-      {/* Comments section */}
+      {/* Comments section - unchanged */}
       {isComments && (
         <Box mt="0.5rem">
-          {/* FIXED: Better comment handling with validation */}
           {comments && comments.length > 0 ? (
             comments.map((comment, index) => {
-              // Handle both old string format and new object format
               const commentId = comment._id || `comment-${index}`;
               const commentName = comment.firstName && comment.lastName 
                 ? `${comment.firstName} ${comment.lastName}`
