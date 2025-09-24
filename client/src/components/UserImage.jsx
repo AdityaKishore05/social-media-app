@@ -6,12 +6,12 @@ const UserImage = ({ image, size = "60px", userName = "" }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const handleImageError = () => {
-    console.error('Failed to load image:', `http://localhost:3001/assets/${image}`);
+    console.error('Failed to load image:', `${process.env.REACT_APP_API_URL}/assets/${image}`);
     setImageError(true);
   };
 
   const handleImageLoad = () => {
-    console.log('Successfully loaded image:', `http://localhost:3001/assets/${image}`);
+    console.log('Successfully loaded image:', `${process.env.REACT_APP_API_URL}/assets/${image}`);
     setImageLoaded(true);
   };
 
@@ -52,7 +52,7 @@ const UserImage = ({ image, size = "60px", userName = "" }) => {
           width={size}
           height={size}
           alt="user"
-          src={`http://localhost:3001/assets/${image}`}
+          src={`${process.env.REACT_APP_API_URL}/assets/${image}`}
           onError={handleImageError}
           onLoad={handleImageLoad}
         />

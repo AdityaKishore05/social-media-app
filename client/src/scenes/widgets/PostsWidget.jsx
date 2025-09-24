@@ -13,7 +13,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const getPosts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:3001/posts", {
+      const response = await fetch("process.env.REACT_APP_API_URL/posts", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -32,7 +32,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:3001/posts/${userId}/posts`,
+        `${process.env.REACT_APP_API_URL}/posts/${userId}/posts`,
         {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
@@ -76,6 +76,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           description,
           location,
           picturePath,
+          videoPath, // 1. Destructure videoPath here
           userPicturePath,
           likes,
           comments,
@@ -88,6 +89,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
             description={description}
             location={location}
             picturePath={picturePath}
+            videoPath={videoPath} // 2. Pass videoPath as a prop here
             userPicturePath={userPicturePath}
             likes={likes}
             comments={comments}

@@ -18,6 +18,7 @@ import User from "./models/User.js";
 import Post from "./models/Post.js";
 import { users, posts } from "./data/index.js";
 
+
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,20 +37,17 @@ app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 /* FILE STORAGE */
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "public/assets");
+    cb(null, "public/assets"); // This is where images/videos will be saved
   },
   filename: function (req, file, cb) {
-    // ✅ FIX: Create a unique filename to prevent files from being overwritten.
-    const uniqueSuffix = Date.now() + "-" + uuidv4();
-    const extension = path.extname(file.originalname);
-    cb(null, file.fieldname + "-" + uniqueSuffix + extension);
+    cb(null, file.originalname);
   },
 });
-const upload = multer({ storage });
+export const upload = multer({ storage }); // Export this for use in routes
 
 /* ROUTES WITH FILES */
 app.post("/auth/register", upload.single("picture"), register);
-app.post("/posts", verifyToken, upload.single("picture"), createPost);
+app.post("/posts", verifyToken, upload.single("media"), createPost);
 
 /* ROUTES */
 app.use("/auth", authRoutes);

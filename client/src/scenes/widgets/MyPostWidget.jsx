@@ -1,11 +1,8 @@
 import {
   EditOutlined,
   DeleteOutlined,
-  AttachFileOutlined,
-  GifBoxOutlined,
   ImageOutlined,
-  MicOutlined,
-  MoreHorizOutlined,
+  VideoCameraFrontOutlined, // NEW: Import video icon
 } from "@mui/icons-material";
 import {
   Box,
@@ -27,20 +24,25 @@ import { setPosts } from "state";
 
 const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
-  const [isImage, setIsImage] = useState(false);
-  const [image, setImage] = useState(null);
+  const [isMediaUpload, setIsMediaUpload] = useState(false); // Combined state for image/video upload section
+  const [mediaFile, setMediaFile] = useState(null); // Holds either image or video file
+  const [mediaType, setMediaType] = useState(null); // 'image' or 'video'
   const [post, setPost] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const { palette } = useTheme();
   const { _id } = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
-  const posts = useSelector((state) => state.posts);
+  // No need for `posts` state here, as backend returns all posts after creation.
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
 
   const handlePost = async () => {
     if (isPosting) return; // Prevent multiple submissions
+    if (!post.trim() && !mediaFile) { // Ensure at least text or media is present
+        alert("Please add a description or select an image/video to post.");
+        return;
+    }
     
     setIsPosting(true);
     
@@ -48,12 +50,14 @@ const MyPostWidget = ({ picturePath }) => {
       const formData = new FormData();
       formData.append("userId", _id);
       formData.append("description", post);
-      if (image) {
-        formData.append("picture", image);
-        formData.append("picturePath", image.name);
+      
+      if (mediaFile) {
+        formData.append("media", mediaFile); // Use a generic name like 'media'
+        formData.append("mediaPath", mediaFile.name); // Send filename for backend
+        formData.append("mediaType", mediaType); // Tell backend if it's 'image' or 'video'
       }
 
-      const response = await fetch(`http://localhost:3001/posts`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -63,23 +67,14 @@ const MyPostWidget = ({ picturePath }) => {
         throw new Error(`Failed to create post: ${response.status}`);
       }
 
-      const newPost = await response.json();
-      console.log('New post created:', newPost);
-      
-      // Option 1: If backend returns just the new post, add it to existing posts
-      if (newPost && !Array.isArray(newPost)) {
-        const updatedPosts = [newPost, ...posts];
-        dispatch(setPosts({ posts: updatedPosts }));
-      }
-      // Option 2: If backend returns all posts array, use it directly
-      else if (Array.isArray(newPost)) {
-        dispatch(setPosts({ posts: newPost }));
-      }
+      const posts = await response.json(); // Backend should return all updated posts
+      dispatch(setPosts({ posts })); // Update global posts state
       
       // Reset form
-      setImage(null);
+      setMediaFile(null);
+      setMediaType(null);
       setPost("");
-      setIsImage(false);
+      setIsMediaUpload(false);
       
     } catch (error) {
       console.error('Error creating post:', error);
@@ -87,6 +82,11 @@ const MyPostWidget = ({ picturePath }) => {
     } finally {
       setIsPosting(false);
     }
+  };
+
+  const handleDrop = (acceptedFiles, type) => {
+    setMediaFile(acceptedFiles[0]);
+    setMediaType(type);
   };
 
   return (
@@ -105,7 +105,8 @@ const MyPostWidget = ({ picturePath }) => {
           }}
         />
       </FlexBetween>
-      {isImage && (
+
+      {isMediaUpload && (
         <Box
           border={`1px solid ${medium}`}
           borderRadius="5px"
@@ -113,9 +114,9 @@ const MyPostWidget = ({ picturePath }) => {
           p="1rem"
         >
           <Dropzone
-            acceptedFiles=".jpg,.jpeg,.png"
+            acceptedFiles={mediaType === 'image' ? ".jpg,.jpeg,.png" : ".mp4,.mov,.avi"} // Accept files based on selected type
             multiple={false}
-            onDrop={(acceptedFiles) => setImage(acceptedFiles[0])}
+            onDrop={(acceptedFiles) => handleDrop(acceptedFiles, mediaType)}
           >
             {({ getRootProps, getInputProps }) => (
               <FlexBetween>
@@ -127,18 +128,20 @@ const MyPostWidget = ({ picturePath }) => {
                   sx={{ "&:hover": { cursor: "pointer" } }}
                 >
                   <input {...getInputProps()} />
-                  {!image ? (
-                    <p>Add Image Here</p>
+                  {!mediaFile ? (
+                    <p>
+                      {mediaType === 'image' ? "Add Image Here" : "Add Video Here"}
+                    </p>
                   ) : (
                     <FlexBetween>
-                      <Typography>{image.name}</Typography>
+                      <Typography>{mediaFile.name}</Typography>
                       <EditOutlined />
                     </FlexBetween>
                   )}
                 </Box>
-                {image && (
+                {mediaFile && (
                   <IconButton
-                    onClick={() => setImage(null)}
+                    onClick={() => { setMediaFile(null); setMediaType(null); }}
                     sx={{ width: "15%" }}
                   >
                     <DeleteOutlined />
@@ -153,7 +156,15 @@ const MyPostWidget = ({ picturePath }) => {
       <Divider sx={{ margin: "1.25rem 0" }} />
 
       <FlexBetween>
-        <FlexBetween gap="0.25rem" onClick={() => setIsImage(!isImage)}>
+        {/* Image Upload Option */}
+        <FlexBetween 
+          gap="0.25rem" 
+          onClick={() => {
+            setIsMediaUpload(true);
+            setMediaType('image');
+            setMediaFile(null); // Clear previous media selection
+          }}
+        >
           <ImageOutlined sx={{ color: mediumMain }} />
           <Typography
             color={mediumMain}
@@ -163,37 +174,39 @@ const MyPostWidget = ({ picturePath }) => {
           </Typography>
         </FlexBetween>
 
-        {isNonMobileScreens ? (
-          <>
-            <FlexBetween gap="0.25rem">
-              <GifBoxOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Clip</Typography>
-            </FlexBetween>
-
-            <FlexBetween gap="0.25rem">
-              <AttachFileOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Attachment</Typography>
-            </FlexBetween>
-
-            <FlexBetween gap="0.25rem">
-              <MicOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Audio</Typography>
-            </FlexBetween>
-          </>
-        ) : (
-          <FlexBetween gap="0.25rem">
-            <MoreHorizOutlined sx={{ color: mediumMain }} />
-          </FlexBetween>
-        )}
+        {/* Video Upload Option */}
+        <FlexBetween 
+          gap="0.25rem" 
+          onClick={() => {
+            setIsMediaUpload(true);
+            setMediaType('video');
+            setMediaFile(null); // Clear previous media selection
+          }}
+        >
+          <VideoCameraFrontOutlined sx={{ color: mediumMain }} />
+          <Typography
+            color={mediumMain}
+            sx={{ "&:hover": { cursor: "pointer", color: medium } }}
+          >
+            Video
+          </Typography>
+        </FlexBetween>
 
         <Button
-          disabled={!post || isPosting}
+          disabled={isPosting || (!post.trim() && !mediaFile)} // Disable if no text and no media
           onClick={handlePost}
           sx={{
             color: palette.background.alt,
             backgroundColor: palette.primary.main,
             borderRadius: "3rem",
             opacity: isPosting ? 0.7 : 1,
+            "&:hover": {
+                cursor: (isPosting || (!post.trim() && !mediaFile)) ? "not-allowed" : "pointer",
+                backgroundColor: palette.primary.dark,
+            },
+            "&:disabled": {
+                backgroundColor: palette.neutral.light,
+            }
           }}
         >
           {isPosting ? "POSTING..." : "POST"}
