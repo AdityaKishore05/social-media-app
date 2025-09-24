@@ -18,13 +18,6 @@ const UserImage = ({ image, size = "60px", userName = "" }) => {
     setImageLoaded(true);
   };
 
-  const getDefaultAvatar = () => {
-    // FIX: The 'initials' variable was unused and has been removed.
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      userName
-    )}&background=random&color=fff&size=150`;
-  };
-
   return (
     <Box width={size} height={size}>
       {imageError || !image ? (

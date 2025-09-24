@@ -15,8 +15,9 @@ export const register = async (req, res) => {
       occupation,
     } = req.body;
 
-    // FIX #1: Get the filename from `req.file`.
-    // Multer processes the uploaded file and puts its information here.
+    // This is the critical part. Multer processes the file upload
+    // and places all the file's information into the `req.file` object.
+    // We get the unique filename from `req.file.filename`.
     const picturePath = req.file.filename;
 
     const salt = await bcrypt.genSalt();
@@ -27,7 +28,7 @@ export const register = async (req, res) => {
       lastName,
       email,
       password: passwordHash,
-      // FIX #2: Use the `picturePath` variable defined above from req.file.
+      // This is where we save the filename to the database record.
       picturePath,
       friends,
       location,
@@ -47,10 +48,10 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email: email });
-    if (!user) return res.status(400).json({ msg: "User does not exist. " });
+    if (!user) return res.status(400).json({ msg: "User does not exist." });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ msg: "Invalid credentials. " });
+    if (!isMatch) return res.status(400).json({ msg: "Invalid credentials." });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
     delete user.password;
