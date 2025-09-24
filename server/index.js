@@ -7,17 +7,15 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
-import { v4 as uuidv4 } from "uuid"; // Import uuid for unique filenames
+import { v4 as uuidv4 } from "uuid";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
 import { register } from "./controllers/auth.js";
 import { createPost } from "./controllers/posts.js";
 import { verifyToken } from "./middleware/auth.js";
-import User from "./models/User.js";
-import Post from "./models/Post.js";
-import { users, posts } from "./data/index.js";
 
+/* ... (other imports like User, Post models) ... */
 
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
@@ -28,7 +26,6 @@ app.use(express.json());
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
-// Use built-in Express body parsers instead of the deprecated body-parser package
 app.use(express.json({ limit: "30mb" }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors());
@@ -37,13 +34,16 @@ app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 /* FILE STORAGE */
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "public/assets"); // This is where images/videos will be saved
+    cb(null, "public/assets");
   },
+  // FIX: Generate a unique filename to prevent files from being overwritten
   filename: function (req, file, cb) {
-    cb(null, file.originalname);
+    const uniqueSuffix = Date.now() + "-" + uuidv4();
+    const extension = path.extname(file.originalname);
+    cb(null, file.fieldname + "-" + uniqueSuffix + extension);
   },
 });
-export const upload = multer({ storage }); // Export this for use in routes
+const upload = multer({ storage });
 
 /* ROUTES WITH FILES */
 app.post("/auth/register", upload.single("picture"), register);
@@ -63,8 +63,7 @@ mongoose
   })
   .then(() => {
     app.listen(PORT, () => console.log(`Server Port: ${PORT}`));
-
-    /* ADD DATA ONE TIME */
+    /* ADD DATA ONE TIME - KEEP COMMENTED OUT */
     // User.insertMany(users);
     // Post.insertMany(posts);
   })
