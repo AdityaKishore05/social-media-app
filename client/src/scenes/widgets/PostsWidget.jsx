@@ -6,7 +6,6 @@ import { Typography } from "@mui/material";
 
 const PostsWidget = ({ userId, isProfile = false }) => {
   const dispatch = useDispatch();
-  // FIX #1: Select state from the 'auth' slice to match your store configuration
   const posts = useSelector((state) => state.posts);
   const token = useSelector((state) => state.token);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,24 +17,14 @@ const PostsWidget = ({ userId, isProfile = false }) => {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      // FIX #2: Add the same 304 check to this function
-      if (response.status === 304) {
-        setIsLoading(false);
-        return;
-      }
-      
       if (!response.ok) throw new Error("Network response was not ok");
-
       const data = await response.json();
       dispatch(setPosts({ posts: data }));
     } catch (error) {
       console.error("Failed to fetch posts:", error);
-      // Also remove the line that clears posts on error for better UX
     } finally {
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, token]);
 
   const getUserPosts = useCallback(async () => {
@@ -48,14 +37,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      
-      if (response.status === 304) {
-        setIsLoading(false);
-        return;
-      }
-      
       if (!response.ok) throw new Error("Network response was not ok");
-
       const data = await response.json();
       dispatch(setPosts({ posts: data }));
     } catch (error) {
@@ -63,7 +45,6 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     } finally {
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, token, userId]);
 
   useEffect(() => {
@@ -72,6 +53,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     } else {
       getPosts();
     }
+    // FIX: Add getPosts and getUserPosts to the dependency array.
   }, [isProfile, userId, getPosts, getUserPosts]);
 
   if (isLoading) {
