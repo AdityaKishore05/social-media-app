@@ -2,7 +2,6 @@ import {
   ChatBubbleOutlineOutlined,
   FavoriteBorderOutlined,
   FavoriteOutlined,
-  ShareOutlined,
   DeleteOutline, // NEW: Import delete icon
 } from "@mui/icons-material";
 import { Box, Divider, IconButton, Typography, useTheme, InputBase, Button } from "@mui/material";
@@ -26,9 +25,8 @@ const PostWidget = ({
   videoPath, // 1. Accept videoPath as a prop
 
 }) => {
-  const [mediaError, setMediaError] = useState(false); // Use a generic name for image/video errors
+  const [setMediaError] = useState(false); // Use a generic name for image/video errors
   const [isComments, setIsComments] = useState(false);
-  const [imageError, setImageError] = useState(false);
   const [commentText, setCommentText] = useState("");
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);

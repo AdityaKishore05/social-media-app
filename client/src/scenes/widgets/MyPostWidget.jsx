@@ -12,7 +12,6 @@ import {
   useTheme,
   Button,
   IconButton,
-  useMediaQuery,
 } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Dropzone from "react-dropzone";
@@ -33,7 +32,6 @@ const MyPostWidget = ({ picturePath }) => {
   const { _id } = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
   // No need for `posts` state here, as backend returns all posts after creation.
-  const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
 
