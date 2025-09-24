@@ -38,15 +38,22 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
+      if (response.status === 304) {
+        setIsLoading(false); // Stop loading, but don't change the data
+        return;
+      }
+      
       if (!response.ok) throw new Error("Network response was not ok");
+
       const data = await response.json();
       dispatch(setPosts({ posts: data }));
     } catch (error) {
       console.error("Failed to fetch user posts:", error);
-      dispatch(setPosts({ posts: [] }));
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, token, userId]);
 
   useEffect(() => {
