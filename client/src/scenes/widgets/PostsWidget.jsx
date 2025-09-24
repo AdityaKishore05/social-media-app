@@ -6,9 +6,9 @@ import { Typography } from "@mui/material";
 
 const PostsWidget = ({ userId, isProfile = false }) => {
   const dispatch = useDispatch();
-  const posts = useSelector((state) => state.auth.posts);
-  const token = useSelector((state) => state.auth.token);
-  const [isLoading, setIsLoading] = useState(true);
+  const posts = useSelector((state) => state.posts);
+  const token = useSelector((state) => state.token);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
   const getPosts = useCallback(async () => {
     setIsLoading(true);
@@ -22,11 +22,11 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       dispatch(setPosts({ posts: data }));
     } catch (error) {
       console.error("Failed to fetch posts:", error);
+      dispatch(setPosts({ posts: [] })); // Clear posts on error
     } finally {
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, token]); // Keep token, disable warning
+  }, [dispatch, token]);
 
   const getUserPosts = useCallback(async () => {
     setIsLoading(true);
@@ -43,11 +43,11 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       dispatch(setPosts({ posts: data }));
     } catch (error) {
       console.error("Failed to fetch user posts:", error);
+      dispatch(setPosts({ posts: [] }));
     } finally {
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, token, userId]); // Keep token, disable warning
+  }, [dispatch, token, userId]);
 
   useEffect(() => {
     if (isProfile) {
@@ -55,7 +55,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     } else {
       getPosts();
     }
-  }, [isProfile, userId, getPosts, getUserPosts]); 
+  }, [isProfile, userId, getPosts, getUserPosts]); // ✅ Correct dependencies
 
   if (isLoading) {
     return <Typography sx={{ mt: 2, textAlign: 'center' }}>Loading posts...</Typography>;
@@ -70,13 +70,13 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       {posts.map(
         ({
           _id,
-          userId: postUserId,
+          userId,
           firstName,
           lastName,
           description,
           location,
           picturePath,
-          videoPath,
+          videoPath, // 1. Destructure videoPath here
           userPicturePath,
           likes,
           comments,
@@ -84,12 +84,12 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           <PostWidget
             key={_id}
             postId={_id}
-            postUserId={postUserId}
+            postUserId={userId}
             name={`${firstName} ${lastName}`}
             description={description}
             location={location}
             picturePath={picturePath}
-            videoPath={videoPath}
+            videoPath={videoPath} // 2. Pass videoPath as a prop here
             userPicturePath={userPicturePath}
             likes={likes}
             comments={comments}
