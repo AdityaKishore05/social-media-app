@@ -13,7 +13,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const getPosts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("process.env.REACT_APP_API_URL/posts", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
