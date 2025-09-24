@@ -1,57 +1,51 @@
 import { Box } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const UserImage = ({ image, size = "60px", userName = "" }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
+  useEffect(() => {
+    setImageError(false);
+    setImageLoaded(false);
+  }, [image]);
+
   const handleImageError = () => {
-    console.error('Failed to load image:', `${process.env.REACT_APP_API_URL}/assets/${image}`);
     setImageError(true);
   };
 
   const handleImageLoad = () => {
-    console.log('Successfully loaded image:', `${process.env.REACT_APP_API_URL}/assets/${image}`);
     setImageLoaded(true);
   };
 
-  // Generate a default avatar URL (using UI Avatars service)
   const getDefaultAvatar = () => {
-    const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase() || '?';
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random&color=fff&size=150`;
+    // FIX: The 'initials' variable was unused and has been removed.
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      userName
+    )}&background=random&color=fff&size=150`;
   };
-
-  // Debug logging
-  console.log('UserImage props:', { image, size, userName });
 
   return (
     <Box width={size} height={size}>
       {imageError || !image ? (
-        // Use external default avatar service
         <img
-          style={{ 
-            objectFit: "cover", 
-            borderRadius: "50%" 
-          }}
+          style={{ objectFit: "cover", borderRadius: "50%" }}
           width={size}
           height={size}
-          alt="user"
+          alt={userName}
           src={getDefaultAvatar()}
-          onError={() => {
-            // Last fallback - colored circle with initial
-            console.error('Even default avatar failed to load');
-          }}
         />
       ) : (
         <img
-          style={{ 
-            objectFit: "cover", 
+          style={{
+            objectFit: "cover",
             borderRadius: "50%",
-            opacity: imageLoaded ? 1 : 0.5 
+            opacity: imageLoaded ? 1 : 0.5,
+            transition: "opacity 0.3s ease-in-out",
           }}
           width={size}
           height={size}
-          alt="user"
+          alt={userName}
           src={`${process.env.REACT_APP_API_URL}/assets/${image}`}
           onError={handleImageError}
           onLoad={handleImageLoad}

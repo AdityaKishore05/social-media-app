@@ -25,7 +25,7 @@ const PostWidget = ({
   videoPath, // 1. Accept videoPath as a prop
 
 }) => {
-  const [setMediaError] = useState(false); // Use a generic name for image/video errors
+  const [mediaError, setMediaError] = useState(false); // Use a generic name for image/video errors
   const [isComments, setIsComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const dispatch = useDispatch();
@@ -40,8 +40,8 @@ const PostWidget = ({
 
   useEffect(() => {
     setMediaError(false);
-  }, [picturePath, videoPath]);
-
+  }, [picturePath, videoPath, setMediaError]);
+  
 const patchLike = async () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/posts/${postId}/like`, {
