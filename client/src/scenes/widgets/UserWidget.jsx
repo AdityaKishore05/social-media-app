@@ -9,11 +9,12 @@ import UserImage from "components/UserImage";
 import FlexBetween from "components/FlexBetween";
 import WidgetWrapper from "components/WidgetWrapper";
 import { useSelector } from "react-redux";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 const UserWidget = ({ userId, picturePath }) => {
   const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
   const { palette } = useTheme();
   const navigate = useNavigate();
   const token = useSelector((state) => state.token);
@@ -22,21 +23,55 @@ const UserWidget = ({ userId, picturePath }) => {
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
 
-  const getUser = async () => {
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/users/${userId}`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    setUser(data);
-  };
+  const getUser = useCallback(async () => {
+    if (!userId || !token) return;
+    
+    try {
+      setError(null);
+      // FIXED: Add cache-busting headers and use hardcoded URL
+      const response = await fetch(`https://getsocialnow.onrender.com/users/${userId}`, {
+        method: "GET",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('User widget data loaded:', data.firstName, data.lastName);
+      setUser(data);
+    } catch (err) {
+      console.error('Error fetching user:', err);
+      setError(err.message);
+    }
+  }, [userId, token]);
 
   useEffect(() => {
     getUser();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getUser]);
+
+  if (error) {
+    return (
+      <WidgetWrapper>
+        <Typography color="error">
+          Error loading user: {error}
+        </Typography>
+      </WidgetWrapper>
+    );
+  }
 
   if (!user) {
-    return null;
+    return (
+      <WidgetWrapper>
+        <Typography>Loading user...</Typography>
+      </WidgetWrapper>
+    );
   }
 
   const {
@@ -49,9 +84,10 @@ const UserWidget = ({ userId, picturePath }) => {
     friends,
   } = user;
 
-  // If this is the logged-in user's widget, use Redux friends data
-  // This ensures the friends count updates immediately when friends are added/removed
-  const displayFriends = userId === loggedInUser?._id ? loggedInUser.friends : friends;
+  // FIXED: Use Redux friends data for logged-in user, fallback to fetched data
+  const displayFriends = userId === loggedInUser?._id ? 
+    (loggedInUser.friends || friends || []) : 
+    (friends || []);
 
   return (
     <WidgetWrapper>
@@ -60,13 +96,14 @@ const UserWidget = ({ userId, picturePath }) => {
         gap="0.5rem"
         pb="1.1rem"
         onClick={() => navigate(`/profile/${userId}`)}
+        sx={{ cursor: 'pointer' }}
       >
         <FlexBetween gap="1rem">
-          <UserImage image={picturePath} />
+          <UserImage image={picturePath || user.picturePath} />
           <Box>
             <Typography
               variant="h4"
-              color={dark}a
+              color={dark}
               fontWeight="500"
               sx={{
                 "&:hover": {
@@ -78,7 +115,7 @@ const UserWidget = ({ userId, picturePath }) => {
               {firstName} {lastName}
             </Typography>
             <Typography color={medium}>
-              {displayFriends?.length || 0} friends
+              {Array.isArray(displayFriends) ? displayFriends.length : 0} friends
             </Typography>
           </Box>
         </FlexBetween>
@@ -91,11 +128,11 @@ const UserWidget = ({ userId, picturePath }) => {
       <Box p="1rem 0">
         <Box display="flex" alignItems="center" gap="1rem" mb="0.5rem">
           <LocationOnOutlined fontSize="large" sx={{ color: main }} />
-          <Typography color={medium}>{location}</Typography>
+          <Typography color={medium}>{location || 'Not specified'}</Typography>
         </Box>
         <Box display="flex" alignItems="center" gap="1rem">
           <WorkOutlineOutlined fontSize="large" sx={{ color: main }} />
-          <Typography color={medium}>{occupation}</Typography>
+          <Typography color={medium}>{occupation || 'Not specified'}</Typography>
         </Box>
       </Box>
 
@@ -106,13 +143,13 @@ const UserWidget = ({ userId, picturePath }) => {
         <FlexBetween mb="0.5rem">
           <Typography color={medium}>Who's viewed your profile</Typography>
           <Typography color={main} fontWeight="500">
-            {viewedProfile}
+            {viewedProfile || 0}
           </Typography>
         </FlexBetween>
         <FlexBetween>
           <Typography color={medium}>Impressions of your post</Typography>
           <Typography color={main} fontWeight="500">
-            {impressions}
+            {impressions || 0}
           </Typography>
         </FlexBetween>
       </Box>
