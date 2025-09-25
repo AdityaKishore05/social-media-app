@@ -1,42 +1,105 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import "./index.css";
-import App from "./App";
-import authReducer from "./state";
-import { configureStore } from "@reduxjs/toolkit";
-import { Provider } from "react-redux";
-import {
-  persistStore,
-  persistReducer,
-  FLUSH,
-  REHYDRATE,
-  PAUSE,
-  PERSIST,
-  PURGE,
-  REGISTER,
-} from "redux-persist";
-import storage from "redux-persist/lib/storage";
-import { PersistGate } from "redux-persist/integration/react";
+import { Box, useMediaQuery } from "@mui/material";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
+import Navbar from "scenes/navbar";
+import FriendListWidget from "scenes/widgets/FriendListWidget";
+import MyPostWidget from "scenes/widgets/MyPostWidget";
+import PostsWidget from "scenes/widgets/PostsWidget";
+import UserWidget from "scenes/widgets/UserWidget";
 
-const persistConfig = { key: "root", storage, version: 1 };
-const persistedReducer = persistReducer(persistConfig, authReducer);
-const store = configureStore({
-  reducer: persistedReducer,
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-      },
-    }),
-});
+const ProfilePage = () => {
+  const [user, setUser] = useState(null);
+  const { userId } = useParams();
+  const token = useSelector((state) => state.token);
+  const loggedInUserId = useSelector((state) => state.user._id);
+  const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistStore(store)}>
-        <App />
-      </PersistGate>
-    </Provider>
-  </React.StrictMode>
-);
+  const getUser = useCallback(async () => {
+    if (!userId) return;
+
+    try {
+      // FIXED: Add cache-busting headers and use hardcoded URL
+      const response = await fetch(
+        `https://getsocialnow.onrender.com/users/${userId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(
+        "User data loaded for profile:",
+        data.firstName,
+        data.lastName
+      );
+      setUser(data);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  }, [userId, token]); // Dependencies for useCallback
+
+  useEffect(() => {
+    getUser();
+  }, [getUser]); // Now getUser is stable thanks to useCallback
+
+  if (!user) {
+    return (
+      <Box>
+        <Navbar />
+        <Box sx={{ textAlign: "center", mt: 4 }}>Loading user profile...</Box>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Navbar />
+      <Box
+        width="100%"
+        padding="2rem 6%"
+        display={isNonMobileScreens ? "flex" : "block"}
+        gap="2rem"
+        justifyContent="center"
+      >
+        <Box flexBasis={isNonMobileScreens ? "26%" : undefined}>
+          <UserWidget userId={userId} picturePath={user.picturePath} />
+          <Box m="2rem 0" />
+          <FriendListWidget userId={userId} />
+        </Box>
+
+        <Box
+          flexBasis={isNonMobileScreens ? "42%" : undefined}
+          mt={isNonMobileScreens ? undefined : "2rem"}
+        >
+          {/* FIXED: Only show MyPostWidget if viewing own profile */}
+          {loggedInUserId === userId && (
+            <>
+              <MyPostWidget picturePath={user.picturePath} />
+              <Box m="2rem 0" />
+            </>
+          )}
+
+          {/* FIXED: Pass key prop to force re-render and ensure only user posts are shown */}
+          <PostsWidget
+            key={`profile-posts-${userId}`}
+            userId={userId}
+            isProfile={true}
+          />
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+export default ProfilePage;
