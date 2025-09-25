@@ -15,7 +15,7 @@ const ProfilePage = () => {
   const loggedInUserId = useSelector((state) => state.user._id);
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
 
- const getUser = useCallback(async () => {
+const getUser = useCallback(async () => {
   if (!userId) return;
   
   try {
@@ -29,17 +29,18 @@ const ProfilePage = () => {
       },
     });
     
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('User data loaded for profile:', data.firstName, data.lastName);
-      setUser(data);
-    } catch (error) {
-      console.error('Error fetching user:', error);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user: ${response.status}`);
     }
-  });
+    
+    const data = await response.json();
+    console.log('User data loaded for profile:', data.firstName, data.lastName);
+    setUser(data);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+  }
+}, [userId, token]); // Add dependency array here
+
 
   useEffect(() => {
     if (userId) {
