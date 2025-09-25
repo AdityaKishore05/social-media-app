@@ -99,7 +99,10 @@ const UserWidget = ({ userId, picturePath }) => {
         sx={{ cursor: 'pointer' }}
       >
         <FlexBetween gap="1rem">
-          <UserImage image={picturePath || user.picturePath} />
+          <UserImage 
+            image={picturePath || user.picturePath} 
+            name={`${firstName} ${lastName}`} 
+          />
           <Box>
             <Typography
               variant="h4"

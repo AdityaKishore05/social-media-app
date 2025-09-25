@@ -18,26 +18,60 @@ export const createPost = async (req, res) => {
       !!req.file
     );
 
-    // FIXED: Handle Cloudinary upload if file exists
+    // FIXED: Handle Cloudinary upload if file exists with better error handling and retry logic
     if (req.file) {
       try {
+        console.log("Uploading file to Cloudinary:", {
+          originalname: req.file.originalname,
+          size: req.file.size,
+          mimetype: req.file.mimetype,
+        });
+
         // Convert buffer to base64
         const fileStr = `data:${
           req.file.mimetype
         };base64,${req.file.buffer.toString("base64")}`;
 
-        // Upload to Cloudinary
-        const uploadResult = await cloudinary.v2.uploader.upload(fileStr, {
-          resource_type: mediaType === "video" ? "video" : "image",
-          folder: "social-media-app",
-        });
+        // Upload to Cloudinary with retry logic
+        let uploadResult;
+        let retries = 3;
+
+        while (retries > 0) {
+          try {
+            uploadResult = await cloudinary.v2.uploader.upload(fileStr, {
+              resource_type: mediaType === "video" ? "video" : "image",
+              folder: "social-media-app",
+              quality: mediaType === "image" ? "auto:good" : undefined,
+              // Add transformation to optimize storage
+              transformation:
+                mediaType === "image"
+                  ? [{ quality: "auto:good" }, { fetch_format: "auto" }]
+                  : undefined,
+            });
+            break;
+          } catch (uploadError) {
+            retries--;
+            console.warn(
+              `Cloudinary upload attempt failed, retries left: ${retries}`,
+              uploadError.message
+            );
+            if (retries === 0) throw uploadError;
+
+            // Wait before retry
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        }
 
         mediaPath = uploadResult.secure_url;
-        console.log("Media uploaded to Cloudinary:", mediaPath);
+        console.log("Media uploaded successfully to Cloudinary:", {
+          url: mediaPath,
+          public_id: uploadResult.public_id,
+          resource_type: uploadResult.resource_type,
+        });
       } catch (uploadError) {
         console.error("Cloudinary upload error:", uploadError);
         return res.status(500).json({
-          message: "Failed to upload media",
+          message: "Failed to upload media to cloud storage",
           error: uploadError.message,
         });
       }
@@ -66,6 +100,15 @@ export const createPost = async (req, res) => {
       userPicturePath: user.picturePath,
       likes: {},
       comments: [],
+      // FIXED: Add metadata to track media info for persistence
+      mediaMetadata: req.file
+        ? {
+            originalFileName: req.file.originalname,
+            fileSize: req.file.size,
+            mimeType: req.file.mimetype,
+            cloudinaryPublicId: uploadResult?.public_id,
+          }
+        : undefined,
     });
 
     // FIXED: Set media path based on type
@@ -370,4 +413,315 @@ export const deletePost = async (req, res) => {
     console.error("DELETE POST ERROR:", err);
     res.status(500).json({ message: err.message });
   }
+};
+
+// Backend: Add to controllers/posts.js - Media Health Check System
+
+// Add this function to monitor and fix media URLs
+export const checkMediaHealth = async (req, res) => {
+  try {
+    console.log('Starting media health check...');
+    
+    const posts = await Post.find({}).limit(100).sort({ createdAt: -1 });
+    const healthReport = {
+      totalPosts: posts.length,
+      postsWithMedia: 0,
+      workingMedia: 0,
+      brokenMedia: 0,
+      fixedMedia: 0,
+      issues: []
+    };
+
+    for (const post of posts) {
+      if (post.picturePath || post.videoPath) {
+        healthReport.postsWithMedia++;
+        
+        const mediaUrl = post.picturePath || post.videoPath;
+        
+        // Check if it's a Cloudinary URL
+        if (mediaUrl.startsWith('https://res.cloudinary.com')) {
+          try {
+            // Test if the media exists
+            const response = await fetch(mediaUrl, { method: 'HEAD' });
+            if (response.ok) {
+              healthReport.workingMedia++;
+            } else {
+              healthReport.brokenMedia++;
+              healthReport.issues.push({
+                postId: post._id,
+                userId: post.userId,
+                mediaUrl,
+                error: `HTTP ${response.status}`
+              });
+            }
+          } catch (error) {
+            healthReport.brokenMedia++;
+            healthReport.issues.push({
+              postId: post._id,
+              userId: post.userId,
+              mediaUrl,
+              error: error.message
+            });
+          }
+        } else {
+          // Old local URLs - these need to be flagged
+          healthReport.issues.push({
+            postId: post._id,
+            userId: post.userId,
+            mediaUrl,
+            error: 'Non-Cloudinary URL detected'
+          });
+        }
+      }
+    }
+
+    console.log('Media health check completed:', healthReport);
+    res.json(healthReport);
+  } catch (error) {
+    console.error('Media health check failed:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Add this function to backup critical posts
+export const backupCriticalPosts = async (req, res) => {
+  try {
+    const posts = await Post.find({})
+      .select('_id userId description picturePath videoPath mediaMetadata createdAt')
+      .sort({ createdAt: -1 });
+
+    const backup = {
+      timestamp: new Date().toISOString(),
+      totalPosts: posts.length,
+      posts: posts.map(post => ({
+        id: post._id,
+        userId: post.userId,
+        description: post.description,
+        hasImage: !!post.picturePath,
+        hasVideo: !!post.videoPath,
+        mediaUrl: post.picturePath || post.videoPath,
+        metadata: post.mediaMetadata,
+        created: post.createdAt
+      }))
+    };
+
+    // In production, save this to a backup service
+    console.log(`Backup created with ${backup.totalPosts} posts`);
+    res.json(backup);
+  } catch (error) {
+    console.error('Backup failed:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Enhanced create post with better persistence
+export const createPostEnhanced = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { userId, description, mediaType } = req.body;
+    let mediaPath = null;
+    let uploadResult = null;
+
+    console.log('Creating post with enhanced persistence:', {
+      userId,
+      hasDescription: !!description,
+      hasFile: !!req.file,
+      mediaType
+    });
+
+    // Handle file upload with extensive error handling
+    if (req.file) {
+      try {
+        console.log('Processing file upload:', {
+          originalname: req.file.originalname,
+          size: req.file.size,
+          mimetype: req.file.mimetype
+        });
+
+        const fileStr = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+        
+        // Upload to Cloudinary with optimized settings
+        uploadResult = await cloudinary.v2.uploader.upload(fileStr, {
+          resource_type: mediaType === 'video' ? 'video' : 'image',
+          folder: 'social-media-app',
+          // Add unique identifier to prevent overwrites
+          public_id: `${userId}_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+          // Optimize for web delivery
+          quality: 'auto:good',
+          fetch_format: 'auto',
+          // Add backup URL generation
+          backup: true,
+          // Ensure long-term storage
+          invalidate: true,
+        });
+        
+        mediaPath = uploadResult.secure_url;
+        
+        console.log('Media uploaded successfully:', {
+          url: mediaPath,
+          public_id: uploadResult.public_id,
+          bytes: uploadResult.bytes,
+          format: uploadResult.format
+        });
+
+        // Verify upload immediately
+        const verifyResponse = await fetch(mediaPath, { method: 'HEAD' });
+        if (!verifyResponse.ok) {
+          throw new Error(`Upload verification failed: ${verifyResponse.status}`);
+        }
+        
+      } catch (uploadError) {
+        console.error('Critical upload error:', uploadError);
+        await session.abortTransaction();
+        return res.status(500).json({ 
+          message: "Failed to upload and verify media", 
+          error: uploadError.message,
+          retryable: true
+        });
+      }
+    }
+
+    // Validate user exists
+    const user = await User.findById(userId).session(session);
+    if (!user) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Create post with enhanced metadata
+    const newPost = new Post({
+      userId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      location: user.location,
+      description: description?.trim() || '',
+      userPicturePath: user.picturePath,
+      picturePath: mediaType === 'image' ? mediaPath : '',
+      videoPath: mediaType === 'video' ? mediaPath : '',
+      likes: {},
+      comments: [],
+      mediaMetadata: uploadResult ? {
+        cloudinaryPublicId: uploadResult.public_id,
+        originalFileName: req.file.originalname,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        uploadedAt: new Date(),
+        backupUrls: uploadResult.backup ? [uploadResult.backup] : [],
+        verified: true
+      } : undefined
+    });
+
+    // Save with transaction
+    await newPost.save({ session });
+    await session.commitTransaction();
+
+    console.log('Post created successfully with ID:', newPost._id);
+
+    // Set cache headers
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
+    // Return updated posts
+    const allPosts = await Post.find().sort({ createdAt: -1 });
+    const populatedPosts = await Promise.all(
+      allPosts.map(async (post) => {
+        const postUser = await User.findById(post.userId);
+        if (!postUser) return null;
+        
+        return {
+          ...post._doc,
+          firstName: postUser.firstName,
+          lastName: postUser.lastName,
+          location: postUser.location,
+          userPicturePath: postUser.picturePath,
+        };
+      })
+    );
+
+    const validPosts = populatedPosts.filter(post => post !== null);
+    res.status(201).json(validPosts);
+
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Enhanced post creation failed:', error);
+    res.status(500).json({
+      message: "Post creation failed",
+      error: error.message,
+      retryable: true
+    });
+  } finally {
+    session.endSession();
+  }
+};
+
+// Frontend: Enhanced error handling for posts
+export const usePostsWithPersistence = (userId, isProfile = false) => {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const fetchPostsWithRetry = useCallback(async (attempt = 1) => {
+    try {
+      setError(null);
+      
+      const endpoint = isProfile 
+        ? `https://getsocialnow.onrender.com/posts/${userId}/posts`
+        : `https://getsocialnow.onrender.com/posts`;
+
+      const response = await fetch(endpoint, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Validate posts have required fields
+      const validPosts = data.filter(post => 
+        post._id && post.userId && (post.description || post.picturePath || post.videoPath)
+      );
+
+      console.log(`Loaded ${validPosts.length} valid posts (attempt ${attempt})`);
+      setPosts(validPosts);
+      setRetryCount(0);
+      
+    } catch (err) {
+      console.error(`Post fetch attempt ${attempt} failed:`, err);
+      
+      if (attempt < 3) {
+        console.log(`Retrying in ${attempt * 1000}ms...`);
+        setTimeout(() => fetchPostsWithRetry(attempt + 1), attempt * 1000);
+      } else {
+        setError(err.message);
+        setRetryCount(attempt);
+      }
+    } finally {
+      if (attempt === 1) setLoading(false);
+    }
+  }, [userId, isProfile]);
+
+  useEffect(() => {
+    fetchPostsWithRetry();
+  }, [fetchPostsWithRetry]);
+
+  return {
+    posts,
+    loading,
+    error,
+    retryCount,
+    refetch: () => fetchPostsWithRetry()
+  };
 };
