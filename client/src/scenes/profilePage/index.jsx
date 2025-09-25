@@ -15,19 +15,20 @@ const ProfilePage = () => {
   const loggedInUserId = useSelector((state) => state.user._id);
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
 
-  const getUser = async () => {
-    try {
-      // FIXED: Add cache-busting headers and use hardcoded URL
-      const response = await fetch(`https://getsocialnow.onrender.com/users/${userId}`, {
-        method: "GET",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-      });
-      
+ const getUser = useCallback(async () => {
+  if (!userId) return;
+  
+  try {
+    const response = await fetch(`https://getsocialnow.onrender.com/users/${userId}`, {
+      method: "GET",
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
+    });
+    
       if (!response.ok) {
         throw new Error(`Failed to fetch user: ${response.status}`);
       }
@@ -38,7 +39,7 @@ const ProfilePage = () => {
     } catch (error) {
       console.error('Error fetching user:', error);
     }
-  };
+  });
 
   useEffect(() => {
     if (userId) {
