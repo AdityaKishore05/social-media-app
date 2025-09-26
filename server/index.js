@@ -54,9 +54,8 @@ app.use(
     origin: [
       "http://localhost:3000",
       "http://localhost:3001",
-      "https://your-frontend-domain.com",
-      "https://your-frontend-domain.vercel.app",
-      "https://your-frontend-domain.netlify.app",
+      "https://getsocialnow.onrender.com",
+      "https://getsocialnow.netlify.app",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
