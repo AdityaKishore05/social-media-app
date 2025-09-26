@@ -203,3 +203,16 @@ mongoose
   .catch((error) => console.log(`${error} did not connect`));
 
 export default app;
+
+app.get("/debug/users-emails", async (req, res) => {
+  try {
+    const User = (await import("./models/User.js")).default;
+    const users = await User.find({}, "email firstName lastName createdAt");
+    res.json({
+      count: users.length,
+      users: users,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
