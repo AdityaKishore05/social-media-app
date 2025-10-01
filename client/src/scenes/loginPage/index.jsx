@@ -1,9 +1,26 @@
 import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
 import Form from "./Form";
+import { useEffect } from "react";
 
 const LoginPage = () => {
   const theme = useTheme();
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
+  
+  // ADDED: Wake up Render server on page load
+  useEffect(() => {
+    const wakeUpServer = async () => {
+      try {
+        console.log("Waking up server...");
+        await fetch("https://getsocialnow.onrender.com/health");
+        console.log("Server is awake");
+      } catch (error) {
+        console.log("Server wake-up ping sent");
+      }
+    };
+    
+    wakeUpServer();
+  }, []);
+
   return (
     <Box>
       <Box
