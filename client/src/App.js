@@ -12,20 +12,6 @@ import ProfilePage from "scenes/profilePage";
 // Import theme - if this fails, we'll see the error
 import { themeSettings } from "./theme";
 
-import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
-import { useMemo } from "react";
-import { useSelector } from "react-redux";
-import { CssBaseline, ThemeProvider } from "@mui/material";
-import { createTheme } from "@mui/material/styles";
-
-// Import your scenes - if any of these fail, we'll see the error
-import HomePage from "scenes/homePage";
-import LoginPage from "scenes/loginPage";
-import ProfilePage from "scenes/profilePage";
-
-// Import theme - if this fails, we'll see the error
-import { themeSettings } from "./theme";
-
 function App() {
   console.log("App component is loading...");
 
