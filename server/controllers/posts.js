@@ -18,65 +18,38 @@ export const createPost = async (req, res) => {
       !!req.file
     );
 
-    // FIXED: Handle Cloudinary upload if file exists with better error handling and retry logic
-    if (req.file) {
-      try {
-        console.log("Uploading file to Cloudinary:", {
-          originalname: req.file.originalname,
-          size: req.file.size,
-          mimetype: req.file.mimetype,
-        });
+if (req.file) {
+  try {
+    console.log("Starting Cloudinary upload...");
 
-        // Convert buffer to base64
-        const fileStr = `data:${
-          req.file.mimetype
-        };base64,${req.file.buffer.toString("base64")}`;
-
-        // Upload to Cloudinary with retry logic
-        let uploadResult;
-        let retries = 3;
-
-        while (retries > 0) {
-          try {
-            uploadResult = await cloudinary.v2.uploader.upload(fileStr, {
-              resource_type: mediaType === "video" ? "video" : "image",
-              folder: "social-media-app",
-              quality: mediaType === "image" ? "auto:good" : undefined,
-              // Add transformation to optimize storage
-              transformation:
-                mediaType === "image"
-                  ? [{ quality: "auto:good" }, { fetch_format: "auto" }]
-                  : undefined,
-            });
-            break;
-          } catch (uploadError) {
-            retries--;
-            console.warn(
-              `Cloudinary upload attempt failed, retries left: ${retries}`,
-              uploadError.message
-            );
-            if (retries === 0) throw uploadError;
-
-            // Wait before retry
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-          }
-        }
-
-        mediaPath = uploadResult.secure_url;
-        console.log("Media uploaded successfully to Cloudinary:", {
-          url: mediaPath,
-          public_id: uploadResult.public_id,
-          resource_type: uploadResult.resource_type,
-        });
-      } catch (uploadError) {
-        console.error("Cloudinary upload error:", uploadError);
-        return res.status(500).json({
-          message: "Failed to upload media to cloud storage",
-          error: uploadError.message,
-        });
-      }
+    // Check if Cloudinary is configured
+    if (!process.env.CLOUDINARY_API_KEY) {
+      throw new Error("Cloudinary API key not configured");
     }
 
+    const fileStr = `data:${
+      req.file.mimetype
+    };base64,${req.file.buffer.toString("base64")}`;
+
+    // Use cloudinary.v2 explicitly
+    const uploadResult = await cloudinary.uploader.upload(fileStr, {
+      resource_type: mediaType === "video" ? "video" : "image",
+      folder: "social-media-app",
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
+    mediaPath = uploadResult.secure_url;
+    console.log("Cloudinary upload successful:", mediaPath);
+  } catch (uploadError) {
+    console.error("Cloudinary upload error:", uploadError);
+    return res.status(500).json({
+      message: "Failed to upload media to cloud storage",
+      error: uploadError.message,
+    });
+  }
+}
     // Validation
     if (!description?.trim() && !mediaPath) {
       return res.status(400).json({

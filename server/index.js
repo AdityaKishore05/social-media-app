@@ -14,7 +14,7 @@ import postRoutes from "./routes/posts.js";
 import { register } from "./controllers/auth.js";
 import { createPost } from "./controllers/posts.js";
 import { verifyToken } from "./middleware/auth.js";
-import cloudinary from "cloudinary"
+import { v2 as cloudinary } from "cloudinary";
 
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
@@ -77,12 +77,20 @@ app.options("*", cors());
 
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
-// CLOUDINARY CONFIGURATION
-cloudinary.v2.config({
+// CLOUDINARY CONFIGURATION - Must be after dotenv.config()
+cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
 });
+
+// Verify Cloudinary configuration
+console.log('===== CLOUDINARY CONFIG CHECK =====');
+console.log('Cloud Name:', process.env.CLOUDINARY_CLOUD_NAME || 'MISSING');
+console.log('API Key:', process.env.CLOUDINARY_API_KEY ? 'EXISTS' : 'MISSING');
+console.log('API Secret:', process.env.CLOUDINARY_API_SECRET ? 'EXISTS' : 'MISSING');
+console.log('===================================');
 
 // FIXED: Use memory storage for Cloudinary uploads
 const storage = multer.memoryStorage();
