@@ -1,55 +1,48 @@
 import Post from "../models/Post.js";
 import User from "../models/User.js";
-import cloudinary from "cloudinary";
 import mongoose from "mongoose";
+import { v2 as cloudinary } from "cloudinary";
 
 /* CREATE */
 export const createPost = async (req, res) => {
   try {
     const { userId, description, mediaType } = req.body;
     let mediaPath = null;
+    let uploadResult = null; // FIXED: Declare at the top level
 
-    console.log(
-      "Creating post - userId:",
-      userId,
-      "mediaType:",
-      mediaType,
-      "hasFile:",
-      !!req.file
-    );
+    console.log("Creating post:", { userId, hasFile: !!req.file, mediaType });
 
-if (req.file) {
-  try {
-    console.log("Starting Cloudinary upload...");
+    // Handle file upload
+    if (req.file) {
+      try {
+        console.log("Starting Cloudinary upload...");
 
-    // Check if Cloudinary is configured
-    if (!process.env.CLOUDINARY_API_KEY) {
-      throw new Error("Cloudinary API key not configured");
+        // Check if Cloudinary is configured
+        if (!process.env.CLOUDINARY_API_KEY) {
+          throw new Error("Cloudinary API key not configured");
+        }
+
+        const fileStr = `data:${
+          req.file.mimetype
+        };base64,${req.file.buffer.toString("base64")}`;
+
+        // Upload to Cloudinary
+        uploadResult = await cloudinary.uploader.upload(fileStr, {
+          resource_type: mediaType === "video" ? "video" : "image",
+          folder: "social-media-app",
+        });
+
+        mediaPath = uploadResult.secure_url;
+        console.log("Cloudinary upload successful:", mediaPath);
+      } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        return res.status(500).json({
+          message: "Failed to upload media to cloud storage",
+          error: uploadError.message,
+        });
+      }
     }
 
-    const fileStr = `data:${
-      req.file.mimetype
-    };base64,${req.file.buffer.toString("base64")}`;
-
-    // Use cloudinary.v2 explicitly
-    const uploadResult = await cloudinary.uploader.upload(fileStr, {
-      resource_type: mediaType === "video" ? "video" : "image",
-      folder: "social-media-app",
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-
-    mediaPath = uploadResult.secure_url;
-    console.log("Cloudinary upload successful:", mediaPath);
-  } catch (uploadError) {
-    console.error("Cloudinary upload error:", uploadError);
-    return res.status(500).json({
-      message: "Failed to upload media to cloud storage",
-      error: uploadError.message,
-    });
-  }
-}
     // Validation
     if (!description?.trim() && !mediaPath) {
       return res.status(400).json({
@@ -60,7 +53,7 @@ if (req.file) {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
-        message: "User not found. Cannot create post.",
+        message: "User not found.",
       });
     }
 
@@ -73,18 +66,9 @@ if (req.file) {
       userPicturePath: user.picturePath,
       likes: {},
       comments: [],
-      // FIXED: Add metadata to track media info for persistence
-      mediaMetadata: req.file
-        ? {
-            originalFileName: req.file.originalname,
-            fileSize: req.file.size,
-            mimeType: req.file.mimetype,
-            cloudinaryPublicId: uploadResult?.public_id,
-          }
-        : undefined,
     });
 
-    // FIXED: Set media path based on type
+    // Set media path based on type
     if (mediaPath) {
       if (mediaType === "image") {
         newPost.picturePath = mediaPath;
@@ -96,18 +80,20 @@ if (req.file) {
     await newPost.save();
     console.log("Post created successfully:", newPost._id);
 
-    // FIXED: Add no-cache headers
+    // Add no-cache headers
     res.set({
       "Cache-Control": "no-store, no-cache, must-revalidate, private",
       Pragma: "no-cache",
       Expires: "0",
     });
 
-    // Return all posts with proper user info
+    // Return all posts
     const allPosts = await Post.find().sort({ createdAt: -1 });
     const populatedPosts = await Promise.all(
       allPosts.map(async (post) => {
         const postUser = await User.findById(post.userId);
+        if (!postUser) return null;
+
         return {
           ...post._doc,
           firstName: postUser.firstName,
@@ -118,7 +104,8 @@ if (req.file) {
       })
     );
 
-    res.status(201).json(populatedPosts);
+    const validPosts = populatedPosts.filter((post) => post !== null);
+    res.status(201).json(validPosts);
   } catch (err) {
     console.error("CREATE POST ERROR:", err);
     res.status(500).json({
