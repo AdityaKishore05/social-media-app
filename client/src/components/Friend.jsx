@@ -80,7 +80,8 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
       {friendId !== _id && (
         <IconButton
           onClick={() => patchFriend()}
-          sx={{ backgroundColor: primaryLight, p: "0.6rem" }}
+          sx={{ color: palette.background.alt,
+            backgroundColor: palette.primary.main, p: "0.6rem" }}
         >
           {isFriend ? (
             <PersonRemoveOutlined sx={{ color: primaryDark }} />
