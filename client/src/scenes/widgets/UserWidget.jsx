@@ -127,7 +127,7 @@ const UserWidget = ({ userId, picturePath }) => {
 
       {/* SECOND ROW */}
       <FlexBetween p="1rem 0">
-        <Box display="flex" alignItems="center" gap="0.5rem" mb="0.5rem">
+        <Box display="flex" alignItems="center" gap="0.5rem">
           <LocationOnOutlined fontSize="large" sx={{ color: main }} />
           <Typography color={medium}>{location || 'Not specified'}</Typography>
         </Box>
