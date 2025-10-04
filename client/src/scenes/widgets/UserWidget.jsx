@@ -174,7 +174,7 @@ user?.socialLinks?.instagram && (
         gap="0.5rem"
         pb="1.1rem"
       >
-        <FlexBetween 
+        <Box
           gap="1rem"
           onClick={() => navigate(`/profile/${userId}`)}
           sx={{ cursor: 'pointer', flex: 1 }}
@@ -201,7 +201,7 @@ user?.socialLinks?.instagram && (
               {Array.isArray(displayFriends) ? displayFriends.length : 0} friends
             </Typography>
           </Box>
-        </FlexBetween>
+        </Box>
         
         {/* Only show edit button for own profile */}
         {isOwnProfile && (
