@@ -57,9 +57,9 @@ const formatSocialUrl = (url) => {
       <EditOutlined sx={{ color: main, cursor: 'pointer' }} />
     </a>
   </FlexBetween>
-)}
+  )
+  }
 
-{/* Same for LinkedIn */}
 {user?.socialLinks?.linkedin && (
   <FlexBetween gap="1rem" mb="0.5rem">
     <FlexBetween gap="1rem">
@@ -78,9 +78,9 @@ const formatSocialUrl = (url) => {
       <EditOutlined sx={{ color: main, cursor: 'pointer' }} />
     </a>
   </FlexBetween>
-)}
+  )
+  }
 
-{/* Same for Instagram */}
 {user?.socialLinks?.instagram && (
   <FlexBetween gap="1rem">
     <FlexBetween gap="1rem">
