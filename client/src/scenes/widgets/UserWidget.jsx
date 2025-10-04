@@ -4,6 +4,7 @@ import {
   LocationOnOutlined,
   WorkOutlineOutlined,
 } from "@mui/icons-material";
+import LaunchIcon from '@mui/icons-material/Launch';
 import { Box, Typography, Divider, useTheme } from "@mui/material";
 import UserImage from "components/UserImage";
 import FlexBetween from "components/FlexBetween";
@@ -219,11 +220,11 @@ user?.socialLinks?.instagram && (
 
       {/* SECOND ROW */}
       <FlexBetween p="1rem 0">
-        <Box display="flex" alignItems="center" gap="1rem">
+        <Box display="flex" alignItems="center" gap="0.75rem">
           <LocationOnOutlined fontSize="large" sx={{ color: main }} />
           <Typography color={medium}>{location || 'Not specified'}</Typography>
         </Box>
-        <Box display="flex" alignItems="center" gap="1rem">
+        <Box display="flex" alignItems="center" gap="0.75rem">
           <WorkOutlineOutlined fontSize="large" sx={{ color: main }} />
           <Typography color={medium}>{occupation || 'Not specified'}</Typography>
         </Box>
@@ -239,15 +240,12 @@ user?.socialLinks?.instagram && (
 
         {/* Twitter */}
         {user?.socialLinks?.twitter && (
-          <FlexBetween gap="1rem" mb="0.5rem">
+          <FlexBetween gap="1rem">
             <FlexBetween gap="1rem">
               <img src="../assets/twitter.png" alt="twitter" style={{ width: '24px', height: '24px' }} />
-              <Box>
                 <Typography color={main} fontWeight="500">
                   Twitter
                 </Typography>
-                <Typography color={medium} fontSize="0.75rem">Social Network</Typography>
-              </Box>
             </FlexBetween>
             <a 
               href={user.socialLinks.twitter} 
@@ -255,22 +253,19 @@ user?.socialLinks?.instagram && (
               rel="noopener noreferrer"
               style={{ textDecoration: 'none' }}
             >
-              <EditOutlined sx={{ color: main, cursor: 'pointer' }} />
+              <LaunchIcon sx={{ color: main, cursor: 'pointer' }} />
             </a>
           </FlexBetween>
         )}
 
         {/* LinkedIn */}
         {user?.socialLinks?.linkedin && (
-          <FlexBetween gap="1rem" mb="0.5rem">
+          <FlexBetween gap="1rem">
             <FlexBetween gap="1rem">
               <img src="../assets/linkedin.png" alt="linkedin" style={{ width: '24px', height: '24px' }} />
-              <Box>
                 <Typography color={main} fontWeight="500">
                   LinkedIn
                 </Typography>
-                <Typography color={medium} fontSize="0.75rem">Network Platform</Typography>
-              </Box>
             </FlexBetween>
             <a 
               href={user.socialLinks.linkedin} 
@@ -278,7 +273,7 @@ user?.socialLinks?.instagram && (
               rel="noopener noreferrer"
               style={{ textDecoration: 'none' }}
             >
-              <EditOutlined sx={{ color: main, cursor: 'pointer' }} />
+              <LaunchIcon sx={{ color: main, cursor: 'pointer' }} />
             </a>
           </FlexBetween>
         )}
@@ -288,12 +283,9 @@ user?.socialLinks?.instagram && (
           <FlexBetween gap="1rem">
             <FlexBetween gap="1rem">
               <img src="../assets/instagram.png" alt="instagram" style={{ width: '24px', height: '24px' }} />
-              <Box>
                 <Typography color={main} fontWeight="500">
                   Instagram
                 </Typography>
-                <Typography color={medium} fontSize="0.75rem">Photo Sharing</Typography>
-              </Box>
             </FlexBetween>
             <a 
               href={user.socialLinks.instagram} 
@@ -301,7 +293,7 @@ user?.socialLinks?.instagram && (
               rel="noopener noreferrer"
               style={{ textDecoration: 'none' }}
             >
-              <EditOutlined sx={{ color: main, cursor: 'pointer' }} />
+              <LaunchIcon sx={{ color: main, cursor: 'pointer' }} />
             </a>
           </FlexBetween>
         )}
