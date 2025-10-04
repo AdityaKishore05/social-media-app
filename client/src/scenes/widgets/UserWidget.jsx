@@ -177,7 +177,7 @@ user?.socialLinks?.instagram && (
         <Box
           gap="1rem" display="flex"
           onClick={() => navigate(`/profile/${userId}`)}
-          sx={{ cursor: 'pointer', flex: 1 }}
+          sx={{ cursor: 'pointer', flex: 1}}
         >
           <UserImage 
             image={picturePath || user.picturePath} 
@@ -220,8 +220,8 @@ user?.socialLinks?.instagram && (
       <Divider />
 
       {/* SECOND ROW */}
-      <Box p="1rem 0">
-        <Box display="flex" alignItems="center" gap="1rem" mb="0.5rem">
+      <FlexBetween p="1rem 0">
+        <Box display="flex" alignItems="center" gap="1rem">
           <LocationOnOutlined fontSize="large" sx={{ color: main }} />
           <Typography color={medium}>{location || 'Not specified'}</Typography>
         </Box>
@@ -229,25 +229,7 @@ user?.socialLinks?.instagram && (
           <WorkOutlineOutlined fontSize="large" sx={{ color: main }} />
           <Typography color={medium}>{occupation || 'Not specified'}</Typography>
         </Box>
-      </Box>
-
-      <Divider />
-
-      {/* THIRD ROW - Stats */}
-      <Box p="1rem 0">
-        <FlexBetween mb="0.5rem">
-          <Typography color={medium}>Who's viewed your profile</Typography>
-          <Typography color={main} fontWeight="500">
-            {viewedProfile || 0}
-          </Typography>
-        </FlexBetween>
-        <FlexBetween>
-          <Typography color={medium}>Impressions of your post</Typography>
-          <Typography color={main} fontWeight="500">
-            {impressions || 0}
-          </Typography>
-        </FlexBetween>
-      </Box>
+      </FlexBetween>
 
       <Divider />
 
