@@ -22,10 +22,12 @@ export const register = async (req, res) => {
     // Handle picture upload to Cloudinary
     let picturePath = "";
     if (req.file) {
-      const fileStr = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      const fileStr = `data:${
+        req.file.mimetype
+      };base64,${req.file.buffer.toString("base64")}`;
       const uploadResult = await cloudinary.uploader.upload(fileStr, {
-        resource_type: 'image',
-        folder: 'social-media-app/profiles',
+        resource_type: "image",
+        folder: "social-media-app/profiles",
       });
       picturePath = uploadResult.secure_url;
     }
@@ -58,7 +60,6 @@ export const register = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
 /* LOGGING IN */
 export const login = async (req, res) => {
   try {

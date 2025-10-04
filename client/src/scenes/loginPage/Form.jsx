@@ -25,9 +25,10 @@ const registerSchema = yup.object().shape({
   occupation: yup.string().required("required"),
   picture: yup.string().required("required"),
   // NEW: Optional social media links
-  twitter: yup.string().url("Must be a valid URL").nullable(),
-  linkedin: yup.string().url("Must be a valid URL").nullable(),
-  instagram: yup.string().url("Must be a valid URL").nullable(),
+  // Change from nullable to optional
+  twitter: yup.string().url("Must be a valid URL"),
+  linkedin: yup.string().url("Must be a valid URL"),
+  instagram: yup.string().url("Must be a valid URL"),
 });
 
 const loginSchema = yup.object().shape({
@@ -73,7 +74,10 @@ const Form = () => {
       
       const formData = new FormData();
       for (let value in values) {
-        formData.append(value, values[value]);
+      if ((value === 'twitter' || value === 'linkedin' || value === 'instagram') && !values[value]) {
+      continue;
+      }
+      formData.append(value, values[value]);
       }
       formData.append("picturePath", values.picture.name);
 
