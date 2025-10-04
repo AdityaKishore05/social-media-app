@@ -175,7 +175,7 @@ user?.socialLinks?.instagram && (
         pb="1.1rem"
       >
         <Box
-          gap="1rem"
+          gap="1rem" display="flex"
           onClick={() => navigate(`/profile/${userId}`)}
           sx={{ cursor: 'pointer', flex: 1 }}
         >
