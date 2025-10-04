@@ -24,8 +24,6 @@ const registerSchema = yup.object().shape({
   location: yup.string().required("required"),
   occupation: yup.string().required("required"),
   picture: yup.string().required("required"),
-  // NEW: Optional social media links
-  // Change from nullable to optional
   twitter: yup.string().url("Must be a valid URL"),
   linkedin: yup.string().url("Must be a valid URL"),
   instagram: yup.string().url("Must be a valid URL"),
@@ -44,6 +42,9 @@ const initialValuesRegister = {
   location: "",
   occupation: "",
   picture: "",
+  twitter: "",
+  linkedin: "",
+  instagram: "",
 };
 
 const initialValuesLogin = {
@@ -61,8 +62,6 @@ const Form = () => {
   const isNonMobile = useMediaQuery("(min-width:600px)");
   const isLogin = pageType === "login";
   const isRegister = pageType === "register";
-
-  // FIXED: Hardcode API URL to avoid environment variable issues
   const API_URL = "https://getsocialnow.onrender.com";
 
   const register = async (values, onSubmitProps) => {
@@ -253,7 +252,7 @@ const Form = () => {
                       name="location"
                       error={Boolean(touched.location) && Boolean(errors.location)}
                       helperText={touched.location && errors.location}
-                      sx={{ gridColumn: "span 4" }}
+                      sx={{ gridColumn: "span 2" }}
                       disabled={isLoading}
                     />
                     <TextField
@@ -268,7 +267,7 @@ const Form = () => {
                       disabled={isLoading}
                     />
                     <Box
-                      gridColumn="span 4"
+                      gridColumn="span 2"
                       border={`1px solid ${palette.neutral.medium}`}
                       borderRadius="5px"
                       p="1rem"
@@ -306,7 +305,6 @@ const Form = () => {
                     </Box>
                   </>
                 )}
-
                 <TextField
                   label="Email"
                   onBlur={handleBlur}
@@ -315,7 +313,7 @@ const Form = () => {
                   name="email"
                   error={Boolean(touched.email) && Boolean(errors.email)}
                   helperText={touched.email && errors.email}
-                  sx={{ gridColumn: "span 4" }}
+                  sx={{ gridColumn: "span 2" }}
                   disabled={isLoading}
                 />
                 <TextField
@@ -327,7 +325,40 @@ const Form = () => {
                   name="password"
                   error={Boolean(touched.password) && Boolean(errors.password)}
                   helperText={touched.password && errors.password}
-                  sx={{ gridColumn: "span 4" }}
+                  sx={{ gridColumn: "span 2" }}
+                  disabled={isLoading}
+                />
+                <TextField
+                  label="twitter"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.twitter}
+                  name="twitter"
+                  error={Boolean(touched.twitter) && Boolean(errors.twitter)}
+                  helperText={touched.twitter && errors.twitter}
+                  sx={{ gridColumn: "span 2" }}
+                  disabled={isLoading}
+                />
+                <TextField
+                  label="linkedin"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.linkedin}
+                  name="linkedin"
+                  error={Boolean(touched.linkedin) && Boolean(errors.linkedin)}
+                  helperText={touched.linkedin && errors.linkedin}
+                  sx={{ gridColumn: "span 2" }}
+                  disabled={isLoading}
+                />
+                <TextField
+                  label="instagram"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.instagram}
+                  name="instagram"
+                  error={Boolean(touched.instagram) && Boolean(errors.instagram)}
+                  helperText={touched.instagram && errors.instagram}
+                  sx={{ gridColumn: "span 2" }}
                   disabled={isLoading}
                 />
               </Box>
@@ -379,9 +410,8 @@ const Form = () => {
             </form>
           )}
         </Formik>
-        
-        {/* Debug info */}
-        {process.env.NODE_ENV === 'development' && (
+
+          {process.env.NODE_ENV === 'development' && (
           <Box sx={{ mt: 2, p: 1, backgroundColor: '#f0f0f0', fontSize: '0.8rem' }}>
             <Typography variant="caption">
               Debug: API_URL = {API_URL}
