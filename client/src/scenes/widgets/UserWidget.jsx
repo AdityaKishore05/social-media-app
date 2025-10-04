@@ -220,11 +220,12 @@ user?.socialLinks?.instagram && (
       {/* SECOND ROW */}
       <FlexBetween p="1rem 0">
         <Box display="flex" alignItems="center" gap="0.25rem">
-          <LocationOnOutlined fontSize="large" sx={{ color: main }} />
+          <LocationOnOutlined fontSize="large" sx={{ color: main }} style={{ width: '24px', height: '24px' }} 
+          />
           <Typography color={medium}>{location || 'Not specified'}</Typography>
         </Box>
         <Box display="flex" alignItems="center" gap="0.25rem">
-          <WorkOutlineOutlined fontSize="large" sx={{ color: main }} />
+          <WorkOutlineOutlined fontSize="large" sx={{ color: main }} style={{ width: '24px', height: '24px' }}/>
           <Typography color={medium}>{occupation || 'Not specified'}</Typography>
         </Box>
       </FlexBetween>
