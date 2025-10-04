@@ -31,10 +31,8 @@ const upload = multer({
 router.get("/:id", verifyToken, getUser);
 router.get("/:id/friends", verifyToken, getUserFriends);
 
-/* UPDATE */
-router.patch("/:id/:friendId", verifyToken, addRemoveFriend);
-
-// Update user profile - define directly in routes
+/* UPDATE - CRITICAL: Put specific routes BEFORE dynamic routes */
+// This must come BEFORE /:id/:friendId
 router.patch(
   "/:id/update",
   verifyToken,
@@ -53,8 +51,6 @@ router.patch(
       } = req.body;
 
       console.log("Updating user:", id);
-      console.log("Request body:", req.body);
-      console.log("Has file:", !!req.file);
 
       // Find the user first
       const user = await User.findById(id);
@@ -116,5 +112,8 @@ router.patch(
     }
   }
 );
+
+// This must come AFTER /:id/update
+router.patch("/:id/:friendId", verifyToken, addRemoveFriend);
 
 export default router;
