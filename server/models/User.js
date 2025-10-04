@@ -1,3 +1,4 @@
+// models/User.js
 import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema(
@@ -37,6 +38,21 @@ const UserSchema = new mongoose.Schema(
     occupation: String,
     viewedProfile: Number,
     impressions: Number,
+    // NEW: Add social media links
+    socialLinks: {
+      twitter: {
+        type: String,
+        default: "",
+      },
+      linkedin: {
+        type: String,
+        default: "",
+      },
+      instagram: {
+        type: String,
+        default: "",
+      },
+    },
   },
   { timestamps: true }
 );

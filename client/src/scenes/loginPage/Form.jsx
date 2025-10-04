@@ -24,6 +24,10 @@ const registerSchema = yup.object().shape({
   location: yup.string().required("required"),
   occupation: yup.string().required("required"),
   picture: yup.string().required("required"),
+  // NEW: Optional social media links
+  twitter: yup.string().url("Must be a valid URL").nullable(),
+  linkedin: yup.string().url("Must be a valid URL").nullable(),
+  instagram: yup.string().url("Must be a valid URL").nullable(),
 });
 
 const loginSchema = yup.object().shape({
@@ -393,4 +397,4 @@ const Form = () => {
   }
 };
 
-export default Form
+export default Form;
