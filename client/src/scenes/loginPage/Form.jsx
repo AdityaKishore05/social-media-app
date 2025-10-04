@@ -24,9 +24,9 @@ const registerSchema = yup.object().shape({
   location: yup.string().required("required"),
   occupation: yup.string().required("required"),
   picture: yup.string().required("required"),
-  twitter: yup.string().url("Must be a valid URL"),
-  linkedin: yup.string().url("Must be a valid URL"),
-  instagram: yup.string().url("Must be a valid URL"),
+  Twitter: yup.string().url("Must be a valid URL").required("required"),
+  LinkedIn: yup.string().url("Must be a valid URL").required("required"),
+  Instagram: yup.string().url("Must be a valid URL").required("required"),
 });
 
 const loginSchema = yup.object().shape({
@@ -42,9 +42,9 @@ const initialValuesRegister = {
   location: "",
   occupation: "",
   picture: "",
-  twitter: "",
-  linkedin: "",
-  instagram: "",
+  Twitter: "",
+  LinkedIn: "",
+  Instagram: "",
 };
 
 const initialValuesLogin = {
@@ -73,7 +73,7 @@ const Form = () => {
       
       const formData = new FormData();
       for (let value in values) {
-      if ((value === 'twitter' || value === 'linkedin' || value === 'instagram') && !values[value]) {
+      if ((value === 'Twitter' || value === 'LinkedIn' || value === 'Instagram') && !values[value]) {
       continue;
       }
       formData.append(value, values[value]);
@@ -263,7 +263,7 @@ const Form = () => {
                       name="occupation"
                       error={Boolean(touched.occupation) && Boolean(errors.occupation)}
                       helperText={touched.occupation && errors.occupation}
-                      sx={{ gridColumn: "span 2" }}
+                      sx={{ gridColumn: "span 4" }}
                       disabled={isLoading}
                     />
                     <Box
@@ -328,36 +328,37 @@ const Form = () => {
                   sx={{ gridColumn: "span 2" }}
                   disabled={isLoading}
                 />
+
                 <TextField
-                  label="twitter"
+                  label="Twitter"
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    value={values.Twitter}
+                    name="Twitter"
+                    error={Boolean(touched.Twitter) && Boolean(errors.Twitter)}
+                    helperText={touched.Twitter && errors.Twitter}
+                    sx={{ gridColumn: "span 2" }}
+                    disabled={isLoading}
+                />
+                <TextField
+                  label="LinkedIn"
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  value={values.twitter}
-                  name="twitter"
-                  error={Boolean(touched.twitter) && Boolean(errors.twitter)}
-                  helperText={touched.twitter && errors.twitter}
+                  value={values.LinkedIn}
+                  name="LinkedIn"
+                  error={Boolean(touched.LinkedIn) && Boolean(errors.LinkedIn)}
+                  helperText={touched.LinkedIn && errors.LinkedIn}
                   sx={{ gridColumn: "span 2" }}
                   disabled={isLoading}
                 />
                 <TextField
-                  label="linkedin"
+                  label="Instagram"
                   onBlur={handleBlur}
                   onChange={handleChange}
-                  value={values.linkedin}
-                  name="linkedin"
-                  error={Boolean(touched.linkedin) && Boolean(errors.linkedin)}
-                  helperText={touched.linkedin && errors.linkedin}
-                  sx={{ gridColumn: "span 2" }}
-                  disabled={isLoading}
-                />
-                <TextField
-                  label="instagram"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  value={values.instagram}
-                  name="instagram"
-                  error={Boolean(touched.instagram) && Boolean(errors.instagram)}
-                  helperText={touched.instagram && errors.instagram}
+                  value={values.Instagram}
+                  name="Instagram"
+                  error={Boolean(touched.Instagram) && Boolean(errors.Instagram)}
+                  helperText={touched.Instagram && errors.Instagram}
                   sx={{ gridColumn: "span 2" }}
                   disabled={isLoading}
                 />
