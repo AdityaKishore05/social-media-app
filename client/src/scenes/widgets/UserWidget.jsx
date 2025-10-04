@@ -202,7 +202,6 @@ user?.socialLinks?.instagram && (
           </Box>
         </Box>
         
-        {/* Only show edit button for own profile */}
         {isOwnProfile && (
           <ManageAccountsOutlined 
             onClick={() => setIsEditModalOpen(true)}
@@ -220,11 +219,11 @@ user?.socialLinks?.instagram && (
 
       {/* SECOND ROW */}
       <FlexBetween p="1rem 0">
-        <Box display="flex" alignItems="center" gap="0.75rem">
+        <Box display="flex" alignItems="center" gap="0.25rem">
           <LocationOnOutlined fontSize="large" sx={{ color: main }} />
           <Typography color={medium}>{location || 'Not specified'}</Typography>
         </Box>
-        <Box display="flex" alignItems="center" gap="0.75rem">
+        <Box display="flex" alignItems="center" gap="0.25rem">
           <WorkOutlineOutlined fontSize="large" sx={{ color: main }} />
           <Typography color={medium}>{occupation || 'Not specified'}</Typography>
         </Box>
@@ -240,7 +239,7 @@ user?.socialLinks?.instagram && (
 
         {/* Twitter */}
         {user?.socialLinks?.twitter && (
-          <FlexBetween gap="1rem">
+          <FlexBetween gap="1rem" mb="0.5rem">
             <FlexBetween gap="1rem">
               <img src="../assets/twitter.png" alt="twitter" style={{ width: '24px', height: '24px' }} />
                 <Typography color={main} fontWeight="500">
@@ -260,7 +259,7 @@ user?.socialLinks?.instagram && (
 
         {/* LinkedIn */}
         {user?.socialLinks?.linkedin && (
-          <FlexBetween gap="1rem">
+          <FlexBetween gap="1rem" mb="0.5rem">
             <FlexBetween gap="1rem">
               <img src="../assets/linkedin.png" alt="linkedin" style={{ width: '24px', height: '24px' }} />
                 <Typography color={main} fontWeight="500">
@@ -280,7 +279,7 @@ user?.socialLinks?.instagram && (
 
         {/* Instagram */}
         {user?.socialLinks?.instagram && (
-          <FlexBetween gap="1rem">
+          <FlexBetween gap="1rem" mb="0.5rem">
             <FlexBetween gap="1rem">
               <img src="../assets/instagram.png" alt="instagram" style={{ width: '24px', height: '24px' }} />
                 <Typography color={main} fontWeight="500">

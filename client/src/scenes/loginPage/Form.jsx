@@ -177,7 +177,6 @@ const Form = () => {
   try {
     return (
       <Box>
-        {/* Display error messages */}
         {error && (
           <Box 
             sx={{ 
