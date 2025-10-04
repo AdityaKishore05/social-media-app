@@ -25,6 +25,83 @@ const UserWidget = ({ userId, picturePath }) => {
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
 
+// Helper function to format social media URLs
+const formatSocialUrl = (url) => {
+  if (!url) return null;
+  
+  // If URL already has http:// or https://, return as is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // Otherwise, add https://
+  return `https://${url}`;
+};
+
+// Then in your JSX, use this function:
+{user?.socialLinks?.twitter && (
+  <FlexBetween gap="1rem" mb="0.5rem">
+    <FlexBetween gap="1rem">
+      <img src="../assets/twitter.png" alt="twitter" style={{ width: '24px', height: '24px' }} />
+      <Box>
+        <Typography color={main} fontWeight="500">Twitter</Typography>
+        <Typography color={medium} fontSize="0.75rem">Social Network</Typography>
+      </Box>
+    </FlexBetween>
+    <a 
+      href={formatSocialUrl(user.socialLinks.twitter)}
+      target="_blank" 
+      rel="noopener noreferrer"
+      style={{ textDecoration: 'none' }}
+    >
+      <EditOutlined sx={{ color: main, cursor: 'pointer' }} />
+    </a>
+  </FlexBetween>
+)}
+
+{/* Same for LinkedIn */}
+{user?.socialLinks?.linkedin && (
+  <FlexBetween gap="1rem" mb="0.5rem">
+    <FlexBetween gap="1rem">
+      <img src="../assets/linkedin.png" alt="linkedin" style={{ width: '24px', height: '24px' }} />
+      <Box>
+        <Typography color={main} fontWeight="500">LinkedIn</Typography>
+        <Typography color={medium} fontSize="0.75rem">Network Platform</Typography>
+      </Box>
+    </FlexBetween>
+    <a 
+      href={formatSocialUrl(user.socialLinks.linkedin)}
+      target="_blank" 
+      rel="noopener noreferrer"
+      style={{ textDecoration: 'none' }}
+    >
+      <EditOutlined sx={{ color: main, cursor: 'pointer' }} />
+    </a>
+  </FlexBetween>
+)}
+
+{/* Same for Instagram */}
+{user?.socialLinks?.instagram && (
+  <FlexBetween gap="1rem">
+    <FlexBetween gap="1rem">
+      <img src="../assets/instagram.png" alt="instagram" style={{ width: '24px', height: '24px' }} />
+      <Box>
+        <Typography color={main} fontWeight="500">Instagram</Typography>
+        <Typography color={medium} fontSize="0.75rem">Photo Sharing</Typography>
+      </Box>
+    </FlexBetween>
+    <a 
+      href={formatSocialUrl(user.socialLinks.instagram)}
+      target="_blank" 
+      rel="noopener noreferrer"
+      style={{ textDecoration: 'none' }}
+    >
+      <EditOutlined sx={{ color: main, cursor: 'pointer' }} />
+    </a>
+  </FlexBetween>
+  )
+  }
+  
   const getUser = useCallback(async () => {
     if (!userId || !token) return;
     
