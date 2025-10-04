@@ -1,6 +1,5 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import Friend from "components/Friend";
-import WidgetWrapper from "components/WidgetWrapper";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setFriends } from "state";
@@ -28,7 +27,7 @@ const FriendListWidget = ({ userId }) => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <WidgetWrapper>
+    <Box>
       <Typography
         color={palette.neutral.dark}
         variant="h5"
@@ -48,7 +47,7 @@ const FriendListWidget = ({ userId }) => {
           />
         ))}
       </Box>
-    </WidgetWrapper>
+    </Box>
   );
 };
 
