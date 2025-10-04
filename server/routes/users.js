@@ -33,6 +33,7 @@ router.get("/:id/friends", verifyToken, getUserFriends);
 /* UPDATE */
 router.patch("/:id/:friendId", verifyToken, addRemoveFriend);
 router.patch("/:id/update", verifyToken, upload.single("picture"), updateUser);
+router.patch(
   "/:id/update",
   verifyToken,
   upload.single("picture"),
