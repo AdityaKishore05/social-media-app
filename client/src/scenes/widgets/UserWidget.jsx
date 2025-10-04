@@ -156,8 +156,6 @@ user?.socialLinks?.instagram && (
     lastName,
     location,
     occupation,
-    viewedProfile,
-    impressions,
     friends,
   } = user;
 
