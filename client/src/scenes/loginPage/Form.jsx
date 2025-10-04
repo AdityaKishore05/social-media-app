@@ -263,7 +263,7 @@ const Form = () => {
                       name="occupation"
                       error={Boolean(touched.occupation) && Boolean(errors.occupation)}
                       helperText={touched.occupation && errors.occupation}
-                      sx={{ gridColumn: "span 4" }}
+                      sx={{ gridColumn: "span 2" }}
                       disabled={isLoading}
                     />
                     <Box
