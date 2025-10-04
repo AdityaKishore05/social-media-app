@@ -39,7 +39,7 @@ const formatSocialUrl = (url) => {
 };
 
 // Then in your JSX, use this function:
-{user?.socialLinks?.twitter && (
+user?.socialLinks?.twitter && (
   <FlexBetween gap="1rem" mb="0.5rem">
     <FlexBetween gap="1rem">
       <img src="../assets/twitter.png" alt="twitter" style={{ width: '24px', height: '24px' }} />
@@ -58,9 +58,8 @@ const formatSocialUrl = (url) => {
     </a>
   </FlexBetween>
   )
-  }
 
-{user?.socialLinks?.linkedin && (
+user?.socialLinks?.linkedin && (
   <FlexBetween gap="1rem" mb="0.5rem">
     <FlexBetween gap="1rem">
       <img src="../assets/linkedin.png" alt="linkedin" style={{ width: '24px', height: '24px' }} />
@@ -79,9 +78,9 @@ const formatSocialUrl = (url) => {
     </a>
   </FlexBetween>
   )
-  }
 
-{user?.socialLinks?.instagram && (
+
+user?.socialLinks?.instagram && (
   <FlexBetween gap="1rem">
     <FlexBetween gap="1rem">
       <img src="../assets/instagram.png" alt="instagram" style={{ width: '24px', height: '24px' }} />
@@ -100,7 +99,7 @@ const formatSocialUrl = (url) => {
     </a>
   </FlexBetween>
   )
-  }
+  
   
   const getUser = useCallback(async () => {
     if (!userId || !token) return;
