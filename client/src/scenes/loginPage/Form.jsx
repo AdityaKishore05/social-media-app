@@ -42,9 +42,6 @@ const initialValuesRegister = {
   location: "",
   occupation: "",
   picture: "",
-  Twitter: "",
-  LinkedIn: "",
-  Instagram: "",
 };
 
 const initialValuesLogin = {
@@ -267,7 +264,7 @@ const Form = () => {
                       disabled={isLoading}
                     />
                     <Box
-                      gridColumn="span 2"
+                      gridColumn="span 4"
                       border={`1px solid ${palette.neutral.medium}`}
                       borderRadius="5px"
                       p="1rem"
