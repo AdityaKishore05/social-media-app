@@ -24,9 +24,9 @@ const registerSchema = yup.object().shape({
   location: yup.string().required("required"),
   occupation: yup.string().required("required"),
   picture: yup.string().required("required"),
-  Twitter: yup.string().url("Must be a valid URL").required("required"),
-  LinkedIn: yup.string().url("Must be a valid URL").required("required"),
-  Instagram: yup.string().url("Must be a valid URL").required("required"),
+  Twitter: yup.string().url("Must be a valid URL"),
+  LinkedIn: yup.string().url("Must be a valid URL"),
+  Instagram: yup.string().url("Must be a valid URL"),
 });
 
 const loginSchema = yup.object().shape({
@@ -42,6 +42,9 @@ const initialValuesRegister = {
   location: "",
   occupation: "",
   picture: "",
+  Twitter: "",
+  LinkedIn: "",
+  Instagram: "",
 };
 
 const initialValuesLogin = {
@@ -299,6 +302,39 @@ const Form = () => {
                         )}
                       </Dropzone>
                     </Box>
+                    <TextField
+                    label="Twitter"
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    value={values.Twitter}
+                    name="Twitter"
+                    error={Boolean(touched.Twitter) && Boolean(errors.Twitter)}
+                    helperText={touched.Twitter && errors.Twitter}
+                    sx={{ gridColumn: "span 2" }}
+                    disabled={isLoading}
+                  />
+                  <TextField
+                    label="LinkedIn"
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    value={values.LinkedIn}
+                    name="LinkedIn"
+                    error={Boolean(touched.LinkedIn) && Boolean(errors.LinkedIn)}
+                    helperText={touched.LinkedIn && errors.LinkedIn}
+                    sx={{ gridColumn: "span 2" }}
+                    disabled={isLoading}
+                  />
+                  <TextField
+                    label="Instagram"
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    value={values.Instagram}
+                    name="Instagram"
+                    error={Boolean(touched.Instagram) && Boolean(errors.Instagram)}
+                    helperText={touched.Instagram && errors.Instagram}
+                    sx={{ gridColumn: "span 2" }}
+                    disabled={isLoading}
+                  />
                   </>
                 )}
                 <TextField
@@ -325,39 +361,7 @@ const Form = () => {
                   disabled={isLoading}
                 />
 
-                <TextField
-                  label="Twitter"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    value={values.Twitter}
-                    name="Twitter"
-                    error={Boolean(touched.Twitter) && Boolean(errors.Twitter)}
-                    helperText={touched.Twitter && errors.Twitter}
-                    sx={{ gridColumn: "span 2" }}
-                    disabled={isLoading}
-                />
-                <TextField
-                  label="LinkedIn"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  value={values.LinkedIn}
-                  name="LinkedIn"
-                  error={Boolean(touched.LinkedIn) && Boolean(errors.LinkedIn)}
-                  helperText={touched.LinkedIn && errors.LinkedIn}
-                  sx={{ gridColumn: "span 2" }}
-                  disabled={isLoading}
-                />
-                <TextField
-                  label="Instagram"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  value={values.Instagram}
-                  name="Instagram"
-                  error={Boolean(touched.Instagram) && Boolean(errors.Instagram)}
-                  helperText={touched.Instagram && errors.Instagram}
-                  sx={{ gridColumn: "span 2" }}
-                  disabled={isLoading}
-                />
+                
               </Box>
 
               {/* BUTTONS */}
