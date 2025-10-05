@@ -40,15 +40,15 @@ const UserSchema = new mongoose.Schema(
     impressions: Number,
     // NEW: Add social media links
     socialLinks: {
-      twitter: {
+      Twitter: {
         type: String,
         default: "",
       },
-      linkedin: {
+      LinkedIn: {
         type: String,
         default: "",
       },
-      instagram: {
+      Instagram: {
         type: String,
         default: "",
       },

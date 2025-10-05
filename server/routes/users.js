@@ -45,9 +45,9 @@ router.patch(
         lastName,
         location,
         occupation,
-        twitter,
-        linkedin,
-        instagram,
+        Twitter,
+        LinkedIn,
+        Instagram,
       } = req.body;
 
       console.log("Updating user:", id);
@@ -65,9 +65,9 @@ router.patch(
         location: location || user.location,
         occupation: occupation || user.occupation,
         socialLinks: {
-          twitter: twitter || "",
-          linkedin: linkedin || "",
-          instagram: instagram || "",
+          Twitter: Twitter || "",
+          LinkedIn: LinkedIn || "",
+          Instagram: Instagram || "",
         },
       };
 

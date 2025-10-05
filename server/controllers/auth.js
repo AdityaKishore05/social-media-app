@@ -14,9 +14,9 @@ export const register = async (req, res) => {
       password,
       location,
       occupation,
-      twitter,
-      linkedin,
-      instagram,
+      Twitter,
+      LinkedIn,
+      Instagram,
     } = req.body;
 
     // Handle picture upload to Cloudinary
@@ -47,9 +47,9 @@ export const register = async (req, res) => {
       viewedProfile: Math.floor(Math.random() * 10000),
       impressions: Math.floor(Math.random() * 10000),
       socialLinks: {
-        twitter: twitter || "",
-        linkedin: linkedin || "",
-        instagram: instagram || "",
+        Twitter: Twitter || "",
+        LinkedIn: LinkedIn || "",
+        Instagram: Instagram || "",
       },
     });
 

@@ -24,18 +24,9 @@ const registerSchema = yup.object().shape({
   location: yup.string().required("required"),
   occupation: yup.string().required("required"),
   picture: yup.string().required("required"),
-  Twitter: yup.string().when('Twitter', {
-    is: (value) => value?.length,
-    then: (schema) => schema.url("Must be a valid URL"),
-  }),
-  LinkedIn: yup.string().when('LinkedIn', {
-    is: (value) => value?.length,
-    then: (schema) => schema.url("Must be a valid URL"),
-  }),
-  Instagram: yup.string().when('Instagram', {
-    is: (value) => value?.length,
-    then: (schema) => schema.url("Must be a valid URL"),
-  }),
+  Twitter: yup.string().url("Must be a valid URL"),
+  LinkedIn: yup.string().url("Must be a valid URL"),
+  Instagram: yup.string().url("Must be a valid URL"),
 });
 
 const loginSchema = yup.object().shape({
