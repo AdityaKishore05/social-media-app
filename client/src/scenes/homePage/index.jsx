@@ -15,8 +15,10 @@ const HomePage = () => {
       <Navbar />
       <Box
         width="100%"
-        padding="2rem"
         display={isNonMobileScreens ? "flex" : "block"}
+        padding={isNonMobileScreens ? "1rem" : "0.75rem "}
+        paddingX={isNonMobileScreens ? "2rem" : "0.75rem "}
+
         gap="0.5rem"
         justifyContent="space-between"
       >
@@ -24,15 +26,14 @@ const HomePage = () => {
           <UserWidget userId={_id} picturePath={picturePath} />
         </Box>
         <Box
-          flexBasis={isNonMobileScreens ? "42%" : undefined}
-          mt={isNonMobileScreens ? undefined : "2rem"}
+          flexBasis={isNonMobileScreens ? "44%" : undefined}
+          mt={isNonMobileScreens ? undefined : "1rem"}
         >
           <MyPostWidget picturePath={picturePath} />
           <PostsWidget userId={_id} />
         </Box>
         {isNonMobileScreens && (
-          <Box flexBasis="26%" mt="-32px">
-            <Box m="2rem 0" />
+          <Box flexBasis="26%">
             <FriendListWidget userId={_id} />
           </Box>
         )}

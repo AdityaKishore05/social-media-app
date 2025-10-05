@@ -163,7 +163,7 @@ const PostWidget = ({
   const videoUrl = getMediaUrl(videoPath);
 
   return (
-    <WidgetWrapper m="2rem 0">
+    <WidgetWrapper m="1rem 0">
       <Friend
         friendId={postUserId}
         name={name}
@@ -180,7 +180,7 @@ const PostWidget = ({
         <Box
           sx={{
             width: "100%",
-            paddingTop: "100%",
+            paddingTop: "80%",
             position: "relative",
             backgroundColor: "black",
             borderRadius: "0.75rem",
