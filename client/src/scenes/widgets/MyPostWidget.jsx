@@ -103,32 +103,19 @@ const MyPostWidget = ({ picturePath }) => {
   };
 
   // FIXED: Better file validation and handling
-  const handleDrop = (acceptedFiles, rejectedFiles) => {
-    if (rejectedFiles.length > 0) {
-      console.error('Rejected files:', rejectedFiles);
-      alert('File type not supported. Please select a valid image or video file.');
+const handleDrop = (acceptedFiles, type) => {
+  const file = acceptedFiles[0];
+  if (file) {
+    // Check file size (100MB = 100 * 1024 * 1024 bytes)
+    if (file.size > 100 * 1024 * 1024) {
+      alert('File is too large. Maximum size is 100MB.');
       return;
     }
-
-    const file = acceptedFiles[0];
-    if (file) {
-      // Validate file size (50MB limit to match backend)
-      const maxSize = 50 * 1024 * 1024; // 50MB
-      if (file.size > maxSize) {
-        alert('File is too large. Maximum size is 50MB.');
-        return;
-      }
-
-      console.log('File selected:', {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        mediaType: mediaType
-      });
-      
-      setMediaFile(file);
-    }
-  };
+    console.log('File selected:', file.name, 'Type:', type, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+    setMediaFile(file);
+    setMediaType(type);
+  }
+};
 
   return (
     <WidgetWrapper>
@@ -156,20 +143,13 @@ const MyPostWidget = ({ picturePath }) => {
           mt="1rem"
           p="1rem"
         >
-          <Dropzone
-            accept={
-              mediaType === 'image' 
-                ? {
-                    'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp']
-                  }
-                : {
-                    'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.webm']
-                  }
-            }
-            multiple={false}
-            maxSize={50 * 1024 * 1024} // 50MB
-            onDrop={handleDrop}
-          >
+         <Dropzone
+          acceptedFiles={mediaType === 'image' 
+            ? ".jpg,.jpeg,.png,.gif,.webp" 
+            : ".mp4,.mov,.avi,.mkv,.webm,.flv,.wmv"}
+          multiple={false}
+          onDrop={(acceptedFiles) => handleDrop(acceptedFiles, mediaType)}
+>
             {({ getRootProps, getInputProps, isDragActive }) => (
               <FlexBetween>
                 <Box
