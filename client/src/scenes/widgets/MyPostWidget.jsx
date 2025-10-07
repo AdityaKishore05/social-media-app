@@ -106,9 +106,9 @@ const MyPostWidget = ({ picturePath }) => {
 const handleDrop = (acceptedFiles, type) => {
   const file = acceptedFiles[0];
   if (file) {
-    // Check file size (100MB = 100 * 1024 * 1024 bytes)
-    if (file.size > 100 * 1024 * 1024) {
-      alert('File is too large. Maximum size is 100MB.');
+    // Check file size (50MB = 100 * 1024 * 1024 bytes)
+    if (file.size > 500 * 1024 * 1024) {
+      alert('File is too large. Maximum size is 500MB.');
       return;
     }
     console.log('File selected:', file.name, 'Type:', type, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
