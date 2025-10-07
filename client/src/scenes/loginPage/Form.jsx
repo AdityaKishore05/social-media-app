@@ -73,7 +73,7 @@ const Form = () => {
       
       const formData = new FormData();
       for (let value in values) {
-      if ((value === 'Twitter' || value === 'LinkedIn' || value === 'Instagram') && !values[value]) {
+      if (!values[value]) {
       continue;
       }
       formData.append(value, values[value]);
@@ -302,39 +302,6 @@ const Form = () => {
                         )}
                       </Dropzone>
                     </Box>
-                    <TextField
-                    label="Twitter"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    value={values.Twitter}
-                    name="Twitter"
-                    error={Boolean(touched.Twitter) && Boolean(errors.Twitter)}
-                    helperText={touched.Twitter && errors.Twitter}
-                    sx={{ gridColumn: "span 2" }}
-                    disabled={isLoading}
-                  />
-                  <TextField
-                    label="LinkedIn"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    value={values.LinkedIn}
-                    name="LinkedIn"
-                    error={Boolean(touched.LinkedIn) && Boolean(errors.LinkedIn)}
-                    helperText={touched.LinkedIn && errors.LinkedIn}
-                    sx={{ gridColumn: "span 2" }}
-                    disabled={isLoading}
-                  />
-                  <TextField
-                    label="Instagram"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    value={values.Instagram}
-                    name="Instagram"
-                    error={Boolean(touched.Instagram) && Boolean(errors.Instagram)}
-                    helperText={touched.Instagram && errors.Instagram}
-                    sx={{ gridColumn: "span 2" }}
-                    disabled={isLoading}
-                  />
                   </>
                 )}
                 <TextField

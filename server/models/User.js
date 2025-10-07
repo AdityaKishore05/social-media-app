@@ -38,21 +38,7 @@ const UserSchema = new mongoose.Schema(
     occupation: String,
     viewedProfile: Number,
     impressions: Number,
-    // NEW: Add social media links
-    socialLinks: {
-      Twitter: {
-        type: String,
-        default: "",
-      },
-      LinkedIn: {
-        type: String,
-        default: "",
-      },
-      Instagram: {
-        type: String,
-        default: "",
-      },
-    },
+
   },
   { timestamps: true }
 );

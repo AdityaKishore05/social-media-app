@@ -34,73 +34,80 @@ const MyPostWidget = ({ picturePath }) => {
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
 
-  const handlePost = async () => {
-    if (isPosting) return;
-    if (!post.trim() && !mediaFile) {
-      alert("Please add a description or select an image/video to post.");
-      return;
-    }
+const handlePost = async () => {
+  if (isPosting) return;
+  if (!post.trim() && !mediaFile) {
+    alert("Please add a description or select an image/video to post.");
+    return;
+  }
+  
+  setIsPosting(true);
+  
+  try {
+    let mediaUrl = null;
     
-    setIsPosting(true);
-    
-    try {
+    // Upload directly to Cloudinary if media exists
+    if (mediaFile) {
       const formData = new FormData();
-      formData.append("userId", _id);
-      formData.append("description", post.trim());
+      formData.append('file', mediaFile);
+      formData.append('upload_preset', 'your_unsigned_preset'); // You need to create this
       
-      if (mediaFile) {
-        // FIXED: Use 'media' as field name to match backend multer config
-        formData.append("media", mediaFile);
-        formData.append("mediaType", mediaType);
-        
-        // Debug: Log file details
-        console.log('Uploading file:', {
-          name: mediaFile.name,
-          type: mediaFile.type,
-          size: mediaFile.size,
-          mediaType: mediaType
-        });
+      // Upload directly to Cloudinary
+      const cloudinaryResponse = await fetch(
+        `https://api.cloudinary.com/v1_1/dfcyqjptk/${mediaType === 'video' ? 'video' : 'image'}/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+      
+      if (!cloudinaryResponse.ok) {
+        throw new Error('Failed to upload media');
       }
-
-      // FIXED: Remove Content-Type header - let browser set it automatically for FormData
-      const response = await fetch(`https://getsocialnow.onrender.com/posts`, {
-        method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          // Removed Content-Type - browser will set multipart/form-data automatically
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server response:', response.status, errorText);
-        throw new Error(`Failed to create post: ${response.status} - ${errorText}`);
-      }
-
-      const posts = await response.json();
-      console.log('Post created successfully, received posts:', posts.length);
-      dispatch(setPosts({ posts }));
       
-      // Reset form
-      setMediaFile(null);
-      setMediaType(null);
-      setPost("");
-      setIsMediaUpload(false);
-      
-      // Show success message
-      alert("Post created successfully!");
-      
-    } catch (error) {
-      console.error('Error creating post:', error);
-      alert(`Failed to create post: ${error.message}`);
-    } finally {
-      setIsPosting(false);
+      const cloudinaryData = await cloudinaryResponse.json();
+      mediaUrl = cloudinaryData.secure_url;
+      console.log('Media uploaded directly to Cloudinary:', mediaUrl);
     }
-  };
+
+    // Now send post data with media URL to your backend
+    const response = await fetch(`https://getsocialnow.onrender.com/posts`, {
+      method: "POST",
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
+      body: JSON.stringify({
+        userId: _id,
+        description: post,
+        mediaType: mediaType,
+        mediaUrl: mediaUrl, // Send the Cloudinary URL
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create post: ${response.status}`);
+    }
+
+    const posts = await response.json();
+    dispatch(setPosts({ posts }));
+    
+    // Reset form
+    setMediaFile(null);
+    setMediaType(null);
+    setPost("");
+    setIsMediaUpload(false);
+    
+  } catch (error) {
+    console.error('Error creating post:', error);
+    alert(`Failed to create post: ${error.message}`);
+  } finally {
+    setIsPosting(false);
+  }
+};
 
   // FIXED: Better file validation and handling
 const handleDrop = (acceptedFiles, type) => {

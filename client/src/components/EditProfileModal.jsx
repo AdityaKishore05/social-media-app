@@ -24,9 +24,6 @@ const EditProfileModal = ({ open, onClose, user }) => {
     lastName: user?.lastName || "",
     location: user?.location || "",
     occupation: user?.occupation || "",
-    twitter: user?.socialLinks?.twitter || "",
-    linkedin: user?.socialLinks?.linkedin || "",
-    instagram: user?.socialLinks?.instagram || "",
   });
   const [picture, setPicture] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -196,41 +193,6 @@ const EditProfileModal = ({ open, onClose, user }) => {
             label="Occupation"
             name="occupation"
             value={formData.occupation}
-            onChange={handleChange}
-            disabled={isLoading}
-            fullWidth
-          />
-
-          {/* Social Media Links */}
-          <Typography variant="subtitle1" fontWeight="600" mt={1}>
-            Social Media Links
-          </Typography>
-
-          <TextField
-            label="Twitter URL"
-            name="twitter"
-            placeholder="https://twitter.com/yourprofile"
-            value={formData.twitter}
-            onChange={handleChange}
-            disabled={isLoading}
-            fullWidth
-          />
-
-          <TextField
-            label="LinkedIn URL"
-            name="linkedin"
-            placeholder="https://linkedin.com/in/yourprofile"
-            value={formData.linkedin}
-            onChange={handleChange}
-            disabled={isLoading}
-            fullWidth
-          />
-
-          <TextField
-            label="Instagram URL"
-            name="instagram"
-            placeholder="https://instagram.com/yourprofile"
-            value={formData.instagram}
             onChange={handleChange}
             disabled={isLoading}
             fullWidth

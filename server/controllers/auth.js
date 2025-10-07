@@ -14,9 +14,6 @@ export const register = async (req, res) => {
       password,
       location,
       occupation,
-      Twitter,
-      LinkedIn,
-      Instagram,
     } = req.body;
 
     // Handle picture upload to Cloudinary
@@ -44,13 +41,6 @@ export const register = async (req, res) => {
       friends: [],
       location,
       occupation,
-      viewedProfile: Math.floor(Math.random() * 10000),
-      impressions: Math.floor(Math.random() * 10000),
-      socialLinks: {
-        Twitter: Twitter || "",
-        LinkedIn: LinkedIn || "",
-        Instagram: Instagram || "",
-      },
     });
 
     const savedUser = await newUser.save();

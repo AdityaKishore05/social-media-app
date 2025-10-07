@@ -6,55 +6,18 @@ import { v2 as cloudinary } from "cloudinary";
 /* CREATE */
 export const createPost = async (req, res) => {
   try {
-    const { userId, description, mediaType } = req.body;
-    let mediaPath = null;
-    let uploadResult = null; // FIXED: Declare at the top level
+    const { userId, description, mediaType, mediaUrl } = req.body; // Receive URL instead of file
 
-    console.log("Creating post:", { userId, hasFile: !!req.file, mediaType });
+    console.log("Creating post with direct upload URL:", {
+      userId,
+      mediaType,
+      mediaUrl,
+    });
 
-    // Handle file upload
-    if (req.file) {
-      try {
-        console.log("Starting Cloudinary upload...");
-
-        // Check if Cloudinary is configured
-        if (!process.env.CLOUDINARY_API_KEY) {
-          throw new Error("Cloudinary API key not configured");
-        }
-
-        const fileStr = `data:${
-          req.file.mimetype
-        };base64,${req.file.buffer.toString("base64")}`;
-
-        // Upload to Cloudinary
-        uploadResult = await cloudinary.uploader.upload(fileStr, {
-          resource_type: mediaType === "video" ? "video" : "image",
-          folder: "social-media-app",
-        });
-
-        mediaPath = uploadResult.secure_url;
-        console.log("Cloudinary upload successful:", mediaPath);
-      } catch (uploadError) {
-        console.error("Cloudinary upload error:", uploadError);
-        return res.status(500).json({
-          message: "Failed to upload media to cloud storage",
-          error: uploadError.message,
-        });
-      }
-    }
-
-    // Validation
-    if (!description?.trim() && !mediaPath) {
-      return res.status(400).json({
-        message: "Post must include a description or media.",
-      });
-    }
-
+    // No file processing needed - just use the URL
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({
-        message: "User not found.",
-      });
+      return res.status(404).json({ message: "User not found." });
     }
 
     const newPost = new Post({
@@ -64,28 +27,13 @@ export const createPost = async (req, res) => {
       location: user.location,
       description: description?.trim() || "",
       userPicturePath: user.picturePath,
+      picturePath: mediaType === "image" ? mediaUrl : "",
+      videoPath: mediaType === "video" ? mediaUrl : "",
       likes: {},
       comments: [],
     });
 
-    // Set media path based on type
-    if (mediaPath) {
-      if (mediaType === "image") {
-        newPost.picturePath = mediaPath;
-      } else if (mediaType === "video") {
-        newPost.videoPath = mediaPath;
-      }
-    }
-
     await newPost.save();
-    console.log("Post created successfully:", newPost._id);
-
-    // Add no-cache headers
-    res.set({
-      "Cache-Control": "no-store, no-cache, must-revalidate, private",
-      Pragma: "no-cache",
-      Expires: "0",
-    });
 
     // Return all posts
     const allPosts = await Post.find().sort({ createdAt: -1 });
