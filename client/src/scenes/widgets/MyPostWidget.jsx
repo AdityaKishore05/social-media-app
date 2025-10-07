@@ -107,8 +107,8 @@ const handleDrop = (acceptedFiles, type) => {
   const file = acceptedFiles[0];
   if (file) {
     // Check file size (50MB = 100 * 1024 * 1024 bytes)
-    if (file.size > 500 * 1024 * 1024) {
-      alert('File is too large. Maximum size is 500MB.');
+    if (file.size > 50 * 1024 * 1024) {
+      alert('File is too large. Maximum size is 50MB.');
       return;
     }
     console.log('File selected:', file.name, 'Type:', type, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
