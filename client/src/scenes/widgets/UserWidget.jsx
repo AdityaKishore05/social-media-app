@@ -1,10 +1,8 @@
 import {
   ManageAccountsOutlined,
-  EditOutlined,
   LocationOnOutlined,
   WorkOutlineOutlined,
 } from "@mui/icons-material";
-import LaunchIcon from '@mui/icons-material/Launch';
 import { Box, Typography, Divider, useTheme } from "@mui/material";
 import UserImage from "components/UserImage";
 import FlexBetween from "components/FlexBetween";
@@ -25,19 +23,6 @@ const UserWidget = ({ userId, picturePath }) => {
   const dark = palette.neutral.dark;
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
-
-// Helper function to format social media URLs
-const formatSocialUrl = (url) => {
-  if (!url) return null;
-  
-  // If URL already has http:// or https://, return as is
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  
-  // Otherwise, add https://
-  return `https://${url}`;
-};
   
   const getUser = useCallback(async () => {
     if (!userId || !token) return;
