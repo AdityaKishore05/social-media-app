@@ -89,7 +89,6 @@ const UserWidget = ({ userId, picturePath }) => {
   location,
   occupation,
   friends,
-  following,
   bio,
 } = user;
 
