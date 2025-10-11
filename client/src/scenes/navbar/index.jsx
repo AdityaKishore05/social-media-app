@@ -27,7 +27,6 @@ const Navbar = () => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
-
   const theme = useTheme();
   const neutralLight = theme.palette.neutral.light;
   const dark = theme.palette.neutral.dark;
@@ -38,7 +37,11 @@ const Navbar = () => {
   const fullName = `${user.firstName} ${user.lastName}`;
 
   return (
-    <FlexBetween padding="1rem 6%" backgroundColor={alt}>
+    <FlexBetween width="100%"
+        backdropFilter="blur(12px)"
+        boxShadow="10px 0px 10px 0 rgba(0, 0, 0, 0.5)"
+        borderBottom="1px solid rgba(255, 255, 255, 0.15)"
+        p="1rem 6%">
       <FlexBetween gap="1.75rem">
         <Typography
           fontWeight="bold"
@@ -52,13 +55,13 @@ const Navbar = () => {
             },
           }}
         >
-          Sociopedia
+          GSN
         </Typography>
       </FlexBetween>
 
       {/* DESKTOP NAV */}
       {isNonMobileScreens ? (
-        <FlexBetween gap="2rem">
+        <FlexBetween gap="1rem">
           <IconButton onClick={() => dispatch(setMode())}>
             {theme.palette.mode === "dark" ? (
               <DarkMode sx={{ fontSize: "25px" }} />
@@ -71,7 +74,6 @@ const Navbar = () => {
               value={fullName}
               sx={{
                 backgroundColor: neutralLight,
-                width: "200px",
                 borderRadius: "0.25rem",
                 p: "0.25rem 1rem",
                 "& .MuiSvgIcon-root": {

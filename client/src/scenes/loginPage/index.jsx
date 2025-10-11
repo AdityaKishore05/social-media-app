@@ -1,10 +1,21 @@
 import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
 import Form from "./Form";
 import { useEffect } from "react";
+import FlexBetween from "components/FlexBetween";
+import { useDispatch } from "react-redux";
+import{IconButton} from "@mui/material";
+import { setMode } from "state";
+import {
+  DarkMode,
+  LightMode,
+} from "@mui/icons-material";
+import WidgetWrapper from "components/WidgetWrapper";
 
 const LoginPage = () => {
   const theme = useTheme();
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
+  const dispatch = useDispatch();
+  const dark = theme.palette.neutral.dark;
   
   // ADDED: Wake up Render server on page load
   useEffect(() => {
@@ -23,29 +34,37 @@ const LoginPage = () => {
 
   return (
     <Box>
-      <Box
+      <FlexBetween
         width="100%"
-        backgroundColor={theme.palette.background.alt}
+        backdropFilter="blur(12px)"
+        boxShadow="10px 0px 10px 0 rgba(0, 0, 0, 0.5)"
+        borderBottom="1px solid rgba(255, 255, 255, 0.15)"
         p="1rem 6%"
-        textAlign="center"
       >
         <Typography fontWeight="bold" fontSize="32px" color="primary">
-          Sociopedia
+          GSN
         </Typography>
-      </Box>
+        <Typography fontWeight="bold" fontSize="32px" color="primary">
+          <IconButton onClick={() => dispatch(setMode())}>
+            {theme.palette.mode === "dark" ? (
+              <DarkMode sx={{ fontSize: "25px" }} />
+            ) : (
+              <LightMode sx={{ color: dark, fontSize: "25px" }} />
+            )}
+          </IconButton>
+        </Typography>
+      </FlexBetween>
 
-      <Box
+      <WidgetWrapper
         width={isNonMobileScreens ? "50%" : "93%"}
         p="2rem"
         m="2rem auto"
-        borderRadius="1.5rem"
-        backgroundColor={theme.palette.background.alt}
       >
         <Typography fontWeight="500" variant="h5" sx={{ mb: "1.5rem" }}>
-          Welcome to Socipedia, the Social Media for Sociopaths!
+          Welcome to GSN, the social media platform for Gen Z's!
         </Typography>
         <Form />
-      </Box>
+      </WidgetWrapper>
     </Box>
   );
 };

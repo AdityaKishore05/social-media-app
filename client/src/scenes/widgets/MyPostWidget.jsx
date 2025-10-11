@@ -20,16 +20,19 @@ import WidgetWrapper from "components/WidgetWrapper";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
+import { useNavigate } from "react-router-dom";
 
 const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isMediaUpload, setIsMediaUpload] = useState(false);
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaType, setMediaType] = useState(null);
   const [post, setPost] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const { palette } = useTheme();
-  const { _id } = useSelector((state) => state.user);
+  const user = useSelector((state) => state.user);
+  const { _id, firstName, lastName } = user;
   const token = useSelector((state) => state.token);
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
@@ -49,11 +52,9 @@ const MyPostWidget = ({ picturePath }) => {
       formData.append("description", post.trim());
       
       if (mediaFile) {
-        // FIXED: Use 'media' as field name to match backend multer config
         formData.append("media", mediaFile);
         formData.append("mediaType", mediaType);
         
-        // Debug: Log file details
         console.log('Uploading file:', {
           name: mediaFile.name,
           type: mediaFile.type,
@@ -62,12 +63,10 @@ const MyPostWidget = ({ picturePath }) => {
         });
       }
 
-      // FIXED: Remove Content-Type header - let browser set it automatically for FormData
       const response = await fetch(`https://getsocialnow.onrender.com/posts`, {
         method: "POST",
         headers: { 
           Authorization: `Bearer ${token}`,
-          // Removed Content-Type - browser will set multipart/form-data automatically
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
           'Expires': '0'
@@ -85,13 +84,11 @@ const MyPostWidget = ({ picturePath }) => {
       console.log('Post created successfully, received posts:', posts.length);
       dispatch(setPosts({ posts }));
       
-      // Reset form
       setMediaFile(null);
       setMediaType(null);
       setPost("");
       setIsMediaUpload(false);
       
-      // Show success message
       alert("Post created successfully!");
       
     } catch (error) {
@@ -102,25 +99,28 @@ const MyPostWidget = ({ picturePath }) => {
     }
   };
 
-  // FIXED: Better file validation and handling
-const handleDrop = (acceptedFiles, type) => {
-  const file = acceptedFiles[0];
-  if (file) {
-    // Check file size (50MB = 100 * 1024 * 1024 bytes)
-    if (file.size > 50 * 1024 * 1024) {
-      alert('File is too large. Maximum size is 50MB.');
-      return;
+  const handleDrop = (acceptedFiles, type) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      if (file.size > 50 * 1024 * 1024) {
+        alert('File is too large. Maximum size is 50MB.');
+        return;
+      }
+      console.log('File selected:', file.name, 'Type:', type, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+      setMediaFile(file);
+      setMediaType(type);
     }
-    console.log('File selected:', file.name, 'Type:', type, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
-    setMediaFile(file);
-    setMediaType(type);
-  }
-};
+  };
 
   return (
     <WidgetWrapper>
       <FlexBetween gap="1.5rem">
-        <UserImage image={picturePath} />
+        <Box onClick={() => navigate(`/profile/${_id}`)} sx={{ cursor: 'pointer' }}>
+          <UserImage 
+            image={picturePath} 
+            name={`${firstName} ${lastName}`}
+          />
+        </Box>
         <InputBase
           placeholder="What's on your mind..."
           onChange={(e) => setPost(e.target.value)}
@@ -143,13 +143,13 @@ const handleDrop = (acceptedFiles, type) => {
           mt="1rem"
           p="1rem"
         >
-         <Dropzone
-          acceptedFiles={mediaType === 'image' 
-            ? ".jpg,.jpeg,.png,.gif,.webp" 
-            : ".mp4,.mov,.avi,.mkv,.webm,.flv,.wmv"}
-          multiple={false}
-          onDrop={(acceptedFiles) => handleDrop(acceptedFiles, mediaType)}
->
+          <Dropzone
+            acceptedFiles={mediaType === 'image' 
+              ? ".jpg,.jpeg,.png,.gif,.webp" 
+              : ".mp4,.mov,.avi,.mkv,.webm,.flv,.wmv"}
+            multiple={false}
+            onDrop={(acceptedFiles) => handleDrop(acceptedFiles, mediaType)}
+          >
             {({ getRootProps, getInputProps, isDragActive }) => (
               <FlexBetween>
                 <Box

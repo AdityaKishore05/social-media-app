@@ -141,33 +141,32 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       </Box>
     );
   }
+return (
+  <Box>
+    {posts.map((post) => {
+      if (!post || !post._id) {
+        console.warn('Invalid post data:', post);
+        return null;
+      }
 
-  return (
-    <Box>
-      {posts.map((post) => {
-        if (!post || !post._id) {
-          console.warn('Invalid post data:', post);
-          return null;
-        }
-
-        return (
-          <PostWidget
-            key={post._id}
-            postId={post._id}
-            postUserId={post.userId}
-            name={`${post.firstName || 'Unknown'} ${post.lastName || 'User'}`}
-            description={post.description || ''}
-            location={post.location || ''}
-            picturePath={post.picturePath}
-            videoPath={post.videoPath}
-            userPicturePath={post.userPicturePath}
-            likes={post.likes || {}}
-            comments={post.comments || []}
-          />
-        );
-      })}
-    </Box>
-  );
+      return (
+        <PostWidget
+          key={post._id}
+          postId={post._id}
+          postUserId={post.userId}
+          name={`${post.firstName || 'Unknown'} ${post.lastName || 'User'}`}
+          description={post.description || ''}
+          picturePath={post.picturePath}
+          videoPath={post.videoPath}
+          userPicturePath={post.userPicturePath}
+          likes={post.likes || {}}
+          comments={post.comments || []}
+          createdAt={post.createdAt || post.updatedAt || new Date().toISOString()}
+        />
+      );
+    })}
+  </Box>
+);
 };
 
 export default PostsWidget;

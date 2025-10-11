@@ -13,7 +13,7 @@ const postSchema = mongoose.Schema(
     },
     lastName: {
       type: String,
-      required: trzue,
+      required: true,
     },
     location: String,
     description: {

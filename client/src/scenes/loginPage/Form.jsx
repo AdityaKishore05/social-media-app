@@ -24,9 +24,7 @@ const registerSchema = yup.object().shape({
   location: yup.string().required("required"),
   occupation: yup.string().required("required"),
   picture: yup.string().required("required"),
-  Twitter: yup.string().url("Must be a valid URL"),
-  LinkedIn: yup.string().url("Must be a valid URL"),
-  Instagram: yup.string().url("Must be a valid URL"),
+  bio: yup.string().max(150, "Bio must be 150 characters or less"),
 });
 
 const loginSchema = yup.object().shape({
@@ -42,9 +40,7 @@ const initialValuesRegister = {
   location: "",
   occupation: "",
   picture: "",
-  Twitter: "",
-  LinkedIn: "",
-  Instagram: "",
+  bio: "",
 };
 
 const initialValuesLogin = {
@@ -265,6 +261,20 @@ const Form = () => {
                       sx={{ gridColumn: "span 2" }}
                       disabled={isLoading}
                     />
+                    <TextField
+                      label="Bio"
+                      placeholder="Tell us about yourself..."
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      value={values.bio}
+                      name="bio"
+                      multiline
+                      rows={3}
+                      error={Boolean(touched.bio) && Boolean(errors.bio)}
+                      helperText={touched.bio && errors.bio}
+                      sx={{ gridColumn: "span 4" }}
+                      disabled={isLoading}
+                    />
                     <Box
                       gridColumn="span 4"
                       border={`1px solid ${palette.neutral.medium}`}
@@ -378,14 +388,6 @@ const Form = () => {
             </form>
           )}
         </Formik>
-
-          {process.env.NODE_ENV === 'development' && (
-          <Box sx={{ mt: 2, p: 1, backgroundColor: '#f0f0f0', fontSize: '0.8rem' }}>
-            <Typography variant="caption">
-              Debug: API_URL = {API_URL}
-            </Typography>
-          </Box>
-        )}
       </Box>
     );
   } catch (componentError) {

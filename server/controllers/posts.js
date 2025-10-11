@@ -76,10 +76,7 @@ export const createPost = async (req, res) => {
         newPost.videoPath = mediaPath;
       }
     }
-
-    await newPost.save();
-    console.log("Post created successfully:", newPost._id);
-
+    
     // Add no-cache headers
     res.set({
       "Cache-Control": "no-store, no-cache, must-revalidate, private",
@@ -577,7 +574,6 @@ export const createPostEnhanced = async (req, res) => {
     await newPost.save({ session });
     await session.commitTransaction();
 
-    console.log('Post created successfully with ID:', newPost._id);
 
     // Set cache headers
     res.set({

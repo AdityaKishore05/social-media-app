@@ -13,6 +13,14 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 const UserWidget = ({ userId, picturePath }) => {
+  const posts = useSelector((state) => state.posts);
+  const userPosts = Array.isArray(posts) ? posts.filter(post => post.userId === userId) : [];
+  const totalLikes = userPosts.reduce((total, post) => {
+  return total + (post.likes ? Object.keys(post.likes).length : 0);
+  }, 0);
+  const totalComments = userPosts.reduce((total, post) => {
+  return total + (post.comments ? post.comments.length : 0);
+}, 0);
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -23,6 +31,7 @@ const UserWidget = ({ userId, picturePath }) => {
   const dark = palette.neutral.dark;
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
+  
   
   const getUser = useCallback(async () => {
     if (!userId || !token) return;
@@ -75,12 +84,14 @@ const UserWidget = ({ userId, picturePath }) => {
   }
 
   const {
-    firstName,
-    lastName,
-    location,
-    occupation,
-    friends,
-  } = user;
+  firstName,
+  lastName,
+  location,
+  occupation,
+  friends,
+  following,
+  bio,
+} = user;
 
   const displayFriends = userId === loggedInUser?._id ? 
     (loggedInUser.friends || friends || []) : 
@@ -118,9 +129,32 @@ const UserWidget = ({ userId, picturePath }) => {
             >
               {firstName} {lastName}
             </Typography>
-            <Typography color={medium}>
-              {Array.isArray(displayFriends) ? displayFriends.length : 0} friends
-            </Typography>
+            <Box display="flex" gap="0.5rem" mt="0.5rem">
+              <Box textAlign="center">
+                <Typography fontWeight="600" color={dark}>
+                  {userPosts.length}
+                </Typography>
+                <Typography color={medium} fontSize="0.875rem">posts</Typography>
+              </Box>
+              <Box textAlign="center">
+                <Typography fontWeight="600" color={dark}>
+                  {Array.isArray(displayFriends) ? displayFriends.length : 0}
+                </Typography>
+                <Typography color={medium} fontSize="0.875rem">friends</Typography>
+              </Box>
+              <Box textAlign="center">
+                <Typography fontWeight="600" color={dark}>
+                  {totalLikes}
+                </Typography>
+                <Typography color={medium} fontSize="0.875rem">likes</Typography>
+              </Box>
+              <Box textAlign="center">
+                <Typography fontWeight="600" color={dark}>
+                  {totalComments}
+                </Typography>
+                <Typography color={medium} fontSize="0.875rem">comments</Typography>
+                </Box>
+            </Box>
           </Box>
         </Box>
         
@@ -136,11 +170,18 @@ const UserWidget = ({ userId, picturePath }) => {
           />
         )}
       </FlexBetween>
+     {bio && (
+        <Box mt="0.5rem">
+          <Typography color={medium} sx={{ fontStyle: 'italic' }}>
+            {bio}
+          </Typography>
+        </Box>
+      )}
 
       <Divider />
 
       {/* SECOND ROW */}
-      <FlexBetween p="1rem 0">
+      <FlexBetween p="1.3rem 0">
         <Box display="flex" alignItems="center" gap="0.25rem">
           <LocationOnOutlined fontSize="large" sx={{ color: main }} style={{ width: '24px', height: '24px' }} 
           />

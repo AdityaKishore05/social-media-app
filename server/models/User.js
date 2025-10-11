@@ -36,10 +36,16 @@ const UserSchema = new mongoose.Schema(
     },
     location: String,
     occupation: String,
-    viewedProfile: Number,
-    impressions: Number,
-
-  },
+   bio: {
+      type: String,
+      default: "",
+      maxlength: 150,
+    },
+    following: {
+      type: Array,
+      default: [],
+    },
+},
   { timestamps: true }
 );
 

@@ -43,15 +43,8 @@ router.patch(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const {
-        firstName,
-        lastName,
-        location,
-        occupation,
-        Twitter,
-        LinkedIn,
-        Instagram,
-      } = req.body;
+      const { firstName, lastName, location, occupation, bio } = req.body;
+
 
       console.log("Updating user:", id);
 
@@ -67,11 +60,7 @@ router.patch(
         lastName: lastName || user.lastName,
         location: location || user.location,
         occupation: occupation || user.occupation,
-        socialLinks: {
-          Twitter: Twitter || "",
-          LinkedIn: LinkedIn || "",
-          Instagram: Instagram || "",
-        },
+        bio: bio || user.bio || "",
       };
 
       // Handle profile picture upload to Cloudinary if provided

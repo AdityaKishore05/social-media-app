@@ -7,14 +7,8 @@ import cloudinary from "cloudinary";
 /* REGISTER USER */
 export const register = async (req, res) => {
   try {
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      location,
-      occupation,
-    } = req.body;
+    const { firstName, lastName, email, password, location, occupation, bio } =
+      req.body;
 
     // Handle picture upload to Cloudinary
     let picturePath = "";
@@ -39,9 +33,12 @@ export const register = async (req, res) => {
       password: passwordHash,
       picturePath,
       friends: [],
+      following: [],
       location,
       occupation,
+      bio: bio || "",
     });
+
 
     const savedUser = await newUser.save();
     res.status(201).json(savedUser);

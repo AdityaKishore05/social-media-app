@@ -51,7 +51,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
     <FlexBetween>
       <FlexBetween gap="1rem">
         {/* FIXED: Pass the name prop to UserImage for initials */}
-        <UserImage image={userPicturePath} size="55px" name={name} />
+        <UserImage image={userPicturePath} size="60px" name={name} />
         <Box
           onClick={() => {
             navigate(`/profile/${friendId}`);
@@ -70,7 +70,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
           >
             {name}
           </Typography>
-          <Typography color={medium} fontSize="0.75rem">
+          <Typography color={medium} fontSize="0.9rem">
             {subtitle}
           </Typography>
         </Box>

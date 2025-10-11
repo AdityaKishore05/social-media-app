@@ -24,6 +24,7 @@ const EditProfileModal = ({ open, onClose, user }) => {
     lastName: user?.lastName || "",
     location: user?.location || "",
     occupation: user?.occupation || "",
+    bio: user?.bio || "",
   });
   const [picture, setPicture] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -196,6 +197,19 @@ const EditProfileModal = ({ open, onClose, user }) => {
             onChange={handleChange}
             disabled={isLoading}
             fullWidth
+          />
+          <TextField
+            label="Bio"
+            name="bio"
+            placeholder="Tell us about yourself..."
+            value={formData.bio}
+            onChange={handleChange}
+            disabled={isLoading}
+            multiline
+            rows={3}
+            fullWidth
+            inputProps={{ maxLength: 150 }}
+            helperText={`${formData.bio?.length || 0}/150 characters`}
           />
         </Box>
       </DialogContent>
