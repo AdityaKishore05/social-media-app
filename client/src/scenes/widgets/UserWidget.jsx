@@ -1,7 +1,5 @@
 import {
   ManageAccountsOutlined,
-  LocationOnOutlined,
-  WorkOutlineOutlined,
 } from "@mui/icons-material";
 import { Box, Typography, Divider, useTheme } from "@mui/material";
 import UserImage from "components/UserImage";
@@ -86,8 +84,6 @@ const UserWidget = ({ userId, picturePath }) => {
   const {
   firstName,
   lastName,
-  location,
-  occupation,
   friends,
   bio,
 } = user;
@@ -176,21 +172,6 @@ const UserWidget = ({ userId, picturePath }) => {
           </Typography>
         </Box>
       )}
-
-      <Divider />
-
-      {/* SECOND ROW */}
-      <FlexBetween p="1.3rem 0">
-        <Box display="flex" alignItems="center" gap="0.25rem">
-          <LocationOnOutlined fontSize="large" sx={{ color: main }} style={{ width: '24px', height: '24px' }} 
-          />
-          <Typography color={medium}>{location || 'Not specified'}</Typography>
-        </Box>
-        <Box display="flex" alignItems="center" gap="0.25rem">
-          <WorkOutlineOutlined fontSize="large" sx={{ color: main }} style={{ width: '24px', height: '24px' }}/>
-          <Typography color={medium}>{occupation || 'Not specified'}</Typography>
-        </Box>
-      </FlexBetween>
 
       <Divider />
 

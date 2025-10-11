@@ -43,7 +43,7 @@ router.patch(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { firstName, lastName, location, occupation, bio } = req.body;
+      const { firstName, lastName, bio } = req.body;
 
 
       console.log("Updating user:", id);
@@ -58,8 +58,6 @@ router.patch(
       const updateData = {
         firstName: firstName || user.firstName,
         lastName: lastName || user.lastName,
-        location: location || user.location,
-        occupation: occupation || user.occupation,
         bio: bio || user.bio || "",
       };
 

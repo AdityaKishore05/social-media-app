@@ -61,7 +61,6 @@ export const createPost = async (req, res) => {
       userId,
       firstName: user.firstName,
       lastName: user.lastName,
-      location: user.location,
       description: description?.trim() || "",
       userPicturePath: user.picturePath,
       likes: {},
@@ -95,7 +94,6 @@ export const createPost = async (req, res) => {
           ...post._doc,
           firstName: postUser.firstName,
           lastName: postUser.lastName,
-          location: postUser.location,
           userPicturePath: postUser.picturePath,
         };
       })
@@ -140,7 +138,6 @@ export const getFeedPosts = async (req, res) => {
           ...post._doc,
           firstName: user.firstName,
           lastName: user.lastName,
-          location: user.location,
           userPicturePath: user.picturePath,
         };
       })
@@ -185,7 +182,6 @@ export const getUserPosts = async (req, res) => {
           ...post._doc,
           firstName: user.firstName,
           lastName: user.lastName,
-          location: user.location,
           userPicturePath: user.picturePath,
         };
       })
@@ -242,7 +238,6 @@ export const likePost = async (req, res) => {
       ...updatedPost._doc,
       firstName: user.firstName,
       lastName: user.lastName,
-      location: user.location,
       userPicturePath: user.picturePath,
     };
 
@@ -304,7 +299,6 @@ export const commentPost = async (req, res) => {
       ...updatedPost._doc,
       firstName: postUser.firstName,
       lastName: postUser.lastName,
-      location: postUser.location,
       userPicturePath: postUser.picturePath,
     };
 
@@ -355,7 +349,6 @@ export const deletePost = async (req, res) => {
           ...p._doc,
           firstName: postUser.firstName,
           lastName: postUser.lastName,
-          location: postUser.location,
           userPicturePath: postUser.picturePath,
         };
       })
@@ -552,7 +545,6 @@ export const createPostEnhanced = async (req, res) => {
       userId,
       firstName: user.firstName,
       lastName: user.lastName,
-      location: user.location,
       description: description?.trim() || '',
       userPicturePath: user.picturePath,
       picturePath: mediaType === 'image' ? mediaPath : '',
@@ -593,7 +585,6 @@ export const createPostEnhanced = async (req, res) => {
           ...post._doc,
           firstName: postUser.firstName,
           lastName: postUser.lastName,
-          location: postUser.location,
           userPicturePath: postUser.picturePath,
         };
       })
