@@ -28,7 +28,6 @@ const UserWidget = ({ userId, picturePath }) => {
   const loggedInUser = useSelector((state) => state.user);
   const dark = palette.neutral.dark;
   const medium = palette.neutral.medium;
-  const main = palette.neutral.main;
   
   
   const getUser = useCallback(async () => {
