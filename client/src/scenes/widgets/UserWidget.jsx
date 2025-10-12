@@ -166,7 +166,7 @@ const UserWidget = ({ userId, picturePath }) => {
       </FlexBetween>
      {bio && (
         <Box mt="0.5rem">
-          <Typography color={medium} sx={{ fontStyle: 'italic'}}>
+          <Typography color={medium} sx={{ fontStyle: 'italic',  whiteSpace: 'pre-wrap'}}>
             {bio}
           </Typography>
         </Box>
