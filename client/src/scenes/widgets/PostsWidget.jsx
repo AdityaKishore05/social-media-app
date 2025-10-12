@@ -158,6 +158,7 @@ return (
           description={post.description || ''}
           picturePath={post.picturePath}
           videoPath={post.videoPath}
+          videoLink={post.videoLink} // Add this
           userPicturePath={post.userPicturePath}
           likes={post.likes || {}}
           comments={post.comments || []}

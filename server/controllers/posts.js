@@ -6,13 +6,13 @@ import { v2 as cloudinary } from "cloudinary";
 /* CREATE */
 export const createPost = async (req, res) => {
   try {
-    const { userId, description, mediaType } = req.body;
+    const { userId, description, mediaType, videoLink } = req.body;
     let mediaPath = null;
 
     console.log("Creating post:", { userId, hasFile: !!req.file, mediaType });
 
     // Handle file upload
-    if (req.file) {
+    if (req.file && mediaType !== "link") {
       try {
         console.log("Starting Cloudinary upload...");
 
@@ -40,9 +40,9 @@ export const createPost = async (req, res) => {
       }
     }
 
-    if (!description?.trim() && !mediaPath) {
+    if (!description?.trim() && !mediaPath && !videoLink?.trim()) {
       return res.status(400).json({
-        message: "Post must include a description or media.",
+        message: "Post must include a description, media, or video link.",
       });
     }
 
@@ -62,6 +62,16 @@ export const createPost = async (req, res) => {
     });
 
     if (mediaPath) {
+      if (mediaType === "image") {
+        newPost.picturePath = mediaPath;
+      } else if (mediaType === "video") {
+        newPost.videoPath = mediaPath;
+      }
+    }
+
+    if (videoLink?.trim()) {
+      newPost.videoLink = videoLink.trim();
+    } else if (mediaPath) {
       if (mediaType === "image") {
         newPost.picturePath = mediaPath;
       } else if (mediaType === "video") {

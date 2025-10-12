@@ -3,6 +3,7 @@ import {
   DeleteOutlined,
   ImageOutlined,
   VideoCameraFrontOutlined,
+  LinkOutlined, // Add this import
 } from "@mui/icons-material";
 import {
   Box,
@@ -28,6 +29,7 @@ const MyPostWidget = ({ picturePath }) => {
   const [isMediaUpload, setIsMediaUpload] = useState(false);
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaType, setMediaType] = useState(null);
+  const [videoLink, setVideoLink] = useState(""); // Add this
   const [post, setPost] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const { palette } = useTheme();
@@ -37,65 +39,66 @@ const MyPostWidget = ({ picturePath }) => {
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
 
-  const handlePost = async () => {
-    if (isPosting) return;
-    if (!post.trim() && !mediaFile) {
-      alert("Please add a description or select an image/video to post.");
-      return;
+const handlePost = async () => {
+  if (isPosting) return;
+  if (!post.trim() && !mediaFile && !videoLink.trim()) {
+    alert("Please add a description, select a file, or add a video link.");
+    return;
+  }
+  
+  setIsPosting(true);
+  
+  try {
+    const formData = new FormData();
+    formData.append("userId", _id);
+    formData.append("description", post.trim());
+    
+    // If video link exists, send it
+    if (videoLink.trim()) {
+      formData.append("videoLink", videoLink.trim());
+      formData.append("mediaType", "link");
+    } else if (mediaFile) {
+      formData.append("media", mediaFile);
+      formData.append("mediaType", mediaType);
+    }
+
+    const response = await fetch(`https://getsocialnow.onrender.com/posts`, {
+      method: "POST",
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to create post: ${response.status} - ${errorText}`);
+    }
+
+    const posts = await response.json();
+    
+    if (Array.isArray(posts)) {
+      dispatch(setPosts({ posts }));
     }
     
-    setIsPosting(true);
+    // Reset form
+    setMediaFile(null);
+    setMediaType(null);
+    setVideoLink("");
+    setPost("");
+    setIsMediaUpload(false);
     
-    try {
-      const formData = new FormData();
-      formData.append("userId", _id);
-      formData.append("description", post.trim());
-      
-      if (mediaFile) {
-        formData.append("media", mediaFile);
-        formData.append("mediaType", mediaType);
-      }
+  } catch (error) {
+    console.error('Error creating post:', error);
+    alert(`Failed to create post: ${error.message}`);
+  } finally {
+    setIsPosting(false);
+  }
+};
 
-      const response = await fetch(`https://getsocialnow.onrender.com/posts`, {
-        method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to create post: ${response.status} - ${errorText}`);
-      }
-
-      const posts = await response.json();
-      console.log('Post created successfully, received posts:', posts);
-      
-      // FIXED: Ensure posts is an array before dispatching
-      if (Array.isArray(posts)) {
-        dispatch(setPosts({ posts }));
-      } else {
-        console.error('Expected array of posts, got:', posts);
-      }
-      
-      setMediaFile(null);
-      setMediaType(null);
-      setPost("");
-      setIsMediaUpload(false);
-      
-      // FIXED: Remove alert, post will appear automatically
-      
-    } catch (error) {
-      console.error('Error creating post:', error);
-      alert(`Failed to create post: ${error.message}`);
-    } finally {
-      setIsPosting(false);
-    }
-  };
 
   const handleDrop = (acceptedFiles, type) => {
     const file = acceptedFiles[0];
@@ -193,6 +196,32 @@ const MyPostWidget = ({ picturePath }) => {
         </Box>
       )}
 
+        {mediaType === 'link' && isMediaUpload && (
+          <Box mt="1rem">
+            <InputBase
+              placeholder="Paste YouTube, Vimeo, Twitch, or other video link..."
+              value={videoLink}
+              onChange={(e) => setVideoLink(e.target.value)}
+              sx={{
+                width: "100%",
+                backgroundColor: palette.neutral.light,
+                borderRadius: "0.5rem",
+                padding: "1rem",
+                border: `1px solid ${medium}`,
+              }}
+            />
+            {videoLink && (
+              <Typography 
+                variant="caption" 
+                color={palette.primary.main}
+                sx={{ mt: 0.5, display: 'block' }}
+              >
+                Link added ✓
+              </Typography>
+            )}
+          </Box>
+        )}  
+
       <Divider sx={{ margin: "1.25rem 0" }} />
 
       <FlexBetween>
@@ -229,6 +258,25 @@ const MyPostWidget = ({ picturePath }) => {
             sx={{ "&:hover": { cursor: "pointer", color: medium } }}
           >
             Video
+          </Typography>
+        </FlexBetween>
+
+        <FlexBetween 
+          gap="0.25rem" 
+          onClick={() => {
+            setIsMediaUpload(!isMediaUpload || mediaType !== 'link');
+            setMediaType('link');
+            setMediaFile(null);
+            setVideoLink("");
+          }}
+          sx={{ "&:hover": { cursor: "pointer" } }}
+        >
+          <LinkOutlined sx={{ color: mediumMain }} />
+          <Typography
+            color={mediumMain}
+            sx={{ "&:hover": { cursor: "pointer", color: medium } }}
+          >
+            Link
           </Typography>
         </FlexBetween>
 

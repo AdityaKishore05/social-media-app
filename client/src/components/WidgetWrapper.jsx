@@ -4,7 +4,8 @@ import { styled } from "@mui/system";
 const WidgetWrapper = styled(Box)(({ theme }) => ({
   padding: "1.5rem",
   borderRadius: "1rem",
-  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)", // Change this
+  backdropFilter: "blur(10px)", // Change this - now it's in the style object, not a prop
   border: theme.palette.mode === "dark"
     ? "1px solid rgba(255, 255, 255, 0.1)"
     : "1px solid rgba(0, 0, 0, 0.05)",

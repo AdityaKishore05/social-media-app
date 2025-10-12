@@ -27,6 +27,10 @@ const postSchema = mongoose.Schema(
       type: String,
       default: "",
     },
+    videoLink: {
+      type: String,
+      default: "",
+    },
     userPicturePath: {
       type: String,
       default: "",

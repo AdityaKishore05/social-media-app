@@ -11,6 +11,8 @@ import WidgetWrapper from "components/WidgetWrapper";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost, setPosts } from "state";
+import ReactPlayer from 'react-player';
+import { OpenInNew } from "@mui/icons-material"; // Add this import
 
 const PostWidget = ({
   postId,
@@ -22,8 +24,8 @@ const PostWidget = ({
   likes,
   comments,
   videoPath,
+  videoLink, // Add this prop
   createdAt, // Add this
-
 }) => {
   const [mediaError, setMediaError] = useState(false);
   const [isComments, setIsComments] = useState(false);
@@ -197,8 +199,46 @@ const PostWidget = ({
         {description}
       </Typography>
 
+      {videoLink && (
+        <Box
+          sx={{
+            width: "100%",
+            marginTop: "0.75rem",
+            borderRadius: "0.75rem",
+            overflow: "hidden",
+            backgroundColor: "black",
+            position: "relative",
+          }}
+        >
+          <ReactPlayer
+            url={videoLink}
+            controls
+            width="100%"
+            height="400px"
+            config={{
+              youtube: {
+                playerVars: { showinfo: 1 }
+              }
+            }}
+          />
+          <Button
+            href={videoLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            startIcon={<OpenInNew />}
+            sx={{
+              mt: 1,
+              color: palette.primary.main,
+              textTransform: "none",
+            }}
+          >
+            Watch on Platform
+          </Button>
+        </Box>
+      )}
+
       {/* FIXED: Better media handling with error states */}
-      {(imageUrl || videoUrl) && !mediaError && (
+      {!videoLink && (imageUrl || videoUrl) && !mediaError &&  (
         <Box
           sx={{
             width: "100%",
