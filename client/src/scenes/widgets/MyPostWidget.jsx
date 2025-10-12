@@ -54,13 +54,6 @@ const MyPostWidget = ({ picturePath }) => {
       if (mediaFile) {
         formData.append("media", mediaFile);
         formData.append("mediaType", mediaType);
-        
-        console.log('Uploading file:', {
-          name: mediaFile.name,
-          type: mediaFile.type,
-          size: mediaFile.size,
-          mediaType: mediaType
-        });
       }
 
       const response = await fetch(`https://getsocialnow.onrender.com/posts`, {
@@ -76,20 +69,25 @@ const MyPostWidget = ({ picturePath }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Server response:', response.status, errorText);
         throw new Error(`Failed to create post: ${response.status} - ${errorText}`);
       }
 
       const posts = await response.json();
-      console.log('Post created successfully, received posts:', posts.length);
-      dispatch(setPosts({ posts }));
+      console.log('Post created successfully, received posts:', posts);
+      
+      // FIXED: Ensure posts is an array before dispatching
+      if (Array.isArray(posts)) {
+        dispatch(setPosts({ posts }));
+      } else {
+        console.error('Expected array of posts, got:', posts);
+      }
       
       setMediaFile(null);
       setMediaType(null);
       setPost("");
       setIsMediaUpload(false);
       
-      alert("Post created successfully!");
+      // FIXED: Remove alert, post will appear automatically
       
     } catch (error) {
       console.error('Error creating post:', error);

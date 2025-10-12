@@ -21,8 +21,6 @@ const registerSchema = yup.object().shape({
   lastName: yup.string().required("required"),
   email: yup.string().email("invalid email").required("required"),
   password: yup.string().required("required"),
-  location: yup.string().required("required"),
-  occupation: yup.string().required("required"),
   picture: yup.string().required("required"),
   bio: yup.string().max(150, "Bio must be 150 characters or less"),
 });
@@ -37,8 +35,6 @@ const initialValuesRegister = {
   lastName: "",
   email: "",
   password: "",
-  location: "",
-  occupation: "",
   picture: "",
   bio: "",
 };
@@ -240,28 +236,6 @@ const Form = () => {
                       disabled={isLoading}
                     />
                     <TextField
-                      label="Location"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.location}
-                      name="location"
-                      error={Boolean(touched.location) && Boolean(errors.location)}
-                      helperText={touched.location && errors.location}
-                      sx={{ gridColumn: "span 2" }}
-                      disabled={isLoading}
-                    />
-                    <TextField
-                      label="Occupation"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.occupation}
-                      name="occupation"
-                      error={Boolean(touched.occupation) && Boolean(errors.occupation)}
-                      helperText={touched.occupation && errors.occupation}
-                      sx={{ gridColumn: "span 2" }}
-                      disabled={isLoading}
-                    />
-                    <TextField
                       label="Bio"
                       placeholder="Tell us about yourself..."
                       onBlur={handleBlur}
@@ -274,7 +248,8 @@ const Form = () => {
                       helperText={touched.bio && errors.bio}
                       sx={{ gridColumn: "span 4" }}
                       disabled={isLoading}
-                    />
+                      inputProps={{ style: { whiteSpace: 'pre-wrap' } }}
+                  />
                     <Box
                       gridColumn="span 4"
                       border={`1px solid ${palette.neutral.medium}`}

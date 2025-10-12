@@ -208,7 +208,7 @@ const EditProfileModal = ({ open, onClose, user }) => {
             multiline
             rows={3}
             fullWidth
-            inputProps={{ maxLength: 150 }}
+            inputProps={{ maxLength: 150, style: { whiteSpace: 'pre-wrap' } }}
             helperText={`${formData.bio?.length || 0}/150 characters`}
           />
         </Box>
