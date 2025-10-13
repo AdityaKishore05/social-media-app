@@ -154,15 +154,13 @@ return (
           key={post._id}
           postId={post._id}
           postUserId={post.userId}
-          name={`${post.firstName || 'Unknown'} ${post.lastName || 'User'}`}
-          description={post.description || ''}
-          picturePath={post.picturePath}
-          videoPath={post.videoPath}
-          videoLink={post.videoLink} // Add this
+          name={`${post.firstName} ${post.lastName}`}
+          description={post.description}
           userPicturePath={post.userPicturePath}
           likes={post.likes || {}}
           comments={post.comments || []}
-          createdAt={post.createdAt || post.updatedAt || new Date().toISOString()}
+          mediaItems={post.mediaItems || []}
+          createdAt={post.createdAt}
         />
       );
     })}

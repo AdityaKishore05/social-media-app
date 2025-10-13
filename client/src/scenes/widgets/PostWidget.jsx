@@ -3,29 +3,28 @@ import {
   FavoriteBorderOutlined,
   FavoriteOutlined,
   DeleteOutline,
+  ChevronLeft,
+  ChevronRight,
 } from "@mui/icons-material";
 import { Box, Divider, IconButton, Typography, useTheme, InputBase, Button } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Friend from "components/Friend";
 import WidgetWrapper from "components/WidgetWrapper";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost, setPosts } from "state";
-import ReactPlayer from 'react-player';
-import { OpenInNew } from "@mui/icons-material"; // Add this import
 
 const PostWidget = ({
   postId,
   postUserId,
   name,
   description,
-  picturePath,
   userPicturePath,
+  mediaItems,
   likes,
   comments,
-  videoPath,
-  videoLink, // Add this prop
   createdAt, // Add this
+
 }) => {
   const [mediaError, setMediaError] = useState(false);
   const [isComments, setIsComments] = useState(false);
@@ -33,7 +32,9 @@ const PostWidget = ({
   const [isLiking, setIsLiking] = useState(false);
   const [isCommenting, setIsCommenting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+  const items = mediaItems || [];
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user._id);
@@ -43,11 +44,6 @@ const PostWidget = ({
   const { palette } = useTheme();
   const main = palette.neutral.main;
   const primary = palette.primary.main;
-
-  useEffect(() => {
-    setMediaError(false);
-  }, [picturePath, videoPath]);
-
   const formatDate = (dateString) => {
     if (!dateString) return 'Recently';
     
@@ -182,119 +178,58 @@ const PostWidget = ({
     return `https://getsocialnow.onrender.com/assets/${mediaPath}`;
   };
 
-  const imageUrl = getMediaUrl(picturePath);
-  const videoUrl = getMediaUrl(videoPath);
-
-
   return (
     <WidgetWrapper m="1rem 0">
-      <Friend
-      friendId={postUserId}
-      name={name}
-      subtitle={formatDate(createdAt)}
-      userPicturePath={userPicturePath}
-    />
+      <Friend friendId={postUserId} name={name} subtitle={formatDate(createdAt)} userPicturePath={userPicturePath} />
       
-      <Typography color={main} sx={{ mt: "1rem" }}>
-        {description}
-      </Typography>
+      <Typography color={main} sx={{ mt: "1rem" }}>{description}</Typography>
 
-      {videoLink && (
-        <Box
-          sx={{
-            width: "100%",
-            marginTop: "0.75rem",
-            borderRadius: "0.75rem",
-            overflow: "hidden",
-            backgroundColor: "black",
-            position: "relative",
-          }}
-        >
-          <ReactPlayer
-            url={videoLink}
-            controls
-            width="100%"
-            height="400px"
-            config={{
-              youtube: {
-                playerVars: { showinfo: 1 }
-              }
-            }}
-          />
-          <Button
-            href={videoLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            startIcon={<OpenInNew />}
-            sx={{
-              mt: 1,
-              color: palette.primary.main,
-              textTransform: "none",
-            }}
-          >
-            Watch on Platform
-          </Button>
-        </Box>
-      )}
-
-      {/* FIXED: Better media handling with error states */}
-      {!videoLink && (imageUrl || videoUrl) && !mediaError &&  (
-        <Box
-          sx={{
-            width: "100%",
-            paddingBottom:"70%",
-            position: "relative",
-            backgroundColor: "black",
-            borderRadius: "0.75rem",
-            marginTop: "0.75rem",
-          }}
-        >
-          {videoUrl ? (
+      {items.length > 0 && (
+        <Box sx={{ width: "100%", paddingBottom: "70%", position: "relative", backgroundColor: "black", borderRadius: "0.75rem", marginTop: "0.75rem" }}>
+          {items[currentIndex].type === 'video' ? (
             <video
               width="100%"
               height="100%"
               controls
-              src={videoUrl}
-              onError={(e) => {
-                console.error('Video load error:', e);
-                setMediaError(true);
-              }}
-              onLoadStart={() => console.log('Video loading started')}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                objectFit: "contain",
-                objectPosition: "center",
-              }}
-            >
-              Your browser does not support the video tag.
-            </video>
-          ) : imageUrl ? (
-            <img
-              alt={description || 'Post image'}
-              src={imageUrl}
-              onError={(e) => {
-                console.error('Image load error:', e);
-                setMediaError(true);
-              }}
-              onLoad={() => console.log('Image loaded successfully')}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-                objectPosition: "center",
-              }}
+              src={items[currentIndex].url}
+              style={{ position: "absolute", top: 0, left: 0, objectFit: "contain" }}
             />
-          ) : null}
+          ) : (
+            <img
+              src={items[currentIndex].url}
+              alt="post media"
+              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain" }}
+            />
+          )}
+          
+          {items.length > 1 && (
+            <>
+              <IconButton onClick={() => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length)}
+                sx={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", backgroundColor: "rgba(255,255,255,0.8)" }}>
+                <ChevronLeft />
+              </IconButton>
+              
+              <IconButton onClick={() => setCurrentIndex((prev) => (prev + 1) % items.length)}
+                sx={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", backgroundColor: "rgba(255,255,255,0.8)" }}>
+                <ChevronRight />
+              </IconButton>
+              
+              <Box sx={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", display: "flex", gap: "4px" }}>
+                {items.map((_, index) => (
+                  <Box
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    sx={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: index === currentIndex ? "white" : "rgba(255,255,255,0.5)", cursor: "pointer" }}
+                  />
+                ))}
+              </Box>
+            </>
+          )}
         </Box>
       )}
 
       {/* Show error message if media fails to load */}
-      {mediaError && (imageUrl || videoUrl) && (
+      {mediaError && (items) && (
         <Box
           sx={{
             width: "100%",

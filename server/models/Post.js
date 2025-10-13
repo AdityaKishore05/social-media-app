@@ -5,7 +5,7 @@ const postSchema = mongoose.Schema(
     userId: {
       type: String,
       required: true,
-      index: true, // Add index for faster queries
+      index: true,
     },
     firstName: {
       type: String,
@@ -19,18 +19,22 @@ const postSchema = mongoose.Schema(
       type: String,
       default: "",
     },
-    picturePath: {
-      type: String,
-      default: "",
-    },
-    videoPath: {
-      type: String,
-      default: "",
-    },
-    videoLink: {
-      type: String,
-      default: "",
-    },
+    mediaItems: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        type: {
+          type: String,
+          enum: ["image", "video"],
+          required: true,
+        },
+        publicId: {
+          type: String, // Cloudinary public ID for deletion
+        },
+      },
+    ],
     userPicturePath: {
       type: String,
       default: "",
@@ -72,14 +76,7 @@ const postSchema = mongoose.Schema(
         },
       },
     ],
-    // Add fields to track media metadata
-    mediaMetadata: {
-      cloudinaryPublicId: String, // Store Cloudinary public_id for management
-      originalFileName: String, // Store original filename
-      fileSize: Number, // Store file size
-      mimeType: String, // Store MIME type
-    },
-    // Add field to prevent accidental deletion
+    // Soft delete flag
     isDeleted: {
       type: Boolean,
       default: false,
@@ -87,45 +84,80 @@ const postSchema = mongoose.Schema(
     },
   },
   {
-    timestamps: true, // Automatically add createdAt and updatedAt
-    // Add schema options for better performance
+    timestamps: true, // Automatically adds createdAt and updatedAt
     collection: "posts",
   }
 );
 
-// Add indexes for better query performance
+// Add compound indexes for better query performance
 postSchema.index({ userId: 1, createdAt: -1 });
 postSchema.index({ isDeleted: 1, createdAt: -1 });
 
-// Add a pre-find middleware to exclude deleted posts by default
-postSchema.pre(/^find/, function () {
+// Pre-find middleware to exclude soft-deleted posts
+postSchema.pre(/^find/, function (next) {
   // Don't return deleted posts unless explicitly requested
   if (!this.getQuery().includeDeleted) {
     this.where({ isDeleted: { $ne: true } });
   }
+  next();
 });
 
-// Add instance method to soft delete
+// Instance method for soft delete
 postSchema.methods.softDelete = function () {
   this.isDeleted = true;
   return this.save();
 };
 
-// Add static method to find with deleted posts
+// Static method to find including deleted posts
 postSchema.statics.findWithDeleted = function (query = {}) {
   return this.find({ ...query, includeDeleted: true });
 };
 
-// Add validation to ensure at least description or media is present
+// FIXED: Validation to ensure at least description or media is present
 postSchema.pre("save", function (next) {
-  if (!this.description && !this.picturePath && !this.videoPath) {
-    const error = new Error(
-      "Post must have either description, image, or video"
-    );
+  // Skip validation for updates
+  if (!this.isNew) {
+    return next();
+  }
+
+  // For new posts, require either description or media
+  const hasDescription = this.description && this.description.trim().length > 0;
+  const hasMedia = this.mediaItems && this.mediaItems.length > 0;
+
+  if (!hasDescription && !hasMedia) {
+    const error = new Error("Post must have either description or media");
     return next(error);
   }
+
   next();
 });
+
+// Add a method to get full post with user info
+postSchema.methods.toJSONWithUser = async function () {
+  const User = mongoose.model("User");
+  const user = await User.findById(this.userId);
+
+  return {
+    ...this.toObject(),
+    firstName: user?.firstName || this.firstName,
+    lastName: user?.lastName || this.lastName,
+    userPicturePath: user?.picturePath || this.userPicturePath,
+  };
+};
+
+// Virtual for comment count
+postSchema.virtual("commentCount").get(function () {
+  return this.comments ? this.comments.length : 0;
+});
+
+// Virtual for like count
+postSchema.virtual("likeCount").get(function () {
+  return this.likes ? this.likes.size : 0;
+});
+
+// Ensure virtuals are included in JSON
+postSchema.set("toJSON", { virtuals: true });
+postSchema.set("toObject", { virtuals: true });
 
 const Post = mongoose.model("Post", postSchema);
 

@@ -1,9 +1,6 @@
 import {
-  EditOutlined,
   DeleteOutlined,
   ImageOutlined,
-  VideoCameraFrontOutlined,
-  LinkOutlined, // Add this import
 } from "@mui/icons-material";
 import {
   Box,
@@ -27,9 +24,7 @@ const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isMediaUpload, setIsMediaUpload] = useState(false);
-  const [mediaFile, setMediaFile] = useState(null);
   const [mediaType, setMediaType] = useState(null);
-  const [videoLink, setVideoLink] = useState(""); // Add this
   const [post, setPost] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const { palette } = useTheme();
@@ -38,79 +33,93 @@ const MyPostWidget = ({ picturePath }) => {
   const token = useSelector((state) => state.token);
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
+  const [mediaFiles, setMediaFiles] = useState([]);
 
-const handlePost = async () => {
-  if (isPosting) return;
-  if (!post.trim() && !mediaFile && !videoLink.trim()) {
-    alert("Please add a description, select a file, or add a video link.");
-    return;
-  }
-  
-  setIsPosting(true);
-  
-  try {
-    const formData = new FormData();
-    formData.append("userId", _id);
-    formData.append("description", post.trim());
-    
-    // If video link exists, send it
-    if (videoLink.trim()) {
-      formData.append("videoLink", videoLink.trim());
-      formData.append("mediaType", "link");
-    } else if (mediaFile) {
-      formData.append("media", mediaFile);
-      formData.append("mediaType", mediaType);
-    }
-
-    const response = await fetch(`https://getsocialnow.onrender.com/posts`, {
-      method: "POST",
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to create post: ${response.status} - ${errorText}`);
-    }
-
-    const posts = await response.json();
-    
-    if (Array.isArray(posts)) {
-      dispatch(setPosts({ posts }));
+  const handlePost = async () => {
+    if (isPosting) return;
+    if (!post.trim() && mediaFiles.length === 0) {
+      alert("Please add a description or select media.");
+      return;
     }
     
-    // Reset form
-    setMediaFile(null);
-    setMediaType(null);
-    setVideoLink("");
-    setPost("");
-    setIsMediaUpload(false);
+    setIsPosting(true);
     
-  } catch (error) {
-    console.error('Error creating post:', error);
-    alert(`Failed to create post: ${error.message}`);
-  } finally {
-    setIsPosting(false);
-  }
-};
+    try {
+      const formData = new FormData();
+      formData.append("userId", _id);
+      formData.append("description", post.trim());
+      
+      if (mediaFiles.length > 0) {
+        mediaFiles.forEach((file, index) => {
+          // Use indexed names or the backend's expected field name
+          formData.append("mediaFiles", file);
+          console.log(`Adding file ${index}:`, file.name, file.type, file.size);
+        });
+        formData.append("mediaType", "mixed");
+      }
 
+      console.log('Posting to server...', {
+        userId: _id,
+        description: post.trim(),
+        mediaCount: mediaFiles.length
+      });
+
+      const response = await fetch(`https://getsocialnow.onrender.com/posts`, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server error response:', errorText);
+        throw new Error(`Failed to create post: ${response.status} - ${errorText}`);
+      }
+
+      const posts = await response.json();
+      console.log('Post created successfully:', posts);
+      
+      if (Array.isArray(posts)) {
+        dispatch(setPosts({ posts }));
+      }
+      
+      // Reset form
+      setMediaFiles([]);
+      setMediaType(null);
+      setPost("");
+      setIsMediaUpload(false);
+      
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert(`Failed to create post: ${error.message}`);
+    } finally {
+      setIsPosting(false);
+    }
+  };
 
   const handleDrop = (acceptedFiles, type) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      if (file.size > 50 * 1024 * 1024) {
-        alert('File is too large. Maximum size is 50MB.');
+    const newFiles = acceptedFiles.slice(0, 10 - mediaFiles.length);
+    
+    if (mediaFiles.length + newFiles.length > 10) {
+      alert('Maximum 10 items allowed per post');
+      return;
+    }
+
+    // Check file sizes
+    for (const file of newFiles) {
+      const isVideo = file.type.startsWith('video/');
+      const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+      
+      if (file.size > maxSize) {
+        alert(`${file.name} is too large. Max size: ${isVideo ? '50MB' : '10MB'}`);
         return;
       }
-      console.log('File selected:', file.name, 'Type:', type, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
-      setMediaFile(file);
-      setMediaType(type);
     }
+
+    setMediaFiles([...mediaFiles, ...newFiles]);
+    setMediaType('mixed');
   };
 
   return (
@@ -145,82 +154,62 @@ const handlePost = async () => {
           p="1rem"
         >
           <Dropzone
-            acceptedFiles={mediaType === 'image' 
-              ? ".jpg,.jpeg,.png,.gif,.webp" 
-              : ".mp4,.mov,.avi,.mkv,.webm,.flv,.wmv"}
-            multiple={false}
-            onDrop={(acceptedFiles) => handleDrop(acceptedFiles, mediaType)}
+            acceptedFiles=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.mkv,.webm"
+            multiple={true}
+            onDrop={(acceptedFiles) => handleDrop(acceptedFiles, 'mixed')}
           >
-            {({ getRootProps, getInputProps, isDragActive }) => (
-              <FlexBetween>
-                <Box
-                  {...getRootProps()}
-                  border={`2px dashed ${isDragActive ? palette.primary.dark : palette.primary.main}`}
-                  p="1rem"
-                  width="100%"
-                  sx={{ 
-                    "&:hover": { cursor: "pointer" },
-                    backgroundColor: isDragActive ? palette.primary.light : 'transparent'
-                  }}
-                >
+            {({ getRootProps, getInputProps }) => (
+              <Box>
+                <Box {...getRootProps()} border={`2px dashed ${palette.primary.main}`} p="1rem" sx={{ cursor: "pointer" }}>
                   <input {...getInputProps()} />
-                  {!mediaFile ? (
-                    <Typography sx={{ textAlign: 'center' }}>
-                      {isDragActive 
-                        ? `Drop ${mediaType} here...`
-                        : `Click or drag ${mediaType} here`}
-                    </Typography>
-                  ) : (
-                    <FlexBetween>
-                      <Typography>{mediaFile.name}</Typography>
-                      <EditOutlined />
-                    </FlexBetween>
-                  )}
+                  <Typography sx={{ textAlign: 'center' }}>
+                    {mediaFiles.length === 0 
+                      ? 'Click or drag photos/videos here (max 10)'
+                      : `${mediaFiles.length} file(s) selected`}
+                  </Typography>
                 </Box>
-                {mediaFile && (
-                  <IconButton
-                    onClick={(e) => { 
-                      e.stopPropagation();
-                      setMediaFile(null); 
-                      setMediaType(null);
-                      setIsMediaUpload(false);
-                    }}
-                    sx={{ width: "15%" }}
-                  >
-                    <DeleteOutlined />
-                  </IconButton>
+                
+                {mediaFiles.length > 0 && (
+                  <Box mt="1rem" display="flex" gap="0.5rem" flexWrap="wrap">
+                    {mediaFiles.map((file, index) => {
+                      const isVideo = file.type.startsWith('video/');
+                      return (
+                        <Box key={index} position="relative">
+                          {isVideo ? (
+                            <video 
+                              src={URL.createObjectURL(file)} 
+                              style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
+                            />
+                          ) : (
+                            <img 
+                              src={URL.createObjectURL(file)} 
+                              alt={`preview-${index}`}
+                              style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
+                            />
+                          )}
+                          <IconButton
+                            size="small"
+                            onClick={() => setMediaFiles(mediaFiles.filter((_, i) => i !== index))}
+                            sx={{
+                              position: 'absolute',
+                              top: -8,
+                              right: -8,
+                              backgroundColor: 'white',
+                              '&:hover': { backgroundColor: '#f0f0f0' }
+                            }}
+                          >
+                            <DeleteOutlined fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      );
+                    })}
+                  </Box>
                 )}
-              </FlexBetween>
+              </Box>
             )}
           </Dropzone>
         </Box>
       )}
-
-        {mediaType === 'link' && isMediaUpload && (
-          <Box mt="1rem">
-            <InputBase
-              placeholder="Paste YouTube, Vimeo, Twitch, or other video link..."
-              value={videoLink}
-              onChange={(e) => setVideoLink(e.target.value)}
-              sx={{
-                width: "100%",
-                backgroundColor: palette.neutral.light,
-                borderRadius: "0.5rem",
-                padding: "1rem",
-                border: `1px solid ${medium}`,
-              }}
-            />
-            {videoLink && (
-              <Typography 
-                variant="caption" 
-                color={palette.primary.main}
-                sx={{ mt: 0.5, display: 'block' }}
-              >
-                Link added ✓
-              </Typography>
-            )}
-          </Box>
-        )}  
 
       <Divider sx={{ margin: "1.25rem 0" }} />
 
@@ -228,60 +217,22 @@ const handlePost = async () => {
         <FlexBetween 
           gap="0.25rem" 
           onClick={() => {
-            setIsMediaUpload(!isMediaUpload || mediaType !== 'image');
-            setMediaType('image');
-            setMediaFile(null);
+            setIsMediaUpload(!isMediaUpload);
+            setMediaType('mixed');
+            if (isMediaUpload) {
+              setMediaFiles([]);
+            }
           }}
           sx={{ "&:hover": { cursor: "pointer" } }}
         >
           <ImageOutlined sx={{ color: mediumMain }} />
-          <Typography
-            color={mediumMain}
-            sx={{ "&:hover": { cursor: "pointer", color: medium } }}
-          >
-            Image
-          </Typography>
-        </FlexBetween>
-
-        <FlexBetween 
-          gap="0.25rem" 
-          onClick={() => {
-            setIsMediaUpload(!isMediaUpload || mediaType !== 'video');
-            setMediaType('video');
-            setMediaFile(null);
-          }}
-          sx={{ "&:hover": { cursor: "pointer" } }}
-        >
-          <VideoCameraFrontOutlined sx={{ color: mediumMain }} />
-          <Typography
-            color={mediumMain}
-            sx={{ "&:hover": { cursor: "pointer", color: medium } }}
-          >
-            Video
-          </Typography>
-        </FlexBetween>
-
-        <FlexBetween 
-          gap="0.25rem" 
-          onClick={() => {
-            setIsMediaUpload(!isMediaUpload || mediaType !== 'link');
-            setMediaType('link');
-            setMediaFile(null);
-            setVideoLink("");
-          }}
-          sx={{ "&:hover": { cursor: "pointer" } }}
-        >
-          <LinkOutlined sx={{ color: mediumMain }} />
-          <Typography
-            color={mediumMain}
-            sx={{ "&:hover": { cursor: "pointer", color: medium } }}
-          >
-            Link
+          <Typography color={mediumMain} sx={{ "&:hover": { cursor: "pointer", color: medium } }}>
+            Photo/Video
           </Typography>
         </FlexBetween>
 
         <Button
-          disabled={isPosting || (!post.trim() && !mediaFile)}
+          disabled={isPosting || (!post.trim() && mediaFiles.length === 0)}
           onClick={handlePost}
           sx={{
             color: palette.background.alt,
@@ -289,7 +240,7 @@ const handlePost = async () => {
             borderRadius: "3rem",
             opacity: isPosting ? 0.7 : 1,
             "&:hover": {
-              cursor: (isPosting || (!post.trim() && !mediaFile)) ? "not-allowed" : "pointer",
+              cursor: (isPosting || (!post.trim() && mediaFiles.length === 0)) ? "not-allowed" : "pointer",
               backgroundColor: palette.primary.dark,
             },
             "&:disabled": {

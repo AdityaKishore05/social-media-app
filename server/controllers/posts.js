@@ -6,110 +6,150 @@ import { v2 as cloudinary } from "cloudinary";
 /* CREATE */
 export const createPost = async (req, res) => {
   try {
-    const { userId, description, mediaType, videoLink } = req.body;
-    let mediaPath = null;
+    console.log("=== CREATE POST REQUEST ===");
+    console.log("Body:", req.body);
+    console.log("Files:", req.files ? req.files.length : 0);
 
-    console.log("Creating post:", { userId, hasFile: !!req.file, mediaType });
+    const { userId, description, mediaType } = req.body;
 
-    // Handle file upload
-    if (req.file && mediaType !== "link") {
+    // Validate required fields
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    if (!description?.trim() && (!req.files || req.files.length === 0)) {
+      return res.status(400).json({
+        message: "Post must have either description or media",
+      });
+    }
+
+    let mediaItems = [];
+
+    // Process uploaded files
+    if (req.files && req.files.length > 0) {
+      console.log(`Processing ${req.files.length} media files...`);
+
       try {
-        console.log("Starting Cloudinary upload...");
+        for (let i = 0; i < req.files.length; i++) {
+          const file = req.files[i];
+          console.log(`Uploading file ${i + 1}:`, {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+            hasBuffer: !!file.buffer,
+          });
 
-        if (!process.env.CLOUDINARY_API_KEY) {
-          throw new Error("Cloudinary API key not configured");
+          // Check if buffer exists
+          if (!file.buffer) {
+            throw new Error(`File buffer is missing for ${file.originalname}`);
+          }
+
+          const isVideo = file.mimetype.startsWith("video/");
+
+          // Convert buffer to base64
+          const fileStr = `data:${file.mimetype};base64,${file.buffer.toString(
+            "base64"
+          )}`;
+
+          // Upload to Cloudinary
+          const uploadResult = await cloudinary.uploader.upload(fileStr, {
+            resource_type: isVideo ? "video" : "image",
+            folder: "social-media-app",
+            timeout: 60000, // 60 second timeout
+          });
+
+          console.log(
+            `File ${i + 1} uploaded successfully:`,
+            uploadResult.secure_url
+          );
+
+          mediaItems.push({
+            url: uploadResult.secure_url,
+            type: isVideo ? "video" : "image",
+            publicId: uploadResult.public_id, // Store for potential deletion later
+          });
         }
-
-        const fileStr = `data:${
-          req.file.mimetype
-        };base64,${req.file.buffer.toString("base64")}`;
-
-        const uploadResult = await cloudinary.uploader.upload(fileStr, {
-          resource_type: mediaType === "video" ? "video" : "image",
-          folder: "social-media-app",
-        });
-
-        mediaPath = uploadResult.secure_url;
-        console.log("Cloudinary upload successful:", mediaPath);
+        console.log(`All ${mediaItems.length} files uploaded successfully`);
       } catch (uploadError) {
-        console.error("Cloudinary upload error:", uploadError);
+        console.error("CLOUDINARY UPLOAD ERROR:", uploadError);
         return res.status(500).json({
           message: "Failed to upload media to cloud storage",
           error: uploadError.message,
+          details: uploadError.stack,
         });
       }
     }
 
-    if (!description?.trim() && !mediaPath && !videoLink?.trim()) {
-      return res.status(400).json({
-        message: "Post must include a description, media, or video link.",
-      });
-    }
-
+    // Get user information
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({ message: "User not found" });
     }
 
+    console.log("Creating post for user:", user.firstName, user.lastName);
+
+    // Create new post
     const newPost = new Post({
       userId,
       firstName: user.firstName,
       lastName: user.lastName,
       description: description?.trim() || "",
       userPicturePath: user.picturePath,
+      mediaItems: mediaItems,
       likes: {},
       comments: [],
     });
 
-    if (mediaPath) {
-      if (mediaType === "image") {
-        newPost.picturePath = mediaPath;
-      } else if (mediaType === "video") {
-        newPost.videoPath = mediaPath;
-      }
-    }
-
-    if (videoLink?.trim()) {
-      newPost.videoLink = videoLink.trim();
-    } else if (mediaPath) {
-      if (mediaType === "image") {
-        newPost.picturePath = mediaPath;
-      } else if (mediaType === "video") {
-        newPost.videoPath = mediaPath;
-      }
-    }
-
     await newPost.save();
     console.log("Post created successfully:", newPost._id);
 
+    // Set no-cache headers
     res.set({
       "Cache-Control": "no-store, no-cache, must-revalidate, private",
       Pragma: "no-cache",
       Expires: "0",
     });
 
+    // Fetch all posts sorted by newest first
     const allPosts = await Post.find().sort({ createdAt: -1 });
+
+    // Populate user information for each post
     const populatedPosts = await Promise.all(
       allPosts.map(async (post) => {
-        const postUser = await User.findById(post.userId);
-        if (!postUser) return null;
+        try {
+          const postUser = await User.findById(post.userId);
+          if (!postUser) {
+            console.warn(`User not found for post ${post._id}`);
+            return null;
+          }
 
-        return {
-          ...post._doc,
-          firstName: postUser.firstName,
-          lastName: postUser.lastName,
-          userPicturePath: postUser.picturePath,
-        };
+          return {
+            ...post._doc,
+            firstName: postUser.firstName,
+            lastName: postUser.lastName,
+            userPicturePath: postUser.picturePath,
+          };
+        } catch (err) {
+          console.error(`Error populating post ${post._id}:`, err);
+          return null;
+        }
       })
     );
 
+    // Filter out any null posts
     const validPosts = populatedPosts.filter((post) => post !== null);
+
+    console.log(`Returning ${validPosts.length} posts`);
     res.status(201).json(validPosts);
   } catch (err) {
     console.error("CREATE POST ERROR:", err);
+    console.error("Error stack:", err.stack);
+
     res.status(500).json({
-      message: "An internal server error occurred.",
+      message: "Internal server error occurred while creating post",
       error: err.message,
+      // Only include stack trace in development
+      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
     });
   }
 };
