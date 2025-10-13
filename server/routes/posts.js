@@ -7,8 +7,8 @@ import {
   commentPost,
   deletePost,
 } from "../controllers/posts.js";
-import { verifyToken } from "../middleware/auth.js";
 import multer from "multer";
+import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -40,16 +40,14 @@ const upload = multer({
 // ROUTES
 // ============================================
 
-/* CREATE - THIS WAS MISSING! */
-router.post("/", verifyToken, upload.array("mediaFiles", 10), createPost);
 
 /* READ */
-router.get("/", verifyToken, getFeedPosts);
 router.get("/:userId/posts", verifyToken, getUserPosts);
-
-/* UPDATE */
-router.patch("/:id/like", verifyToken, likePost);
+router.post("/", verifyToken, upload.array("mediaFiles", 10), createPost);
+router.get("/", verifyToken, getFeedPosts);
+/* UPDATE */  
 router.patch("/:id/comment", verifyToken, commentPost);
+router.patch("/:id/like", verifyToken, likePost);
 
 /* DELETE */
 router.delete("/:id/delete", verifyToken, deletePost);

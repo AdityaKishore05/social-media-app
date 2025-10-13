@@ -3,93 +3,172 @@ import User from "../models/User.js";
 import mongoose from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
 
-/* CREATE */
+/* CREATE POST WITH COMPREHENSIVE DEBUGGING */
 export const createPost = async (req, res) => {
+  console.log("\n==========================================");
+  console.log("CREATE POST REQUEST RECEIVED");
+  console.log("==========================================");
+
   try {
-    console.log("=== CREATE POST REQUEST ===");
-    console.log("Body:", req.body);
-    console.log("Files:", req.files ? req.files.length : 0);
+    // Log everything about the request
+    console.log("Request Method:", req.method);
+    console.log("Request URL:", req.url);
+    console.log("Request Headers:", JSON.stringify(req.headers, null, 2));
+    console.log("\n--- Request Body ---");
+    console.log("Body keys:", Object.keys(req.body));
+    console.log("Body:", JSON.stringify(req.body, null, 2));
 
-    const { userId, description, mediaType } = req.body;
+    console.log("\n--- Files Information ---");
+    console.log("req.files exists:", !!req.files);
+    console.log("req.files type:", typeof req.files);
+    console.log("req.files is array:", Array.isArray(req.files));
+    console.log("Files count:", req.files ? req.files.length : 0);
 
-    // Validate required fields
-    if (!userId) {
-      return res.status(400).json({ message: "User ID is required" });
-    }
-
-    if (!description?.trim() && (!req.files || req.files.length === 0)) {
-      return res.status(400).json({
-        message: "Post must have either description or media",
+    if (req.files && req.files.length > 0) {
+      console.log("\nDetailed file info:");
+      req.files.forEach((file, index) => {
+        console.log(`File ${index + 1}:`, {
+          fieldname: file.fieldname,
+          originalname: file.originalname,
+          encoding: file.encoding,
+          mimetype: file.mimetype,
+          size: file.size,
+          hasBuffer: !!file.buffer,
+          bufferLength: file.buffer ? file.buffer.length : 0,
+        });
       });
     }
 
+    const { userId, description, mediaType } = req.body;
+    console.log("\n--- Extracted Data ---");
+    console.log("userId:", userId);
+    console.log("description:", description);
+    console.log("mediaType:", mediaType);
+
+    // Validate required fields
+    if (!userId) {
+      console.error("ERROR: User ID is missing");
+      return res.status(400).json({
+        message: "User ID is required",
+        receivedBody: req.body,
+      });
+    }
+
+    if (!description?.trim() && (!req.files || req.files.length === 0)) {
+      console.error("ERROR: No content provided");
+      return res.status(400).json({
+        message: "Post must have either description or media",
+        hasDescription: !!description?.trim(),
+        hasFiles: !!(req.files && req.files.length > 0),
+      });
+    }
+
+    console.log("\n--- Validation Passed ---");
     let mediaItems = [];
 
     // Process uploaded files
     if (req.files && req.files.length > 0) {
-      console.log(`Processing ${req.files.length} media files...`);
+      console.log(
+        `\n--- Starting Media Upload (${req.files.length} files) ---`
+      );
 
-      try {
-        for (let i = 0; i < req.files.length; i++) {
-          const file = req.files[i];
-          console.log(`Uploading file ${i + 1}:`, {
-            originalname: file.originalname,
-            mimetype: file.mimetype,
-            size: file.size,
-            hasBuffer: !!file.buffer,
-          });
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        console.log(`\nProcessing file ${i + 1}/${req.files.length}:`);
+        console.log("  - Name:", file.originalname);
+        console.log("  - Type:", file.mimetype);
+        console.log("  - Size:", `${(file.size / 1024).toFixed(2)} KB`);
 
-          // Check if buffer exists
-          if (!file.buffer) {
-            throw new Error(`File buffer is missing for ${file.originalname}`);
-          }
+        // Check if buffer exists
+        if (!file.buffer) {
+          console.error(`ERROR: Buffer missing for file ${file.originalname}`);
+          throw new Error(`File buffer is missing for ${file.originalname}`);
+        }
 
+        console.log("  - Buffer length:", file.buffer.length);
+
+        try {
           const isVideo = file.mimetype.startsWith("video/");
+          console.log("  - Is video:", isVideo);
 
           // Convert buffer to base64
-          const fileStr = `data:${file.mimetype};base64,${file.buffer.toString(
-            "base64"
-          )}`;
+          console.log("  - Converting to base64...");
+          const base64String = file.buffer.toString("base64");
+          console.log("  - Base64 length:", base64String.length);
+
+          const fileStr = `data:${file.mimetype};base64,${base64String}`;
+          console.log("  - Data URL created, length:", fileStr.length);
+
+          // Check Cloudinary configuration
+          console.log("\n  - Cloudinary config check:");
+          console.log(
+            "    Cloud name:",
+            cloudinary.config().cloud_name || "NOT SET"
+          );
+          console.log(
+            "    API key:",
+            cloudinary.config().api_key ? "SET" : "NOT SET"
+          );
+          console.log(
+            "    API secret:",
+            cloudinary.config().api_secret ? "SET" : "NOT SET"
+          );
 
           // Upload to Cloudinary
+          console.log("  - Starting Cloudinary upload...");
           const uploadResult = await cloudinary.uploader.upload(fileStr, {
             resource_type: isVideo ? "video" : "image",
             folder: "social-media-app",
-            timeout: 60000, // 60 second timeout
+            timeout: 60000,
           });
 
-          console.log(
-            `File ${i + 1} uploaded successfully:`,
-            uploadResult.secure_url
-          );
+          console.log("  ✓ Upload successful!");
+          console.log("    URL:", uploadResult.secure_url);
+          console.log("    Public ID:", uploadResult.public_id);
 
           mediaItems.push({
             url: uploadResult.secure_url,
             type: isVideo ? "video" : "image",
-            publicId: uploadResult.public_id, // Store for potential deletion later
+            publicId: uploadResult.public_id,
+          });
+        } catch (uploadError) {
+          console.error(`\n✗ CLOUDINARY UPLOAD ERROR for file ${i + 1}:`);
+          console.error("Error name:", uploadError.name);
+          console.error("Error message:", uploadError.message);
+          console.error("Error stack:", uploadError.stack);
+
+          return res.status(500).json({
+            message: "Failed to upload media to cloud storage",
+            error: uploadError.message,
+            fileName: file.originalname,
+            fileIndex: i + 1,
+            details: uploadError.stack,
           });
         }
-        console.log(`All ${mediaItems.length} files uploaded successfully`);
-      } catch (uploadError) {
-        console.error("CLOUDINARY UPLOAD ERROR:", uploadError);
-        return res.status(500).json({
-          message: "Failed to upload media to cloud storage",
-          error: uploadError.message,
-          details: uploadError.stack,
-        });
       }
+
+      console.log(`\n✓ All ${mediaItems.length} files uploaded successfully`);
     }
 
     // Get user information
+    console.log("\n--- Fetching User Information ---");
+    console.log("Looking up user ID:", userId);
+
     const user = await User.findById(userId);
+
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      console.error("ERROR: User not found for ID:", userId);
+      return res.status(404).json({
+        message: "User not found",
+        userId: userId,
+      });
     }
 
-    console.log("Creating post for user:", user.firstName, user.lastName);
+    console.log("✓ User found:", user.firstName, user.lastName);
 
     // Create new post
-    const newPost = new Post({
+    console.log("\n--- Creating Post Document ---");
+    const postData = {
       userId,
       firstName: user.firstName,
       lastName: user.lastName,
@@ -98,10 +177,17 @@ export const createPost = async (req, res) => {
       mediaItems: mediaItems,
       likes: {},
       comments: [],
-    });
+    };
 
+    console.log("Post data:", JSON.stringify(postData, null, 2));
+
+    const newPost = new Post(postData);
+
+    console.log("Saving post to database...");
     await newPost.save();
-    console.log("Post created successfully:", newPost._id);
+    console.log("✓ Post saved successfully!");
+    console.log("  Post ID:", newPost._id);
+    console.log("  Created at:", newPost.createdAt);
 
     // Set no-cache headers
     res.set({
@@ -110,10 +196,13 @@ export const createPost = async (req, res) => {
       Expires: "0",
     });
 
-    // Fetch all posts sorted by newest first
+    // Fetch all posts
+    console.log("\n--- Fetching All Posts ---");
     const allPosts = await Post.find().sort({ createdAt: -1 });
+    console.log("Total posts found:", allPosts.length);
 
-    // Populate user information for each post
+    // Populate user information
+    console.log("Populating user information for all posts...");
     const populatedPosts = await Promise.all(
       allPosts.map(async (post) => {
         try {
@@ -136,20 +225,29 @@ export const createPost = async (req, res) => {
       })
     );
 
-    // Filter out any null posts
     const validPosts = populatedPosts.filter((post) => post !== null);
+    console.log("Valid posts to return:", validPosts.length);
 
-    console.log(`Returning ${validPosts.length} posts`);
-    res.status(201).json(validPosts);
+    console.log("\n✓✓✓ POST CREATED SUCCESSFULLY ✓✓✓");
+    console.log("==========================================\n");
+
+    return res.status(201).json(validPosts);
   } catch (err) {
-    console.error("CREATE POST ERROR:", err);
+    console.error("\n✗✗✗ CREATE POST ERROR ✗✗✗");
+    console.error("Error name:", err.name);
+    console.error("Error message:", err.message);
     console.error("Error stack:", err.stack);
+    console.error("==========================================\n");
 
-    res.status(500).json({
+    return res.status(500).json({
       message: "Internal server error occurred while creating post",
       error: err.message,
-      // Only include stack trace in development
-      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+      errorName: err.name,
+      ...(process.env.NODE_ENV === "development" && {
+        stack: err.stack,
+        requestBody: req.body,
+        fileCount: req.files ? req.files.length : 0,
+      }),
     });
   }
 };
