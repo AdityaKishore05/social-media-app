@@ -1,4 +1,4 @@
-import { Box, useMediaQuery } from "@mui/material";
+import { Box, Divider, useMediaQuery } from "@mui/material";
 import { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
@@ -63,10 +63,10 @@ const getUser = useCallback(async () => {
       <Navbar />
       <Box
         width="100%"
-        padding="1rem"
         display={isNonMobileScreens ? "flex" : "block"}
         gap="1rem"
         justifyContent="center"
+        mt="1rem"
       >
         <Box flexBasis={isNonMobileScreens ? "27%" : undefined}>
           <UserWidget userId={userId} picturePath={user.picturePath} />
@@ -84,6 +84,7 @@ const getUser = useCallback(async () => {
               <Box m="1rem 0" />
             </>
           )}
+          <Divider></Divider>
           
           {/* FIXED: Pass key prop to force re-render and ensure only user posts are shown */}
           <PostsWidget 

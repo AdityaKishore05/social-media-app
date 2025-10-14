@@ -171,7 +171,6 @@ const UserWidget = ({ userId, picturePath }) => {
           </Typography>
         </Box>
       )}
-      <Divider />
 
       {/* Edit Profile Modal */}
       {isOwnProfile && (

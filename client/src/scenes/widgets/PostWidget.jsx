@@ -6,10 +6,9 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "@mui/icons-material";
-import { Box, Divider, IconButton, Typography, useTheme, InputBase, Button } from "@mui/material";
+import { Box, Divider, IconButton, Typography, useTheme, InputBase, Button, useMediaQuery } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Friend from "components/Friend";
-import WidgetWrapper from "components/WidgetWrapper";
 import { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost, setPosts } from "state";
@@ -28,6 +27,7 @@ const PostWidget = ({
   picturePath,
   videoPath,
 }) => {
+  const isNonMobileScreens = useMediaQuery("(min-width:1025px)");
   const [isComments, setIsComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isLiking, setIsLiking] = useState(false);
@@ -200,25 +200,26 @@ const PostWidget = ({
   };
 
   return (
-    <WidgetWrapper m="1rem 0">
-      <Friend 
+    <Box my="1rem">
+      <Friend
+        padding="20px"
         friendId={postUserId} 
         name={name} 
         subtitle={formatDate(createdAt)} 
-        userPicturePath={userPicturePath} 
+        userPicturePath={userPicturePath}
       />
 
       {items.length > 0 && (
-        <Box 
-          sx={{ 
-            width: "100%", 
-            paddingTop: "80%",
-            position: "relative", 
-            backgroundColor: "black", 
-            borderRadius: "0.75rem", 
-            marginTop: "0.75rem" 
-          }}
-        >
+        <Box
+        sx={{
+          width: "100%",
+          paddingTop: isNonMobileScreens ? "60%" : "150%",
+          position: "relative", 
+          backgroundColor: "black", 
+          marginTop: "1.2rem",
+          marginBottom:"0.5rem"
+        }}
+      >
           {mediaError[currentIndex] ? (
             <Box
               sx={{
@@ -349,9 +350,7 @@ const PostWidget = ({
         </Typography>
       )}
 
-      
-
-      <FlexBetween>
+      <FlexBetween mb="0.5rem">
         <FlexBetween gap="1rem">
           <FlexBetween gap="0.3rem">
             <IconButton onClick={patchLike} disabled={isLiking}>
@@ -384,7 +383,7 @@ const PostWidget = ({
       </FlexBetween>
 
       {isComments && (
-        <Box mt="0.5rem">
+        <Box m="0.5rem">
           {comments && comments.length > 0 ? (
             comments.map((comment, index) => {
               const commentId = comment._id || `comment-${index}`;
@@ -422,7 +421,7 @@ const PostWidget = ({
           )}
           
           <Divider />
-          <FlexBetween gap="1.5rem" mt="0.5rem" alignItems="flex-end">
+          <FlexBetween gap="1.5rem" mt="0.5rem" alignItems="flex-end" mb="1rem">
             <InputBase
               placeholder="Write a comment..."
               onChange={(e) => setCommentText(e.target.value)}
@@ -463,7 +462,8 @@ const PostWidget = ({
           </FlexBetween>
         </Box>
       )}
-    </WidgetWrapper>
+      <Divider ></Divider>
+    </Box>
   );
 };
 

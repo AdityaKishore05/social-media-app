@@ -22,8 +22,6 @@ const EditProfileModal = ({ open, onClose, user }) => {
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
-    location: user?.location || "",
-    occupation: user?.occupation || "",
     bio: user?.bio || "",
   });
   const [picture, setPicture] = useState(null);
@@ -85,7 +83,6 @@ const EditProfileModal = ({ open, onClose, user }) => {
       );
 
       onClose();
-      window.location.reload(); // Refresh to show updates
     } catch (err) {
       console.error("Error updating profile:", err);
       setError(err.message);
@@ -179,25 +176,7 @@ const EditProfileModal = ({ open, onClose, user }) => {
             disabled={isLoading}
             fullWidth
           />
-
-          {/* Location and Occupation */}
-          <TextField
-            label="Location"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            disabled={isLoading}
-            fullWidth
-          />
-
-          <TextField
-            label="Occupation"
-            name="occupation"
-            value={formData.occupation}
-            onChange={handleChange}
-            disabled={isLoading}
-            fullWidth
-          />
+          
           <TextField
             label="Bio"
             name="bio"

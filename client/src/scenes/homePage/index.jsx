@@ -1,4 +1,4 @@
-import { Box, useMediaQuery } from "@mui/material";
+import { Box, Divider, useMediaQuery } from "@mui/material";
 import { useSelector } from "react-redux";
 import Navbar from "scenes/navbar";
 import MyPostWidget from "scenes/widgets/MyPostWidget";
@@ -14,8 +14,6 @@ const HomePage = () => {
       <Box
         width="100%"
         display={isNonMobileScreens ? "flex" : "block"}
-        padding={isNonMobileScreens ? "1rem" : "0.75rem "}
-        paddingX={isNonMobileScreens ? "1rem" : "0.75rem "}
         gap="2rem"
         justifyContent="center"
       >
@@ -23,7 +21,8 @@ const HomePage = () => {
           flexBasis={isNonMobileScreens ? "50%" : undefined}
           mt={isNonMobileScreens ? undefined : "1rem"}
         >
-          <MyPostWidget picturePath={picturePath} />
+          <MyPostWidget picturePath={picturePath}/>
+          <Divider></Divider>
           <PostsWidget userId={_id} />
         </Box>
       </Box>
