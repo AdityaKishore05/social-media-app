@@ -212,7 +212,7 @@ const PostWidget = ({
         <Box 
           sx={{ 
             width: "100%", 
-            paddingBottom: "70%", 
+            paddingTop: "80%", 
             position: "relative", 
             backgroundColor: "black", 
             borderRadius: "0.75rem", 
