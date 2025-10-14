@@ -48,7 +48,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   };
 
   return (
-    <FlexBetween>
+    <FlexBetween p="0.5rem" py="0rem">
       <FlexBetween gap="1rem">
         {/* FIXED: Pass the name prop to UserImage for initials */}
         <UserImage image={userPicturePath} size="60px" name={name} />
@@ -79,7 +79,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
       {friendId !== _id && (
         <IconButton
           onClick={() => patchFriend()}
-          sx={{ color: palette.background.alt, p: "0.6rem" }}
+          sx={{ color: palette.background.alt}}
         >
           {isFriend ? (
             <PersonRemoveOutlined sx={{ color: primaryDark }} />
