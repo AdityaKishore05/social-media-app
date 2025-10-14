@@ -49,18 +49,11 @@ const MyPostWidget = ({ picturePath }) => {
       formData.append("description", post.trim());
       
       if (mediaFiles.length > 0) {
-        mediaFiles.forEach((file, index) => {
-          // Use indexed names or the backend's expected field name
+        mediaFiles.forEach((file) => {
           formData.append("mediaFiles", file);
-          console.log(`Adding file ${index}:`, file.name, file.type, file.size);
         });
+        formData.append("mediaType", "mixed");
       }
-
-      console.log('Posting to server...', {
-        userId: _id,
-        description: post.trim(),
-        mediaCount: mediaFiles.length
-      });
 
       const response = await fetch(`https://getsocialnow.onrender.com/posts`, {
         method: "POST",
@@ -72,18 +65,14 @@ const MyPostWidget = ({ picturePath }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Server error response:', errorText);
         throw new Error(`Failed to create post: ${response.status} - ${errorText}`);
       }
 
       const posts = await response.json();
-      console.log('Post created successfully:', posts);
-      
       if (Array.isArray(posts)) {
         dispatch(setPosts({ posts }));
       }
       
-      // Reset form
       setMediaFiles([]);
       setPost("");
       setIsMediaUpload(false);
@@ -96,11 +85,13 @@ const MyPostWidget = ({ picturePath }) => {
     }
   };
 
-  const handleDrop = (acceptedFiles, type) => {
-   const newFiles = acceptedFiles.slice(0, 20 - mediaFiles.length);
-if (mediaFiles.length + newFiles.length > 20) {
-  alert('Maximum 20 items allowed per post');
-}
+  const handleDrop = (acceptedFiles) => {
+    const newFiles = acceptedFiles.slice(0, 20 - mediaFiles.length);
+    
+    if (mediaFiles.length + newFiles.length > 20) {
+      alert('Maximum 20 items allowed per post');
+      return;
+    }
 
     // Check file sizes
     for (const file of newFiles) {
@@ -130,12 +121,21 @@ if (mediaFiles.length + newFiles.length > 20) {
           onChange={(e) => setPost(e.target.value)}
           value={post}
           multiline
-          maxRows={4}
+          maxRows={8}
           sx={{
             width: "100%",
             backgroundColor: palette.neutral.light,
             borderRadius: "2rem",
             padding: "1rem 2rem",
+            wordWrap: "break-word",
+            overflowWrap: "break-word",
+          }}
+          onKeyDown={(e) => {
+            // Prevent posting on Enter, allow Shift+Enter for new line
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+              // Don't do anything - let user add new lines freely
+              // They can click POST button to submit
+            }
           }}
         />
       </FlexBetween>
@@ -150,11 +150,16 @@ if (mediaFiles.length + newFiles.length > 20) {
           <Dropzone
             acceptedFiles=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.mkv,.webm"
             multiple={true}
-            onDrop={(acceptedFiles) => handleDrop(acceptedFiles, 'mixed')}
+            onDrop={handleDrop}
           >
             {({ getRootProps, getInputProps }) => (
               <Box>
-                <Box {...getRootProps()} border={`2px dashed ${palette.primary.main}`} p="1rem" sx={{ cursor: "pointer" }}>
+                <Box 
+                  {...getRootProps()} 
+                  border={`2px dashed ${palette.primary.main}`} 
+                  p="1rem" 
+                  sx={{ cursor: "pointer" }}
+                >
                   <input {...getInputProps()} />
                   <Typography sx={{ textAlign: 'center' }}>
                     {mediaFiles.length === 0 
@@ -172,13 +177,23 @@ if (mediaFiles.length + newFiles.length > 20) {
                           {isVideo ? (
                             <video 
                               src={URL.createObjectURL(file)} 
-                              style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
+                              style={{ 
+                                width: '80px', 
+                                height: '80px', 
+                                objectFit: 'cover', 
+                                borderRadius: '8px' 
+                              }}
                             />
                           ) : (
                             <img 
                               src={URL.createObjectURL(file)} 
                               alt={`preview-${index}`}
-                              style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
+                              style={{ 
+                                width: '80px', 
+                                height: '80px', 
+                                objectFit: 'cover', 
+                                borderRadius: '8px' 
+                              }}
                             />
                           )}
                           <IconButton
@@ -212,11 +227,17 @@ if (mediaFiles.length + newFiles.length > 20) {
           gap="0.25rem" 
           onClick={() => {
             setIsMediaUpload(!isMediaUpload);
+            if (isMediaUpload) {
+              setMediaFiles([]);
+            }
           }}
           sx={{ "&:hover": { cursor: "pointer" } }}
         >
           <ImageOutlined sx={{ color: mediumMain }} />
-          <Typography color={mediumMain} sx={{ "&:hover": { cursor: "pointer", color: medium } }}>
+          <Typography 
+            color={mediumMain} 
+            sx={{ "&:hover": { cursor: "pointer", color: medium } }}
+          >
             Photo/Video
           </Typography>
         </FlexBetween>

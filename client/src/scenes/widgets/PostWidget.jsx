@@ -207,10 +207,6 @@ const PostWidget = ({
         subtitle={formatDate(createdAt)} 
         userPicturePath={userPicturePath} 
       />
-      
-      <Typography color={main} sx={{ mt: "1rem" }}>
-        {description}
-      </Typography>
 
       {items.length > 0 && (
         <Box 
@@ -338,7 +334,24 @@ const PostWidget = ({
         </Box>
       )}
 
-      <FlexBetween mt="0.25rem">
+      {description && (
+        <Typography 
+          color={main} 
+          sx={{ 
+            my: "0.5rem", mx: "0.8rem",
+            wordWrap: "break-word",
+            overflowWrap: "break-word",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+          }}
+        >
+          {description}
+        </Typography>
+      )}
+
+      
+
+      <FlexBetween>
         <FlexBetween gap="1rem">
           <FlexBetween gap="0.3rem">
             <IconButton onClick={patchLike} disabled={isLiking}>
@@ -383,7 +396,17 @@ const PostWidget = ({
               return (
                 <Box key={commentId}>
                   <Divider />
-                  <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem" }}>
+                  <Typography 
+                    sx={{ 
+                      color: main, 
+                      m: "0.5rem 0", 
+                      pl: "1rem",
+                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                    }}
+                  >
                     <span style={{ fontWeight: 500 }}>
                       {commentName}
                     </span>
@@ -399,23 +422,29 @@ const PostWidget = ({
           )}
           
           <Divider />
-          <FlexBetween gap="1.5rem" mt="0.5rem">
+          <FlexBetween gap="1.5rem" mt="0.5rem" alignItems="flex-end">
             <InputBase
               placeholder="Write a comment..."
               onChange={(e) => setCommentText(e.target.value)}
               value={commentText}
               disabled={isCommenting}
+              multiline
+              maxRows={4}
               sx={{
                 width: "100%",
                 backgroundColor: palette.neutral.light,
                 borderRadius: "2rem",
-                padding: "0.5rem 1.5rem"
+                padding: "0.5rem 1.5rem",
+                minHeight: "40px",
+                alignItems: "center",
               }}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+              onKeyDown={(e) => {
+                // Enter for new line, Ctrl+Enter or Cmd+Enter to submit
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                   e.preventDefault();
                   handleComment();
                 }
+                // Just Enter adds new line (default behavior)
               }}
             />
             <Button
@@ -424,7 +453,9 @@ const PostWidget = ({
               sx={{
                 color: palette.background.alt,
                 backgroundColor: primary,
-                borderRadius: "3rem"
+                borderRadius: "3rem",
+                minWidth: "80px",
+                flexShrink: 0,
               }}
             >
               {isCommenting ? 'SENDING...' : 'SEND'}
