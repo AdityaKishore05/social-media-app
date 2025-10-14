@@ -100,12 +100,10 @@ const MyPostWidget = ({ picturePath }) => {
   };
 
   const handleDrop = (acceptedFiles, type) => {
-    const newFiles = acceptedFiles.slice(0, 10 - mediaFiles.length);
-    
-    if (mediaFiles.length + newFiles.length > 10) {
-      alert('Maximum 10 items allowed per post');
-      return;
-    }
+   const newFiles = acceptedFiles.slice(0, 20 - mediaFiles.length);
+if (mediaFiles.length + newFiles.length > 20) {
+  alert('Maximum 20 items allowed per post');
+}
 
     // Check file sizes
     for (const file of newFiles) {

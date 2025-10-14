@@ -46,6 +46,19 @@ const PostWidget = ({
   const main = palette.neutral.main;
   const primary = palette.primary.main;
 
+  // Helper function to construct proper media URL
+  const constructMediaUrl = (path) => {
+    if (!path) return null;
+    
+    // If it's already a full URL (http:// or https://), return as-is
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    
+    // If it's a relative path, prepend the server URL
+    return `https://getsocialnow.onrender.com/assets/${path}`;
+  };
+
   // BACKWARD COMPATIBILITY: Convert old format to new format
   const items = useMemo(() => {
     // If new format exists, use it
@@ -58,14 +71,14 @@ const PostWidget = ({
 
     if (picturePath) {
       oldFormatItems.push({
-        url: `https://getsocialnow.onrender.com/assets/${picturePath}`,
+        url: constructMediaUrl(picturePath),
         type: 'image',
       });
     }
 
     if (videoPath) {
       oldFormatItems.push({
-        url: `https://getsocialnow.onrender.com/assets/${videoPath}`,
+        url: constructMediaUrl(videoPath),
         type: 'video',
       });
     }

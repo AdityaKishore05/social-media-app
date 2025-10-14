@@ -18,10 +18,10 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 
 const upload = multer({
-  storage: storage,
+  storage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB max file size
-    files: 10, // Max 10 files per request
+    fileSize: 50 * 1024 * 1024, // 50MB per file
+    files: 20, // Max 20 files
   },
   fileFilter: (req, file, cb) => {
     // Accept images and videos only
@@ -43,7 +43,7 @@ const upload = multer({
 
 /* READ */
 router.get("/:userId/posts", verifyToken, getUserPosts);
-router.post("/", verifyToken, upload.array("mediaFiles", 10), createPost);
+router.post("/", verifyToken, upload.array("mediaFiles", 20), createPost);
 router.get("/", verifyToken, getFeedPosts);
 /* UPDATE */  
 router.patch("/:id/comment", verifyToken, commentPost);
