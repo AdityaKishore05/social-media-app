@@ -11,7 +11,6 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // FIXED: Stabilize getPosts function
   const getPosts = useCallback(async (forceRefresh = false) => {
     if (!token) return;
     
@@ -19,7 +18,6 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     setError(null);
     
     try {
-      // Add timestamp for cache busting only when needed
       const timestamp = forceRefresh ? `?_t=${Date.now()}` : '';
       const response = await fetch(`https://getsocialnow.onrender.com/posts${timestamp}`, {
         method: "GET",
@@ -47,7 +45,7 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch, token]); // Remove forceRefresh from dependencies
+  }, [dispatch, token]);
 
   const getUserPosts = useCallback(async (forceRefresh = false) => {
     if (!token || !userId) return;
@@ -86,9 +84,8 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch, token, userId]); // Remove forceRefresh from dependencies
+  }, [dispatch, token, userId]);
 
-  // FIXED: Stabilize handleRefresh
   const handleRefresh = useCallback(() => {
     if (isProfile && userId) {
       getUserPosts(true);
@@ -97,7 +94,6 @@ const PostsWidget = ({ userId, isProfile = false }) => {
     }
   }, [isProfile, userId, getUserPosts, getPosts]);
 
-  // FIXED: Only fetch once on mount/dependency change
   useEffect(() => {
     if (isProfile && userId) {
       getUserPosts(false);
@@ -105,8 +101,6 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       getPosts(false);
     }
   }, [isProfile, userId, getUserPosts, getPosts]);
-
-  // REMOVED: Storage event listener (causing unnecessary refreshes)
 
   if (isLoading) {
     return (
@@ -141,31 +135,36 @@ const PostsWidget = ({ userId, isProfile = false }) => {
       </Box>
     );
   }
-return (
-  <Box>
-    {posts.map((post) => {
-      if (!post || !post._id) {
-        console.warn('Invalid post data:', post);
-        return null;
-      }
 
-      return (
-        <PostWidget
-          key={post._id}
-          postId={post._id}
-          postUserId={post.userId}
-          name={`${post.firstName} ${post.lastName}`}
-          description={post.description}
-          userPicturePath={post.userPicturePath}
-          likes={post.likes || {}}
-          comments={post.comments || []}
-          mediaItems={post.mediaItems || []}
-          createdAt={post.createdAt}
-        />
-      );
-    })}
-  </Box>
-);
+  return (
+    <Box>
+      {posts.map((post) => {
+        if (!post || !post._id) {
+          console.warn('Invalid post data:', post);
+          return null;
+        }
+
+        return (
+          <PostWidget
+            key={post._id}
+            postId={post._id}
+            postUserId={post.userId}
+            name={`${post.firstName} ${post.lastName}`}
+            description={post.description}
+            userPicturePath={post.userPicturePath}
+            likes={post.likes || {}}
+            comments={post.comments || []}
+            // NEW FORMAT
+            mediaItems={post.mediaItems || []}
+            // OLD FORMAT - for backward compatibility
+            picturePath={post.picturePath}
+            videoPath={post.videoPath}
+            createdAt={post.createdAt}
+          />
+        );
+      })}
+    </Box>
+  );
 };
 
 export default PostsWidget;

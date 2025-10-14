@@ -10,7 +10,7 @@ import { Box, Divider, IconButton, Typography, useTheme, InputBase, Button } fro
 import FlexBetween from "components/FlexBetween";
 import Friend from "components/Friend";
 import WidgetWrapper from "components/WidgetWrapper";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost, setPosts } from "state";
 
@@ -23,17 +23,18 @@ const PostWidget = ({
   mediaItems,
   likes,
   comments,
-  createdAt, // Add this
-
+  createdAt,
+  // OLD FORMAT FIELDS - for backward compatibility
+  picturePath,
+  videoPath,
 }) => {
-  const [mediaError, setMediaError] = useState(false);
   const [isComments, setIsComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isLiking, setIsLiking] = useState(false);
   const [isCommenting, setIsCommenting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const items = mediaItems || [];
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [mediaError, setMediaError] = useState({});
 
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
@@ -44,6 +45,34 @@ const PostWidget = ({
   const { palette } = useTheme();
   const main = palette.neutral.main;
   const primary = palette.primary.main;
+
+  // BACKWARD COMPATIBILITY: Convert old format to new format
+  const items = useMemo(() => {
+    // If new format exists, use it
+    if (mediaItems && mediaItems.length > 0) {
+      return mediaItems;
+    }
+
+    // Otherwise, convert old format to new format
+    const oldFormatItems = [];
+
+    if (picturePath) {
+      oldFormatItems.push({
+        url: `https://getsocialnow.onrender.com/assets/${picturePath}`,
+        type: 'image',
+      });
+    }
+
+    if (videoPath) {
+      oldFormatItems.push({
+        url: `https://getsocialnow.onrender.com/assets/${videoPath}`,
+        type: 'video',
+      });
+    }
+
+    return oldFormatItems;
+  }, [mediaItems, picturePath, videoPath]);
+
   const formatDate = (dateString) => {
     if (!dateString) return 'Recently';
     
@@ -64,9 +93,8 @@ const PostWidget = ({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // FIXED: Add cache-busting headers and better error handling
   const patchLike = async () => {
-    if (isLiking) return; // Prevent double clicks
+    if (isLiking) return;
     
     setIsLiking(true);
     try {
@@ -75,9 +103,6 @@ const PostWidget = ({
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
         },
         body: JSON.stringify({ userId: loggedInUserId }),
       });
@@ -88,7 +113,6 @@ const PostWidget = ({
       
       const updatedPost = await response.json();
       dispatch(setPost({ post: updatedPost }));
-      console.log('Like updated successfully');
     } catch (error) {
       console.error("Like action failed:", error);
       alert('Failed to update like. Please try again.');
@@ -97,7 +121,6 @@ const PostWidget = ({
     }
   };
 
-  // FIXED: Add cache-busting headers and better error handling
   const handleComment = async () => {
     if (!commentText.trim() || isCommenting) return;
     
@@ -108,9 +131,6 @@ const PostWidget = ({
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
         },
         body: JSON.stringify({
           userId: loggedInUserId,
@@ -125,7 +145,6 @@ const PostWidget = ({
       const updatedPost = await response.json();
       dispatch(setPost({ post: updatedPost }));
       setCommentText("");
-      console.log('Comment added successfully');
     } catch (error) {
       console.error("Error adding comment:", error);
       alert('Failed to add comment. Please try again.');
@@ -134,7 +153,6 @@ const PostWidget = ({
     }
   };
 
-  // FIXED: Add cache-busting headers and better error handling
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this post?") || isDeleting) return;
     
@@ -145,9 +163,6 @@ const PostWidget = ({
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
         },
         body: JSON.stringify({ userId: loggedInUserId }),
       });
@@ -158,7 +173,6 @@ const PostWidget = ({
       
       const updatedPosts = await response.json();
       dispatch(setPosts({ posts: updatedPosts }));
-      console.log('Post deleted successfully');
     } catch (error) {
       console.error("Error deleting post:", error);
       alert('Failed to delete post. Please try again.');
@@ -167,84 +181,147 @@ const PostWidget = ({
     }
   };
 
-  // FIXED: Better media URL construction
-  const getMediaUrl = (mediaPath) => {
-    if (!mediaPath) return null;
-    
-    // If it's already a full URL, return as is
-    if (mediaPath.startsWith('http')) return mediaPath;
-    
-    // Construct full URL with API base
-    return `https://getsocialnow.onrender.com/assets/${mediaPath}`;
+  const handleMediaError = (index) => {
+    console.error(`Failed to load media at index ${index}:`, items[index]);
+    setMediaError(prev => ({ ...prev, [index]: true }));
   };
 
   return (
     <WidgetWrapper m="1rem 0">
-      <Friend friendId={postUserId} name={name} subtitle={formatDate(createdAt)} userPicturePath={userPicturePath} />
+      <Friend 
+        friendId={postUserId} 
+        name={name} 
+        subtitle={formatDate(createdAt)} 
+        userPicturePath={userPicturePath} 
+      />
       
-      <Typography color={main} sx={{ mt: "1rem" }}>{description}</Typography>
+      <Typography color={main} sx={{ mt: "1rem" }}>
+        {description}
+      </Typography>
 
       {items.length > 0 && (
-        <Box sx={{ width: "100%", paddingBottom: "70%", position: "relative", backgroundColor: "black", borderRadius: "0.75rem", marginTop: "0.75rem" }}>
-          {items[currentIndex].type === 'video' ? (
+        <Box 
+          sx={{ 
+            width: "100%", 
+            paddingBottom: "70%", 
+            position: "relative", 
+            backgroundColor: "black", 
+            borderRadius: "0.75rem", 
+            marginTop: "0.75rem" 
+          }}
+        >
+          {mediaError[currentIndex] ? (
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: palette.neutral.light,
+              }}
+            >
+              <Typography color={palette.neutral.medium}>
+                Failed to load media
+              </Typography>
+            </Box>
+          ) : items[currentIndex].type === 'video' ? (
             <video
               width="100%"
               height="100%"
               controls
               src={items[currentIndex].url}
-              style={{ position: "absolute", top: 0, left: 0, objectFit: "contain" }}
+              onError={() => handleMediaError(currentIndex)}
+              style={{ 
+                position: "absolute", 
+                top: 0, 
+                left: 0, 
+                objectFit: "contain" 
+              }}
             />
           ) : (
             <img
               src={items[currentIndex].url}
               alt="post media"
-              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain" }}
+              onError={() => handleMediaError(currentIndex)}
+              style={{ 
+                position: "absolute", 
+                top: 0, 
+                left: 0, 
+                width: "100%", 
+                height: "100%", 
+                objectFit: "contain" 
+              }}
             />
           )}
           
           {items.length > 1 && (
             <>
-              <IconButton onClick={() => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length)}
-                sx={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", backgroundColor: "rgba(255,255,255,0.8)" }}>
+              <IconButton 
+                onClick={() => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length)}
+                sx={{ 
+                  position: "absolute", 
+                  left: 8, 
+                  top: "50%", 
+                  transform: "translateY(-50%)", 
+                  backgroundColor: "rgba(255,255,255,0.8)",
+                  "&:hover": {
+                    backgroundColor: "rgba(255,255,255,0.9)",
+                  }
+                }}
+              >
                 <ChevronLeft />
               </IconButton>
               
-              <IconButton onClick={() => setCurrentIndex((prev) => (prev + 1) % items.length)}
-                sx={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", backgroundColor: "rgba(255,255,255,0.8)" }}>
+              <IconButton 
+                onClick={() => setCurrentIndex((prev) => (prev + 1) % items.length)}
+                sx={{ 
+                  position: "absolute", 
+                  right: 8, 
+                  top: "50%", 
+                  transform: "translateY(-50%)", 
+                  backgroundColor: "rgba(255,255,255,0.8)",
+                  "&:hover": {
+                    backgroundColor: "rgba(255,255,255,0.9)",
+                  }
+                }}
+              >
                 <ChevronRight />
               </IconButton>
               
-              <Box sx={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", display: "flex", gap: "4px" }}>
+              <Box 
+                sx={{ 
+                  position: "absolute", 
+                  bottom: 8, 
+                  left: "50%", 
+                  transform: "translateX(-50%)", 
+                  display: "flex", 
+                  gap: "4px" 
+                }}
+              >
                 {items.map((_, index) => (
                   <Box
                     key={index}
                     onClick={() => setCurrentIndex(index)}
-                    sx={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: index === currentIndex ? "white" : "rgba(255,255,255,0.5)", cursor: "pointer" }}
+                    sx={{ 
+                      width: 8, 
+                      height: 8, 
+                      borderRadius: "50%", 
+                      backgroundColor: index === currentIndex ? "white" : "rgba(255,255,255,0.5)", 
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        backgroundColor: "rgba(255,255,255,0.8)",
+                      }
+                    }}
                   />
                 ))}
               </Box>
             </>
           )}
-        </Box>
-      )}
-
-      {/* Show error message if media fails to load */}
-      {mediaError && (items) && (
-        <Box
-          sx={{
-            width: "100%",
-            height: "200px",
-            backgroundColor: palette.neutral.light,
-            borderRadius: "0.75rem",
-            marginTop: "0.75rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Typography color={palette.neutral.medium}>
-            Failed to load media content
-          </Typography>
         </Box>
       )}
 
@@ -269,7 +346,6 @@ const PostWidget = ({
           </FlexBetween>
         </FlexBetween>
         
-        {/* Delete button - only show for post owner */}
         {loggedInUserId === postUserId && (
           <IconButton 
             onClick={handleDelete} 
@@ -281,13 +357,10 @@ const PostWidget = ({
         )}
       </FlexBetween>
 
-      {/* Comments section */}
       {isComments && (
         <Box mt="0.5rem">
-          {/* FIXED: Better comment handling with validation */}
           {comments && comments.length > 0 ? (
             comments.map((comment, index) => {
-              // Handle both old string format and new object format
               const commentId = comment._id || `comment-${index}`;
               const commentName = comment.firstName && comment.lastName 
                 ? `${comment.firstName} ${comment.lastName}`

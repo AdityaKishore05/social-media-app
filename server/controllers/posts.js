@@ -273,11 +273,15 @@ export const getFeedPosts = async (req, res) => {
           return null;
         }
 
+        // Return post with ALL fields (new and old format)
         return {
           ...post._doc,
           firstName: user.firstName,
           lastName: user.lastName,
           userPicturePath: user.picturePath,
+          // Explicitly include old format fields
+          picturePath: post.picturePath || "",
+          videoPath: post.videoPath || "",
         };
       })
     );
@@ -309,11 +313,15 @@ export const getUserPosts = async (req, res) => {
         const user = await User.findById(post.userId);
         if (!user) return null;
 
+        // Return post with ALL fields (new and old format)
         return {
           ...post._doc,
           firstName: user.firstName,
           lastName: user.lastName,
           userPicturePath: user.picturePath,
+          // Explicitly include old format fields
+          picturePath: post.picturePath || "",
+          videoPath: post.videoPath || "",
         };
       })
     );
@@ -363,6 +371,9 @@ export const likePost = async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       userPicturePath: user.picturePath,
+      // Include old format fields
+      picturePath: updatedPost.picturePath || "",
+      videoPath: updatedPost.videoPath || "",
     };
 
     res.status(200).json(populatedPost);
@@ -412,6 +423,9 @@ export const commentPost = async (req, res) => {
       firstName: postUser.firstName,
       lastName: postUser.lastName,
       userPicturePath: postUser.picturePath,
+      // Include old format fields
+      picturePath: updatedPost.picturePath || "",
+      videoPath: updatedPost.videoPath || "",
     };
 
     res.status(200).json(populatedPost);
