@@ -24,7 +24,6 @@ const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isMediaUpload, setIsMediaUpload] = useState(false);
-  const [mediaType, setMediaType] = useState(null);
   const [post, setPost] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const { palette } = useTheme();
@@ -55,7 +54,6 @@ const MyPostWidget = ({ picturePath }) => {
           formData.append("mediaFiles", file);
           console.log(`Adding file ${index}:`, file.name, file.type, file.size);
         });
-        formData.append("mediaType", "mixed");
       }
 
       console.log('Posting to server...', {
@@ -87,7 +85,6 @@ const MyPostWidget = ({ picturePath }) => {
       
       // Reset form
       setMediaFiles([]);
-      setMediaType(null);
       setPost("");
       setIsMediaUpload(false);
       
@@ -117,7 +114,6 @@ if (mediaFiles.length + newFiles.length > 20) {
     }
 
     setMediaFiles([...mediaFiles, ...newFiles]);
-    setMediaType('mixed');
   };
 
   return (
@@ -162,7 +158,7 @@ if (mediaFiles.length + newFiles.length > 20) {
                   <input {...getInputProps()} />
                   <Typography sx={{ textAlign: 'center' }}>
                     {mediaFiles.length === 0 
-                      ? 'Click or drag photos/videos here (max 10)'
+                      ? 'Click or drag photos/videos here (max 20)'
                       : `${mediaFiles.length} file(s) selected`}
                   </Typography>
                 </Box>
@@ -216,10 +212,6 @@ if (mediaFiles.length + newFiles.length > 20) {
           gap="0.25rem" 
           onClick={() => {
             setIsMediaUpload(!isMediaUpload);
-            setMediaType('mixed');
-            if (isMediaUpload) {
-              setMediaFiles([]);
-            }
           }}
           sx={{ "&:hover": { cursor: "pointer" } }}
         >
