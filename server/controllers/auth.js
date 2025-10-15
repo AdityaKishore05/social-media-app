@@ -161,6 +161,3 @@ export const googleAuth = async (req, res) => {
     });
   }
 };
-
-// Export both functions
-export { login, googleAuth };
