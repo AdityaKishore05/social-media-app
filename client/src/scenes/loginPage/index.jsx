@@ -3,12 +3,9 @@ import Form from "./Form";
 import { useEffect } from "react";
 import FlexBetween from "components/FlexBetween";
 import { useDispatch } from "react-redux";
-import{IconButton} from "@mui/material";
+import { IconButton } from "@mui/material";
 import { setMode } from "state";
-import {
-  DarkMode,
-  LightMode,
-} from "@mui/icons-material";
+import { DarkMode, LightMode } from "@mui/icons-material";
 import WidgetWrapper from "components/WidgetWrapper";
 
 const LoginPage = () => {
@@ -17,7 +14,6 @@ const LoginPage = () => {
   const dispatch = useDispatch();
   const dark = theme.palette.neutral.dark;
   
-  // ADDED: Wake up Render server on page load
   useEffect(() => {
     const wakeUpServer = async () => {
       try {
@@ -28,7 +24,6 @@ const LoginPage = () => {
         console.log("Server wake-up ping sent");
       }
     };
-    
     wakeUpServer();
   }, []);
 
@@ -44,15 +39,13 @@ const LoginPage = () => {
         <Typography fontWeight="bold" fontSize="32px" color="primary">
           GSN
         </Typography>
-        <Typography fontWeight="bold" fontSize="32px" color="primary">
-          <IconButton onClick={() => dispatch(setMode())}>
-            {theme.palette.mode === "dark" ? (
-              <DarkMode sx={{ fontSize: "25px" }} />
-            ) : (
-              <LightMode sx={{ color: dark, fontSize: "25px" }} />
-            )}
-          </IconButton>
-        </Typography>
+        <IconButton onClick={() => dispatch(setMode())}>
+          {theme.palette.mode === "dark" ? (
+            <DarkMode sx={{ fontSize: "25px" }} />
+          ) : (
+            <LightMode sx={{ color: dark, fontSize: "25px" }} />
+          )}
+        </IconButton>
       </FlexBetween>
 
       <WidgetWrapper
@@ -60,8 +53,21 @@ const LoginPage = () => {
         p="2rem"
         m="2rem auto"
       >
-        <Typography fontWeight="500" variant="h5" sx={{ mb: "1.5rem" }} textAlign="center">
-          Welcome to GSN, the social media platform for Gen Z's!
+        <Typography 
+          fontWeight="500" 
+          variant="h5" 
+          sx={{ mb: "0.5rem" }} 
+          textAlign="center"
+        >
+          Welcome to GSN!
+        </Typography>
+        <Typography 
+          variant="body2" 
+          sx={{ mb: "2rem" }} 
+          textAlign="center"
+          color="text.secondary"
+        >
+          The social media platform for Gen Z
         </Typography>
         <Form />
       </WidgetWrapper>

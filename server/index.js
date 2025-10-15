@@ -10,7 +10,6 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
-import { register } from "./controllers/auth.js";
 import { verifyToken } from "./middleware/auth.js";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -110,10 +109,6 @@ const upload = multer({
     }
   },
 });
-
-/* ROUTES WITH FILES */
-// Register route - single profile picture
-app.post("/auth/register", upload.single("picture"), register);
 
 /* ROUTES - Mount route handlers */
 app.use("/auth", authRoutes);

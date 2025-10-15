@@ -34,7 +34,7 @@ const UserSchema = new mongoose.Schema(
       type: Array,
       default: [],
     },
-   bio: {
+    bio: {
       type: String,
       default: "",
       maxlength: 150,
@@ -43,7 +43,16 @@ const UserSchema = new mongoose.Schema(
       type: Array,
       default: [],
     },
-},
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows null/undefined for non-Google users
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+  },
   { timestamps: true }
 );
 
