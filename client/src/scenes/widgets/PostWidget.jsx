@@ -334,12 +334,19 @@ const PostWidget = ({
           )}
         </Box>
       )}
-
-      {description && (
+      <Typography
+        color={main}
+        variant="h5"
+        fontWeight="500"
+        display="flex"
+        flexDirection="colomn"
+        >
+        {name} -
+        {description && (
         <Typography 
           color={main} 
           sx={{ 
-            my: "0.5rem", mx: "0.8rem",
+            mx: "0.5rem",
             wordWrap: "break-word",
             overflowWrap: "break-word",
             whiteSpace: "pre-wrap",
@@ -349,6 +356,9 @@ const PostWidget = ({
           {description}
         </Typography>
       )}
+      </Typography>
+
+      
 
       <FlexBetween mb="0.5rem">
         <FlexBetween gap="1rem">

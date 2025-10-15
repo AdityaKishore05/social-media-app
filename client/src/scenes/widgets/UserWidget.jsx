@@ -94,7 +94,7 @@ const UserWidget = ({ userId, picturePath }) => {
   const isOwnProfile = loggedInUser?._id === userId;
 
   return (
-    <WidgetWrapper>
+    <Box>
       {/* FIRST ROW */}
       <FlexBetween
         gap="0.5rem"
@@ -103,7 +103,7 @@ const UserWidget = ({ userId, picturePath }) => {
         <Box
           gap="1rem" display="flex"
           onClick={() => navigate(`/profile/${userId}`)}
-          sx={{ cursor: 'pointer', flex: 1}}
+          sx={{ flex: 1}}
         >
           <UserImage 
             image={picturePath || user.picturePath} 
@@ -117,7 +117,6 @@ const UserWidget = ({ userId, picturePath }) => {
               sx={{
                 "&:hover": {
                   color: palette.primary.light,
-                  cursor: "pointer",
                 },
               }}
             >
@@ -180,7 +179,7 @@ const UserWidget = ({ userId, picturePath }) => {
           user={user}
         />
       )}
-    </WidgetWrapper>
+    </Box>
   );
 };
 

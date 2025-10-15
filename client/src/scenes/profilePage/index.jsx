@@ -64,18 +64,20 @@ const getUser = useCallback(async () => {
       <Box
         width="100%"
         display={isNonMobileScreens ? "flex" : "block"}
-        gap="1rem"
+        gap="1.5rem"
         justifyContent="center"
-        mt="1rem"
+        my="1.5rem"
       >
         <Box flexBasis={isNonMobileScreens ? "27%" : undefined}>
           <UserWidget userId={userId} picturePath={user.picturePath} />
+          <Box m="1rem 0" />
+          <Divider></Divider>
           <Box m="1rem 0" />
           <FriendListWidget userId={userId} />
         </Box>
         
         <Box
-          flexBasis={isNonMobileScreens ? "50%" : undefined}
+          flexBasis={isNonMobileScreens ? "60%" : undefined}
           mt={isNonMobileScreens ? "-1rem" : "1rem"}
         >
           {/* FIXED: Only show MyPostWidget if viewing own profile */}
@@ -84,7 +86,6 @@ const getUser = useCallback(async () => {
               <Box m="1rem 0" />
             </>
           )}
-          <Divider></Divider>
           
           {/* FIXED: Pass key prop to force re-render and ensure only user posts are shown */}
           <PostsWidget 

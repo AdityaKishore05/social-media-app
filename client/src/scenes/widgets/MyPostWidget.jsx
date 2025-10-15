@@ -203,11 +203,11 @@ const MyPostWidget = ({ picturePath }) => {
                               position: 'absolute',
                               top: -8,
                               right: -8,
-                              backgroundColor: 'white',
-                              '&:hover': { backgroundColor: '#f0f0f0' }
+                              backgroundColor: 'orange',
+                              '&:hover': { backgroundColor: '#d67e55ff' }
                             }}
                           >
-                            <DeleteOutlined fontSize="small" />
+                            <DeleteOutlined fontSize="small"/>
                           </IconButton>
                         </Box>
                       );

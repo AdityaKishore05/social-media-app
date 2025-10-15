@@ -55,7 +55,7 @@ const FriendListWidget = ({ userId }) => {
   const displayFriends = userId === loggedInUserId ? reduxFriends : otherUserFriends;
 
   return (
-    <WidgetWrapper>
+    <Box>
       <Typography
         color={palette.neutral.dark}
         variant="h5"
@@ -81,7 +81,7 @@ const FriendListWidget = ({ userId }) => {
           </Typography>
         )}
       </Box>
-    </WidgetWrapper>
+    </Box>
   );
 };
 
