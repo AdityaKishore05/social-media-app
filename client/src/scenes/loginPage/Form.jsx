@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   TextField,
-  useMediaQuery,
   Typography,
   useTheme,
   Divider,
@@ -19,7 +18,6 @@ const Form = () => {
   const { palette } = useTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const isNonMobile = useMediaQuery("(min-width:600px)");
   const API_URL = "https://getsocialnow.onrender.com";
 
   // Initialize Google Sign-In
