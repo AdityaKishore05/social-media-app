@@ -48,7 +48,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   };
 
   return (
-    <FlexBetween p="0.5rem" py="0rem">
+    <FlexBetween px="1rem">
       <FlexBetween gap="1rem">
         {/* FIXED: Pass the name prop to UserImage for initials */}
         <UserImage image={userPicturePath} size="60px" name={name} />

@@ -213,7 +213,7 @@ const PostWidget = ({
         <Box
         sx={{
           width: "100%",
-          paddingTop: isNonMobileScreens ? "60%" : "150%",
+          paddingTop: isNonMobileScreens ? "60%" : "140%",
           position: "relative", 
           backgroundColor: "black", 
           marginTop: "1.2rem",
@@ -335,32 +335,23 @@ const PostWidget = ({
         </Box>
       )}
       <Typography
-        color={main}
-        variant="h5"
-        fontWeight="500"
-        display="flex"
-        flexDirection="colomn"
-        >
-        {name} -
-        {description && (
-        <Typography 
-          color={main} 
-          sx={{ 
-            mx: "0.5rem",
-            wordWrap: "break-word",
-            overflowWrap: "break-word",
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
-          }}
-        >
-          {description}
-        </Typography>
-      )}
+      color={main}
+      variant="h5"
+      fontWeight="500"
+      display="flex"
+      flexDirection="column"
+      sx={{ 
+        mx: "1rem",
+        wordWrap: "break-word",
+        overflowWrap: "break-word",
+        whiteSpace: "pre-wrap",
+        wordBreak: "break-word",
+      }}
+      >
+        {description ? `${name} - ${description}` : null}
       </Typography>
 
-      
-
-      <FlexBetween mb="0.5rem">
+      <FlexBetween mx="0.5rem" mb="0.5rem">
         <FlexBetween gap="1rem">
           <FlexBetween gap="0.3rem">
             <IconButton onClick={patchLike} disabled={isLiking}>
@@ -404,12 +395,10 @@ const PostWidget = ({
 
               return (
                 <Box key={commentId}>
-                  <Divider />
                   <Typography 
                     sx={{ 
                       color: main, 
-                      m: "0.5rem 0", 
-                      pl: "1rem",
+                      m: "0.5rem 0.5rem", 
                       wordWrap: "break-word",
                       overflowWrap: "break-word",
                       whiteSpace: "pre-wrap",
@@ -419,7 +408,7 @@ const PostWidget = ({
                     <span style={{ fontWeight: 500 }}>
                       {commentName}
                     </span>
-                    {` — ${commentContent}`}
+                    {` - ${commentContent}`}
                   </Typography>
                 </Box>
               );
@@ -430,7 +419,6 @@ const PostWidget = ({
             </Typography>
           )}
           
-          <Divider />
           <FlexBetween gap="1.5rem" mt="0.5rem" alignItems="flex-end" mb="1rem">
             <InputBase
               placeholder="Write a comment..."

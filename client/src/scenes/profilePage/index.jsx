@@ -72,9 +72,10 @@ const getUser = useCallback(async () => {
           <UserWidget userId={userId} picturePath={user.picturePath} />
           <Box m="1rem 0" />
           <Divider></Divider>
-          <Box m="1rem 0" />
-          <FriendListWidget userId={userId} />
-        </Box>
+          
+          <Box m="1rem 0.5rem">
+            <FriendListWidget userId={userId} />
+          </Box>
         
         <Box
           flexBasis={isNonMobileScreens ? "60%" : undefined}

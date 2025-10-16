@@ -108,7 +108,7 @@ const MyPostWidget = ({ picturePath }) => {
   };
 
   return (
-    <WidgetWrapper mb="1rem">
+    <Box m="1.5rem">
       <FlexBetween gap="1.5rem">
         <Box onClick={() => navigate(`/profile/${_id}`)} sx={{ cursor: 'pointer' }}>
           <UserImage 
@@ -262,7 +262,7 @@ const MyPostWidget = ({ picturePath }) => {
           {isPosting ? "POSTING..." : "POST"}
         </Button>
       </FlexBetween>
-    </WidgetWrapper>
+    </Box>
 
   );
 };
