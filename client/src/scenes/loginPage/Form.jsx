@@ -141,7 +141,7 @@ const Form = () => {
       )}
 
       {/* GOOGLE SIGN IN BUTTON */}
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 1 }}>
         {isLoading ? (
           <Box display="flex" justifyContent="center">
             <CircularProgress />
@@ -151,11 +151,27 @@ const Form = () => {
         )}
       </Box>
 
-      <Divider sx={{ my: 3 }}>
+      <Typography
+            variant="body2"
+            textAlign="center"
+            sx={{color: palette.neutral.medium }}
+          >
+             New users get automatically registered with Google
+          </Typography>
+
+      <Divider sx={{ my: 1 }}>
         <Typography variant="body2" color="text.secondary">
           OR
         </Typography>
       </Divider>
+
+      <Typography
+            variant="body2"
+            textAlign="center"
+            sx={{ my: 1, color: palette.neutral.medium }}
+      >
+        Registered users login
+          </Typography>
 
       {/* EMAIL/PASSWORD LOGIN */}
       <form onSubmit={handleEmailLogin}>
@@ -191,16 +207,8 @@ const Form = () => {
               },
             }}
           >
-            {isLoading ? "LOGGING IN..." : "LOGIN WITH EMAIL"}
+            {isLoading ? "LOGGING IN..." : "LOGIN"}
           </Button>
-
-          <Typography
-            variant="body2"
-            textAlign="center"
-            sx={{ mt: 1, color: palette.neutral.medium }}
-          >
-            🔐 New users get automatically registered with Google
-          </Typography>
         </Box>
       </form>
     </Box>
