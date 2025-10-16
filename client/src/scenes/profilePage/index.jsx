@@ -95,6 +95,7 @@ const getUser = useCallback(async () => {
             isProfile={true} 
           />
         </Box>
+        </Box>
       </Box>
     </Box>
   );
