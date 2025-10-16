@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Button,
@@ -20,30 +20,8 @@ const Form = () => {
   const navigate = useNavigate();
   const API_URL = "https://getsocialnow.onrender.com";
 
-  // Initialize Google Sign-In
-  useEffect(() => {
-    if (window.google) {
-      window.google.accounts.id.initialize({
-        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-        callback: handleGoogleResponse,
-      });
-
-      // Render the button
-      window.google.accounts.id.renderButton(
-        document.getElementById("googleSignInButton"),
-        {
-          theme: palette.mode === "dark" ? "filled_black" : "outline",
-          size: "large",
-          width: "100%",
-          text: "signin_with",
-          shape: "rectangular",
-        }
-      );
-    }
-  }, [palette.mode]);
-
-  // Handle Google response
-  const handleGoogleResponse = async (response) => {
+  // Handle Google response - wrapped in useCallback to avoid recreating
+  const handleGoogleResponse = useCallback(async (response) => {
     setIsLoading(true);
     setError("");
 
@@ -78,7 +56,39 @@ const Form = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dispatch, navigate]); // Add dependencies
+
+  // Initialize Google Sign-In
+  useEffect(() => {
+    // Check if Google script is loaded
+    if (window.google) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+          callback: handleGoogleResponse,
+        });
+
+        // Render the button
+        window.google.accounts.id.renderButton(
+          document.getElementById("googleSignInButton"),
+          {
+            theme: palette.mode === "dark" ? "filled_black" : "outline",
+            size: "large",
+            width: "100%",
+            text: "signin_with",
+            shape: "rectangular",
+          }
+        );
+
+        console.log("Google Sign-In initialized");
+      } catch (error) {
+        console.error("Error initializing Google Sign-In:", error);
+        setError("Failed to initialize Google Sign-In");
+      }
+    } else {
+      console.warn("Google Sign-In script not loaded yet");
+    }
+  }, [palette.mode, handleGoogleResponse]); // Now includes handleGoogleResponse
 
   // Email/Password Login
   const handleEmailLogin = async (e) => {
@@ -131,13 +141,13 @@ const Form = () => {
       )}
 
       {/* GOOGLE SIGN IN BUTTON */}
-      <Box sx={{ mb: 2}}>
+      <Box sx={{ mb: 2 }}>
         {isLoading ? (
           <Box display="flex" justifyContent="center">
             <CircularProgress />
           </Box>
         ) : (
-          <div id="googleSignInButton" style={{ width: "100%"}}></div>
+          <div id="googleSignInButton" style={{ width: "100%" }}></div>
         )}
       </Box>
 
@@ -189,7 +199,7 @@ const Form = () => {
             textAlign="center"
             sx={{ mt: 1, color: palette.neutral.medium }}
           >
-            New users get automatically registered with Google
+            🔐 New users get automatically registered with Google
           </Typography>
         </Box>
       </form>
