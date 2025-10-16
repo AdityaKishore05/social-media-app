@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -20,8 +20,30 @@ const Form = () => {
   const navigate = useNavigate();
   const API_URL = "https://getsocialnow.onrender.com";
 
-  // Handle Google response - wrapped in useCallback
-  const handleGoogleResponse = useCallback(async (response) => {
+  // Initialize Google Sign-In
+  useEffect(() => {
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      });
+
+      // Render the button
+      window.google.accounts.id.renderButton(
+        document.getElementById("googleSignInButton"),
+        {
+          theme: palette.mode === "dark" ? "filled_black" : "outline",
+          size: "large",
+          width: "100%",
+          text: "signin_with",
+          shape: "rectangular",
+        }
+      );
+    }
+  }, [palette.mode]);
+
+  // Handle Google response
+  const handleGoogleResponse = async (response) => {
     setIsLoading(true);
     setError("");
 
@@ -56,29 +78,7 @@ const Form = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch, navigate]); // Add dependencies used inside the callback
-
-  // Initialize Google Sign-In
-  useEffect(() => {
-    if (window.google) {
-      window.google.accounts.id.initialize({
-        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-        callback: handleGoogleResponse,
-      });
-
-      // Render the button
-      window.google.accounts.id.renderButton(
-        document.getElementById("googleSignInButton"),
-        {
-          theme: palette.mode === "dark" ? "filled_black" : "outline",
-          size: "large",
-          width: "100%",
-          text: "signin_with",
-          shape: "rectangular",
-        }
-      );
-    }
-  }, [palette.mode, handleGoogleResponse]); // Now includes handleGoogleResponse
+  };
 
   // Email/Password Login
   const handleEmailLogin = async (e) => {
