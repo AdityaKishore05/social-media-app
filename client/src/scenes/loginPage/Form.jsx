@@ -60,35 +60,73 @@ const Form = () => {
 
   // Initialize Google Sign-In
   useEffect(() => {
+    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+    
+    console.log("=== GOOGLE SIGN-IN SETUP ===");
+    console.log("Client ID:", clientId);
+    console.log("Client ID length:", clientId?.length);
+    console.log("Google loaded:", !!window.google);
+    
+    // Validate Client ID
+    if (!clientId) {
+      console.error("❌ REACT_APP_GOOGLE_CLIENT_ID is not set!");
+      setError("Google Sign-In is not configured. Missing Client ID.");
+      return;
+    }
+    
+    if (!clientId.includes('.apps.googleusercontent.com')) {
+      console.error("❌ Client ID format is incorrect!");
+      setError("Google Client ID is invalid. Must end with .apps.googleusercontent.com");
+      return;
+    }
+    
     // Check if Google script is loaded
     if (window.google) {
       try {
+        console.log("Initializing Google Sign-In...");
+        
         window.google.accounts.id.initialize({
-          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+          client_id: clientId,
           callback: handleGoogleResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
         });
 
         // Render the button
-        window.google.accounts.id.renderButton(
-          document.getElementById("googleSignInButton"),
-          {
-            theme: palette.mode === "dark" ? "filled_black" : "outline",
-            size: "large",
-            width: "100%",
-            text: "signin_with",
-            shape: "rectangular",
-          }
-        );
+        const buttonDiv = document.getElementById("googleSignInButton");
+        if (buttonDiv) {
+          window.google.accounts.id.renderButton(
+            buttonDiv,
+            {
+              theme: palette.mode === "dark" ? "filled_black" : "outline",
+              size: "large",
+              width: "100%",
+              text: "signin_with",
+              shape: "rectangular",
+              logo_alignment: "left",
+            }
+          );
+          console.log("✓ Google Sign-In button rendered");
+        } else {
+          console.error("❌ Button container not found");
+        }
 
-        console.log("Google Sign-In initialized");
+        console.log("✓ Google Sign-In initialized successfully");
       } catch (error) {
-        console.error("Error initializing Google Sign-In:", error);
-        setError("Failed to initialize Google Sign-In");
+        console.error("❌ Error initializing Google Sign-In:", error);
+        setError(`Failed to initialize Google Sign-In: ${error.message}`);
       }
     } else {
-      console.warn("Google Sign-In script not loaded yet");
+      console.warn("⚠️ Google Sign-In script not loaded yet. Retrying...");
+      // Retry after a short delay
+      const retryTimeout = setTimeout(() => {
+        if (window.google) {
+          window.location.reload();
+        }
+      }, 2000);
+      return () => clearTimeout(retryTimeout);
     }
-  }, [palette.mode, handleGoogleResponse]); // Now includes handleGoogleResponse
+  }, [palette.mode, handleGoogleResponse]);
 
   // Email/Password Login
   const handleEmailLogin = async (e) => {
@@ -141,7 +179,7 @@ const Form = () => {
       )}
 
       {/* GOOGLE SIGN IN BUTTON */}
-      <Box sx={{ mb: 1 }}>
+      <Box sx={{ mb: 2 }}>
         {isLoading ? (
           <Box display="flex" justifyContent="center">
             <CircularProgress />
@@ -151,27 +189,11 @@ const Form = () => {
         )}
       </Box>
 
-      <Typography
-            variant="body2"
-            textAlign="center"
-            sx={{color: palette.neutral.medium }}
-          >
-             New users get automatically registered with Google
-          </Typography>
-
-      <Divider sx={{ my: 1 }}>
+      <Divider sx={{ my: 3 }}>
         <Typography variant="body2" color="text.secondary">
           OR
         </Typography>
       </Divider>
-
-      <Typography
-            variant="body2"
-            textAlign="center"
-            sx={{ my: 1, color: palette.neutral.medium }}
-      >
-        Registered users login
-          </Typography>
 
       {/* EMAIL/PASSWORD LOGIN */}
       <form onSubmit={handleEmailLogin}>
@@ -207,8 +229,16 @@ const Form = () => {
               },
             }}
           >
-            {isLoading ? "LOGGING IN..." : "LOGIN"}
+            {isLoading ? "LOGGING IN..." : "LOGIN WITH EMAIL"}
           </Button>
+
+          <Typography
+            variant="body2"
+            textAlign="center"
+            sx={{ mt: 1, color: palette.neutral.medium }}
+          >
+             New users get automatically registered with Google
+          </Typography>
         </Box>
       </form>
     </Box>
