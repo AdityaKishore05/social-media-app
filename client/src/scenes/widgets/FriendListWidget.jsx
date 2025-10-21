@@ -59,7 +59,9 @@ const FriendListWidget = ({ userId }) => {
         color={palette.neutral.dark}
         variant="h5"
         fontWeight="500"
-        sx={{ mb: "1.5rem" }}
+        display="flex"
+        justifyContent="center"
+        sx={{ m: "1rem" }}
       >
         Friend List
       </Typography>

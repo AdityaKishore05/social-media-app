@@ -94,7 +94,7 @@ const UserWidget = ({ userId, picturePath }) => {
   const isOwnProfile = loggedInUser?._id === userId;
 
   return (
-    <Box>
+    <Box m="1rem" >
       {/* FIRST ROW */}
       <FlexBetween
         gap="0.5rem"

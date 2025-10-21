@@ -16,7 +16,7 @@ const HomePage = () => {
         display={isNonMobileScreens ? "flex" : "block"}
         gap="2rem"
         justifyContent="center"
-        marginTop="1rem"
+        marginTop="1remw"
       >
         <Box
           flexBasis={isNonMobileScreens ? "50%" : undefined}

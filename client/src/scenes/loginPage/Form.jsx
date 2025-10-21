@@ -237,7 +237,7 @@ const Form = () => {
             textAlign="center"
             sx={{ mt: 1, color: palette.neutral.medium }}
           >
-             New users get automatically registered with Google
+           New users get automatically registered with Google
           </Typography>
         </Box>
       </form>
