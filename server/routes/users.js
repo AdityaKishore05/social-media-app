@@ -42,16 +42,18 @@ router.get("/:id/friends", verifyToken, getUserFriends);
 router.patch(
   "/:id/update",
   verifyToken,
-  upload.single("picture"),
+  upload.single("picture"), // This should accept "picture" not "media"
   async (req, res) => {
     try {
       const { id } = req.params;
       const { firstName, lastName, bio } = req.body;
 
+      console.log("===== UPDATE USER REQUEST =====");
+      console.log("User ID:", id);
+      console.log("Body:", { firstName, lastName, bio });
+      console.log("Has file:", !!req.file);
 
-      console.log("Updating user:", id);
-
-      // Find the user first
+      // Find the user
       const user = await User.findById(id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -59,15 +61,20 @@ router.patch(
 
       // Build update object
       const updateData = {
-        firstName: firstName || user.firstName,
-        lastName: lastName || user.lastName,
-        bio: bio || user.bio || "",
+        firstName: firstName?.trim() || user.firstName,
+        lastName: lastName?.trim() || user.lastName,
+        bio: bio?.trim() || "",
       };
 
-      // Handle profile picture upload to Cloudinary if provided
+      // Handle profile picture upload
       if (req.file) {
         try {
-          console.log("Uploading new profile picture to Cloudinary...");
+          console.log("Uploading profile picture to Cloudinary...");
+          console.log("File info:", {
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+          });
 
           const fileStr = `data:${
             req.file.mimetype
@@ -76,12 +83,16 @@ router.patch(
           const uploadResult = await cloudinary.uploader.upload(fileStr, {
             resource_type: "image",
             folder: "social-media-app/profiles",
+            transformation: [
+              { width: 500, height: 500, crop: "fill" },
+              { quality: "auto" },
+            ],
           });
 
           updateData.picturePath = uploadResult.secure_url;
-          console.log("Profile picture uploaded:", uploadResult.secure_url);
+          console.log("✓ Profile picture uploaded:", uploadResult.secure_url);
         } catch (uploadError) {
-          console.error("Error uploading profile picture:", uploadError);
+          console.error("Cloudinary upload error:", uploadError);
           return res.status(500).json({
             message: "Failed to upload profile picture",
             error: uploadError.message,
@@ -92,10 +103,22 @@ router.patch(
       // Update user
       const updatedUser = await User.findByIdAndUpdate(id, updateData, {
         new: true,
+        runValidators: true,
       });
 
-      console.log("User updated successfully");
-      res.status(200).json(updatedUser);
+      // Remove sensitive data
+      const userResponse = {
+        _id: updatedUser._id,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        picturePath: updatedUser.picturePath,
+        friends: updatedUser.friends,
+        bio: updatedUser.bio,
+      };
+
+      console.log("✓ User updated successfully");
+      res.status(200).json(userResponse);
     } catch (error) {
       console.error("UPDATE USER ERROR:", error);
       res.status(500).json({

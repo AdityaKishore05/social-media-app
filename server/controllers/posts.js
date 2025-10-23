@@ -3,251 +3,140 @@ import User from "../models/User.js";
 import mongoose from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
 
-/* CREATE POST WITH COMPREHENSIVE DEBUGGING */
+/* CREATE POST */
 export const createPost = async (req, res) => {
   console.log("\n==========================================");
-  console.log("CREATE POST REQUEST RECEIVED");
+  console.log("CREATE POST REQUEST RECEIVED (CLOUDINARY)");
   console.log("==========================================");
 
   try {
-    // Log everything about the request
-    console.log("Request Method:", req.method);
-    console.log("Request URL:", req.url);
-    console.log("Request Headers:", JSON.stringify(req.headers, null, 2));
-    console.log("\n--- Request Body ---");
-    console.log("Body keys:", Object.keys(req.body));
-    console.log("Body:", JSON.stringify(req.body, null, 2));
+    const { userId, description } = req.body;
+    const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 
-    console.log("\n--- Files Information ---");
-    console.log("req.files exists:", !!req.files);
-    console.log("req.files type:", typeof req.files);
-    console.log("req.files is array:", Array.isArray(req.files));
-    console.log("Files count:", req.files ? req.files.length : 0);
-
-    if (req.files && req.files.length > 0) {
-      console.log("\nDetailed file info:");
-      req.files.forEach((file, index) => {
-        console.log(`File ${index + 1}:`, {
-          fieldname: file.fieldname,
-          originalname: file.originalname,
-          encoding: file.encoding,
-          mimetype: file.mimetype,
-          size: file.size,
-          hasBuffer: !!file.buffer,
-          bufferLength: file.buffer ? file.buffer.length : 0,
-        });
-      });
-    }
-
-    const { userId, description, mediaType } = req.body;
-    console.log("\n--- Extracted Data ---");
-    console.log("userId:", userId);
-    console.log("description:", description);
-    console.log("mediaType:", mediaType);
-
-    // Validate required fields
+    // === 1. VALIDATE INPUT ===
     if (!userId) {
-      console.error("ERROR: User ID is missing");
-      return res.status(400).json({
-        message: "User ID is required",
-        receivedBody: req.body,
-      });
+      return res.status(400).json({ message: "User ID is required" });
     }
 
-    if (!description?.trim() && (!req.files || req.files.length === 0)) {
-      console.error("ERROR: No content provided");
+    const hasFiles = req.files && req.files.length > 0;
+    if (!description?.trim() && !hasFiles) {
       return res.status(400).json({
         message: "Post must have either description or media",
-        hasDescription: !!description?.trim(),
-        hasFiles: !!(req.files && req.files.length > 0),
       });
     }
 
-    console.log("\n--- Validation Passed ---");
+    console.log("--- Validation Passed ---");
     let mediaItems = [];
 
-    // Process uploaded files
-    if (req.files && req.files.length > 0) {
-      console.log(
-        `\n--- Starting Media Upload (${req.files.length} files) ---`
-      );
+    // === 2. PROCESS UPLOADED FILES ===
+    if (hasFiles) {
+      console.log(`Processing ${req.files.length} files from Cloudinary...`);
 
-      for (let i = 0; i < req.files.length; i++) {
-        const file = req.files[i];
-        console.log(`\nProcessing file ${i + 1}/${req.files.length}:`);
-        console.log("  - Name:", file.originalname);
-        console.log("  - Type:", file.mimetype);
-        console.log("  - Size:", `${(file.size / 1024).toFixed(2)} KB`);
-
-        // Check if buffer exists
-        if (!file.buffer) {
-          console.error(`ERROR: Buffer missing for file ${file.originalname}`);
-          throw new Error(`File buffer is missing for ${file.originalname}`);
-        }
-
-        console.log("  - Buffer length:", file.buffer.length);
-
-        try {
-          const isVideo = file.mimetype.startsWith("video/");
-          console.log("  - Is video:", isVideo);
-
-          // Convert buffer to base64
-          console.log("  - Converting to base64...");
-          const base64String = file.buffer.toString("base64");
-          console.log("  - Base64 length:", base64String.length);
-
-          const fileStr = `data:${file.mimetype};base64,${base64String}`;
-          console.log("  - Data URL created, length:", fileStr.length);
-
-          // Check Cloudinary configuration
-          console.log("\n  - Cloudinary config check:");
-          console.log(
-            "    Cloud name:",
-            cloudinary.config().cloud_name || "NOT SET"
+      // === Custom Validation: Check for images > 10MB ===
+      for (const file of req.files) {
+        if (
+          file.mimetype.startsWith("image/") &&
+          file.size > MAX_IMAGE_SIZE
+        ) {
+          // File is already on Cloudinary, we must delete it
+          console.error(
+            `ERROR: Image ${file.originalname} is ${
+              file.size / 1024 / 1024
+            }MB (max 10MB).`
           );
-          console.log(
-            "    API key:",
-            cloudinary.config().api_key ? "SET" : "NOT SET"
-          );
-          console.log(
-            "    API secret:",
-            cloudinary.config().api_secret ? "SET" : "NOT SET"
-          );
-
-          // Upload to Cloudinary
-          console.log("  - Starting Cloudinary upload...");
-          const uploadResult = await cloudinary.uploader.upload(fileStr, {
-            resource_type: isVideo ? "video" : "image",
-            folder: "social-media-app",
-            timeout: 60000,
+          
+          // Asynchronously delete the oversized file from Cloudinary
+          cloudinary.uploader.destroy(file.public_id, (err, result) => {
+            if (err) console.error("Failed to delete oversized file:", err);
+            else console.log("Oversized file deleted:", result);
           });
 
-          console.log("  ✓ Upload successful!");
-          console.log("    URL:", uploadResult.secure_url);
-          console.log("    Public ID:", uploadResult.public_id);
-
-          mediaItems.push({
-            url: uploadResult.secure_url,
-            type: isVideo ? "video" : "image",
-            publicId: uploadResult.public_id,
-          });
-        } catch (uploadError) {
-          console.error(`\n✗ CLOUDINARY UPLOAD ERROR for file ${i + 1}:`);
-          console.error("Error name:", uploadError.name);
-          console.error("Error message:", uploadError.message);
-          console.error("Error stack:", uploadError.stack);
-
-          return res.status(500).json({
-            message: "Failed to upload media to cloud storage",
-            error: uploadError.message,
-            fileName: file.originalname,
-            fileIndex: i + 1,
-            details: uploadError.stack,
+          // Return error to user
+          return res.status(400).json({
+            message: `Image '${file.originalname}' is too large. Maximum 10MB for images.`,
           });
         }
       }
+      // === End Custom Validation ===
 
-      console.log(`\n✓ All ${mediaItems.length} files uploaded successfully`);
-    }
-
-    // Get user information
-    console.log("\n--- Fetching User Information ---");
-    console.log("Looking up user ID:", userId);
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      console.error("ERROR: User not found for ID:", userId);
-      return res.status(404).json({
-        message: "User not found",
-        userId: userId,
+      // Map files to the format expected by the Post model
+      mediaItems = req.files.map((file) => {
+        console.log(` - File: ${file.originalname}, URL: ${file.path}`);
+        return {
+          url: file.path, // This is the secure_url from Cloudinary
+          type: file.mimetype.startsWith("video/") ? "video" : "image",
+          publicId: file.public_id, // Store this so we can delete it later
+        };
       });
+
+      console.log(`✓ All ${mediaItems.length} files processed.`);
     }
 
+    // === 3. GET USER INFO ===
+    console.log("\n--- Fetching User Information ---");
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
     console.log("✓ User found:", user.firstName, user.lastName);
 
-    // Create new post
+    // === 4. CREATE NEW POST ===
     console.log("\n--- Creating Post Document ---");
-    const postData = {
+    const newPost = new Post({
       userId,
       firstName: user.firstName,
       lastName: user.lastName,
       description: description?.trim() || "",
       userPicturePath: user.picturePath,
-      mediaItems: mediaItems,
+      mediaItems: mediaItems, // Save the new media array
       likes: {},
       comments: [],
-    };
-
-    console.log("Post data:", JSON.stringify(postData, null, 2));
-
-    const newPost = new Post(postData);
-
-    console.log("Saving post to database...");
-    await newPost.save();
-    console.log("✓ Post saved successfully!");
-    console.log("  Post ID:", newPost._id);
-    console.log("  Created at:", newPost.createdAt);
-
-    // Set no-cache headers
-    res.set({
-      "Cache-Control": "no-store, no-cache, must-revalidate, private",
-      Pragma: "no-cache",
-      Expires: "0",
     });
 
-    // Fetch all posts
+    await newPost.save();
+    console.log("✓ Post saved successfully!");
+
+    // === 5. RETURN ALL POSTS (Refreshed feed) ===
     console.log("\n--- Fetching All Posts ---");
     const allPosts = await Post.find().sort({ createdAt: -1 });
-    console.log("Total posts found:", allPosts.length);
 
-    // Populate user information
-    console.log("Populating user information for all posts...");
+    // Populate user info
     const populatedPosts = await Promise.all(
       allPosts.map(async (post) => {
-        try {
-          const postUser = await User.findById(post.userId);
-          if (!postUser) {
-            console.warn(`User not found for post ${post._id}`);
-            return null;
-          }
-
-          return {
-            ...post._doc,
-            firstName: postUser.firstName,
-            lastName: postUser.lastName,
-            userPicturePath: postUser.picturePath,
-          };
-        } catch (err) {
-          console.error(`Error populating post ${post._id}:`, err);
-          return null;
-        }
+        const postUser = await User.findById(post.userId);
+        if (!postUser) return null;
+        return {
+          ...post._doc,
+          firstName: postUser.firstName,
+          lastName: postUser.lastName,
+          userPicturePath: postUser.picturePath,
+          picturePath: post.picturePath || "", // Keep for backward compatibility
+          videoPath: post.videoPath || "", // Keep for backward compatibility
+        };
       })
     );
 
     const validPosts = populatedPosts.filter((post) => post !== null);
-    console.log("Valid posts to return:", validPosts.length);
-
     console.log("\n✓✓✓ POST CREATED SUCCESSFULLY ✓✓✓");
     console.log("==========================================\n");
 
-    return res.status(201).json(validPosts);
+    res.status(201).json(validPosts);
+
   } catch (err) {
     console.error("\n✗✗✗ CREATE POST ERROR ✗✗✗");
-    console.error("Error name:", err.name);
-    console.error("Error message:", err.message);
-    console.error("Error stack:", err.stack);
-    console.error("==========================================\n");
-
-    return res.status(500).json({
+    console.error("Error:", err.message);
+    
+    // If files were uploaded before the error, try to delete them
+    if (req.files && req.files.length > 0) {
+      console.log("Rolling back Cloudinary uploads due to error...");
+      for (const file of req.files) {
+        cloudinary.uploader.destroy(file.public_id);
+      }
+    }
+    
+    res.status(500).json({
       message: "Internal server error occurred while creating post",
       error: err.message,
-      errorName: err.name,
-      ...(process.env.NODE_ENV === "development" && {
-        stack: err.stack,
-        requestBody: req.body,
-        fileCount: req.files ? req.files.length : 0,
-      }),
     });
   }
 };
@@ -440,29 +329,55 @@ export const deletePost = async (req, res) => {
   try {
     const { id } = req.params;
     const { userId } = req.body;
+    const profileUserId = req.query.userId; // Get from query param
 
+    console.log("DELETE POST REQUEST:", {
+      postId: id,
+      requestingUser: userId,
+      profileUserId: profileUserId,
+    });
+
+    // Find and verify the post
     const post = await Post.findById(id);
     if (!post) {
       return res.status(404).json({ message: "Post not found." });
     }
 
+    // Check authorization
     if (post.userId !== userId) {
       return res.status(403).json({
         message: "You are not authorized to delete this post.",
       });
     }
 
+    // Delete the post
     await Post.findByIdAndDelete(id);
+    console.log("Post deleted:", id);
 
+    // Set no-cache headers
     res.set({
       "Cache-Control": "no-store, no-cache, must-revalidate, private",
       Pragma: "no-cache",
       Expires: "0",
     });
 
-    const allPosts = await Post.find().sort({ createdAt: -1 });
+    // CRITICAL FIX: Return appropriate posts based on context
+    let posts;
+    if (profileUserId) {
+      // Profile page - return only that user's posts
+      console.log("Fetching posts for user:", profileUserId);
+      posts = await Post.find({ userId: profileUserId }).sort({
+        createdAt: -1,
+      });
+    } else {
+      // Feed page - return all posts
+      console.log("Fetching all posts");
+      posts = await Post.find().sort({ createdAt: -1 });
+    }
+
+    // Populate user information
     const populatedPosts = await Promise.all(
-      allPosts.map(async (p) => {
+      posts.map(async (p) => {
         const postUser = await User.findById(p.userId);
         if (!postUser) return null;
 
@@ -471,11 +386,15 @@ export const deletePost = async (req, res) => {
           firstName: postUser.firstName,
           lastName: postUser.lastName,
           userPicturePath: postUser.picturePath,
+          picturePath: p.picturePath || "",
+          videoPath: p.videoPath || "",
         };
       })
     );
 
     const validPosts = populatedPosts.filter((post) => post !== null);
+
+    console.log(`Returning ${validPosts.length} posts after delete`);
     res.status(200).json(validPosts);
   } catch (err) {
     console.error("DELETE POST ERROR:", err);

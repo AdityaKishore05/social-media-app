@@ -1,36 +1,36 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
   TextField,
+  Button,
   Box,
   Typography,
   IconButton,
+  Avatar,
+  CircularProgress,
   useTheme,
 } from "@mui/material";
-import { Close } from "@mui/icons-material";
-import Dropzone from "react-dropzone";
-import { useState } from "react";
+import { Close as CloseIcon, PhotoCamera } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { setLogin } from "state";
-import FlexBetween from "components/FlexBetween";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 
 const EditProfileModal = ({ open, onClose, user }) => {
+  const dispatch = useDispatch();
+  const theme = useTheme();
+  const token = useSelector((state) => state.token);
+  
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     bio: user?.bio || "",
   });
-  const [picture, setPicture] = useState(null);
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(user?.picturePath || "");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const dispatch = useDispatch();
-  const token = useSelector((state) => state.token);
-  const { palette } = useTheme();
 
   const handleChange = (e) => {
     setFormData({
@@ -39,22 +39,42 @@ const EditProfileModal = ({ open, onClose, user }) => {
     });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Image size must be less than 5MB");
+        return;
+      }
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError("Please select an image file");
+        return;
+      }
+      
+      setProfilePicture(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setError(""); // Clear any previous errors
+    }
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setError("");
 
     try {
-      const formDataToSend = new FormData();
+      console.log("Updating profile for user:", user._id);
       
-      // Add all text fields
-      Object.keys(formData).forEach((key) => {
-        formDataToSend.append(key, formData[key]);
-      });
-
-      // Add picture if selected
-      if (picture) {
-        formDataToSend.append("picture", picture);
-        formDataToSend.append("picturePath", picture.name);
+      const formDataToSend = new FormData();
+      formDataToSend.append("firstName", formData.firstName.trim());
+      formDataToSend.append("lastName", formData.lastName.trim());
+      formDataToSend.append("bio", formData.bio.trim());
+      
+      if (profilePicture) {
+        console.log("Including new profile picture");
+        formDataToSend.append("picture", profilePicture);
       }
 
       const response = await fetch(
@@ -63,151 +83,199 @@ const EditProfileModal = ({ open, onClose, user }) => {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
+            // Don't set Content-Type - let browser set it with boundary
           },
           body: formDataToSend,
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to update profile");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update profile");
       }
 
       const updatedUser = await response.json();
+      console.log("Profile updated successfully:", updatedUser);
       
-      // Update Redux store with new user data
-      dispatch(
-        setLogin({
-          user: updatedUser,
-          token: token,
-        })
-      );
+      // Update Redux state with new user data
+      dispatch(setLogin({
+        user: updatedUser,
+        token: token,
+      }));
 
+      // Close modal and show success
       onClose();
+      
     } catch (err) {
       console.error("Error updating profile:", err);
-      setError(err.message);
+      setError(err.message || "Failed to update profile. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <FlexBetween>
-          <Typography variant="h5" fontWeight="600">
-            Edit Profile
-          </Typography>
-          <IconButton onClick={onClose}>
-            <Close />
-          </IconButton>
-        </FlexBetween>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="sm" 
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: "12px",
+          // Remove elevation prop, use sx instead
+        }
+      }}
+    >
+      <DialogTitle
+        sx={{
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          pb: 2,
+        }}
+      >
+        Edit Profile
+        <IconButton
+          onClick={onClose}
+          sx={{ 
+            position: "absolute", 
+            right: 8, 
+            top: 8,
+            color: theme.palette.grey[500],
+          }}
+          disabled={isLoading}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
 
-      <DialogContent>
+      <DialogContent sx={{ mt: 2 }}>
         {error && (
           <Box
             sx={{
               mb: 2,
               p: 2,
-              backgroundColor: "#f8d7da",
-              color: "#721c24",
-              borderRadius: "4px",
+              backgroundColor: theme.palette.error.light,
+              color: theme.palette.error.dark,
+              borderRadius: "8px",
             }}
           >
-            <Typography>{error}</Typography>
+            <Typography variant="body2">{error}</Typography>
           </Box>
         )}
 
-        <Box display="flex" flexDirection="column" gap="1.5rem" mt={1}>
-          {/* Profile Picture Upload */}
-          <Box>
-            <Typography variant="subtitle2" mb={1} fontWeight="500">
-              Profile Picture
-            </Typography>
-            <Dropzone
-              acceptedFiles=".jpg,.jpeg,.png,.gif,.webp"
-              multiple={false}
-              onDrop={(acceptedFiles) => setPicture(acceptedFiles[0])}
+        <Box display="flex" flexDirection="column" gap={3}>
+          {/* Profile Picture Section */}
+          <Box 
+            display="flex" 
+            flexDirection="column" 
+            alignItems="center" 
+            gap={2}
+            sx={{
+              p: 2,
+              backgroundColor: theme.palette.background.default,
+              borderRadius: "8px",
+            }}
+          >
+            <Avatar
+              src={previewUrl}
+              alt={`${formData.firstName} ${formData.lastName}`}
+              sx={{ 
+                width: 100, 
+                height: 100,
+                border: `3px solid ${theme.palette.primary.main}`,
+              }}
+            />
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<PhotoCamera />}
               disabled={isLoading}
+              sx={{ textTransform: "none" }}
             >
-              {({ getRootProps, getInputProps }) => (
-                <Box
-                  {...getRootProps()}
-                  border={`2px dashed ${palette.primary.main}`}
-                  p="1rem"
-                  sx={{
-                    "&:hover": { cursor: isLoading ? "not-allowed" : "pointer" },
-                    opacity: isLoading ? 0.5 : 1,
-                    borderRadius: "8px",
-                  }}
-                >
-                  <input {...getInputProps()} />
-                  {!picture ? (
-                    <Typography color={palette.neutral.medium}>
-                      Click to upload new profile picture
-                    </Typography>
-                  ) : (
-                    <FlexBetween>
-                      <Typography>{picture.name}</Typography>
-                      <EditOutlinedIcon />
-                    </FlexBetween>
-                  )}
-                </Box>
-              )}
-            </Dropzone>
+              Change Photo
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleImageChange}
+                disabled={isLoading}
+              />
+            </Button>
+            {profilePicture && (
+              <Typography variant="caption" color="text.secondary">
+                New photo selected: {profilePicture.name}
+              </Typography>
+            )}
           </Box>
 
-          {/* Name Fields */}
+          {/* Form Fields */}
           <TextField
-            label="First Name"
             name="firstName"
+            label="First Name"
             value={formData.firstName}
             onChange={handleChange}
-            disabled={isLoading}
             fullWidth
+            disabled={isLoading}
+            required
+            inputProps={{ maxLength: 50 }}
           />
 
           <TextField
-            label="Last Name"
             name="lastName"
+            label="Last Name"
             value={formData.lastName}
             onChange={handleChange}
-            disabled={isLoading}
             fullWidth
+            disabled={isLoading}
+            required
+            inputProps={{ maxLength: 50 }}
           />
-          
+
           <TextField
-            label="Bio"
             name="bio"
-            placeholder="Tell us about yourself..."
+            label="Bio"
             value={formData.bio}
             onChange={handleChange}
-            disabled={isLoading}
             multiline
-            rows={3}
+            rows={4}
             fullWidth
-            inputProps={{ maxLength: 150, style: { whiteSpace: 'pre-wrap' } }}
-            helperText={`${formData.bio?.length || 0}/150 characters`}
+            disabled={isLoading}
+            inputProps={{ maxLength: 500 }}
+            helperText={`${formData.bio.length}/500 characters`}
+            placeholder="Tell us about yourself..."
           />
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} disabled={isLoading}>
+      <DialogActions
+        sx={{
+          borderTop: `1px solid ${theme.palette.divider}`,
+          pt: 2,
+          px: 3,
+          pb: 2,
+        }}
+      >
+        <Button 
+          onClick={onClose} 
+          disabled={isLoading}
+          sx={{ textTransform: "none" }}
+        >
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={isLoading}
-          sx={{
-            backgroundColor: palette.primary.main,
-            color: palette.background.alt,
-            "&:hover": { backgroundColor: palette.primary.dark },
+          disabled={isLoading || !formData.firstName.trim() || !formData.lastName.trim()}
+          sx={{ 
+            textTransform: "none",
+            minWidth: "120px",
           }}
         >
-          {isLoading ? "Saving..." : "Save Changes"}
+          {isLoading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            "Save Changes"
+          )}
         </Button>
       </DialogActions>
     </Dialog>

@@ -12,6 +12,8 @@ import Friend from "components/Friend";
 import { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost, setPosts } from "state";
+import { useLocation } from "react-router-dom"; // Add this import
+
 
 const PostWidget = ({
   postId,
@@ -23,7 +25,6 @@ const PostWidget = ({
   likes,
   comments,
   createdAt,
-  // OLD FORMAT FIELDS - for backward compatibility
   picturePath,
   videoPath,
 }) => {
@@ -35,6 +36,8 @@ const PostWidget = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mediaError, setMediaError] = useState({});
+  const location = useLocation();
+  const isProfilePage = location.pathname.includes('/profile');
 
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
@@ -166,12 +169,15 @@ const PostWidget = ({
     }
   };
 
-  const handleDelete = async () => {
+const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this post?") || isDeleting) return;
     
     setIsDeleting(true);
     try {
-      const response = await fetch(`https://getsocialnow.onrender.com/posts/${postId}/delete`, {
+      // Add query parameter to indicate if this is a profile page
+      const url = `https://getsocialnow.onrender.com/posts/${postId}/delete${isProfilePage ? `?userId=${postUserId}` : ''}`;
+      
+      const response = await fetch(url, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -186,6 +192,8 @@ const PostWidget = ({
       
       const updatedPosts = await response.json();
       dispatch(setPosts({ posts: updatedPosts }));
+      
+      console.log('Post deleted successfully');
     } catch (error) {
       console.error("Error deleting post:", error);
       alert('Failed to delete post. Please try again.');
@@ -193,7 +201,7 @@ const PostWidget = ({
       setIsDeleting(false);
     }
   };
-
+  
   const handleMediaError = (index) => {
     console.error(`Failed to load media at index ${index}:`, items[index]);
     setMediaError(prev => ({ ...prev, [index]: true }));

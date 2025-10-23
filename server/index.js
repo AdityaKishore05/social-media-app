@@ -10,7 +10,6 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
-import { verifyToken } from "./middleware/auth.js";
 import { v2 as cloudinary } from "cloudinary";
 
 /* CONFIGURATIONS */

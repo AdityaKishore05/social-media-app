@@ -6,68 +6,83 @@ import UserImage from "components/UserImage";
 import FlexBetween from "components/FlexBetween";
 import WidgetWrapper from "components/WidgetWrapper";
 import EditProfileModal from "components/EditProfileModal";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { setUser } from "state"; // Import setUser action
 
 const UserWidget = ({ userId, picturePath }) => {
+  const dispatch = useDispatch();
   const posts = useSelector((state) => state.posts);
-  const userPosts = Array.isArray(posts) ? posts.filter(post => post.userId === userId) : [];
-  const totalLikes = userPosts.reduce((total, post) => {
-  return total + (post.likes ? Object.keys(post.likes).length : 0);
-  }, 0);
-  const totalComments = userPosts.reduce((total, post) => {
-  return total + (post.comments ? post.comments.length : 0);
-}, 0);
-  const [user, setUser] = useState(null);
+  const loggedInUser = useSelector((state) => state.user);
+  const token = useSelector((state) => state.token);
+  
+  const [user, setUserState] = useState(null);
   const [error, setError] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
   const { palette } = useTheme();
   const navigate = useNavigate();
-  const token = useSelector((state) => state.token);
-  const loggedInUser = useSelector((state) => state.user);
   const dark = palette.neutral.dark;
   const medium = palette.neutral.medium;
-  
-  
+
+  // Calculate stats
+  const userPosts = Array.isArray(posts) ? posts.filter(post => post.userId === userId) : [];
+  const totalLikes = userPosts.reduce((total, post) => {
+    return total + (post.likes ? Object.keys(post.likes).length : 0);
+  }, 0);
+  const totalComments = userPosts.reduce((total, post) => {
+    return total + (post.comments ? post.comments.length : 0);
+  }, 0);
+
   const getUser = useCallback(async () => {
     if (!userId || !token) return;
     
     try {
       setError(null);
-      const response = await fetch(`https://getsocialnow.onrender.com/users/${userId}`, {
-        method: "GET",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-      });
+      const response = await fetch(
+        `https://getsocialnow.onrender.com/users/${userId}`,
+        {
+          method: "GET",
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+          },
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch user: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to fetch user: ${response.status}`);
       }
 
       const data = await response.json();
       console.log('User widget data loaded:', data.firstName, data.lastName);
-      setUser(data);
+      setUserState(data);
+      
+      // If this is the logged-in user, update Redux too
+      if (userId === loggedInUser?._id) {
+        dispatch(setUser({ user: data }));
+      }
     } catch (err) {
       console.error('Error fetching user:', err);
       setError(err.message);
     }
-  }, [userId, token]);
+  }, [userId, token, loggedInUser?._id, dispatch]);
 
   useEffect(() => {
     getUser();
   }, [getUser]);
 
+  // Refresh user data when modal closes
+  const handleModalClose = () => {
+    setIsEditModalOpen(false);
+    getUser(); // Refresh user data
+  };
+
   if (error) {
     return (
       <WidgetWrapper>
-        <Typography color="error">
-          Error loading user: {error}
-        </Typography>
+        <Typography color="error">Error loading user: {error}</Typography>
       </WidgetWrapper>
     );
   }
@@ -80,33 +95,23 @@ const UserWidget = ({ userId, picturePath }) => {
     );
   }
 
-  const {
-  firstName,
-  lastName,
-  friends,
-  bio,
-} = user;
-
-  const displayFriends = userId === loggedInUser?._id ? 
-    (loggedInUser.friends || friends || []) : 
-    (friends || []);
-
+  const { firstName, lastName, friends, bio } = user;
+  const displayFriends = userId === loggedInUser?._id 
+    ? (loggedInUser.friends || friends || []) 
+    : (friends || []);
   const isOwnProfile = loggedInUser?._id === userId;
 
   return (
     <Box m="1rem" >
-      {/* FIRST ROW */}
-      <FlexBetween
-        gap="0.5rem"
-        pb="1.1rem"
-      >
+      <FlexBetween gap="0.5rem" pb="1.1rem">
         <Box
-          gap="1rem" display="flex"
+          gap="1rem"
+          display="flex"
           onClick={() => navigate(`/profile/${userId}`)}
-          sx={{ flex: 1}}
+          sx={{ cursor: 'pointer', flex: 1 }}
         >
           <UserImage 
-            image={picturePath || user.picturePath} 
+            image={user.picturePath} 
             name={`${firstName} ${lastName}`} 
           />
           <Box>
@@ -115,11 +120,15 @@ const UserWidget = ({ userId, picturePath }) => {
               color={dark}
               fontWeight="500"
               sx={{
+                wordBreak: "break-word",
+                whiteSpace: "pre-wrap",
                 "&:hover": {
                   color: palette.primary.light,
+                  cursor: "pointer",
                 },
               }}
             >
+
               {firstName} {lastName}
             </Typography>
             <Box display="flex" gap="0.5rem" mt="0.5rem">
@@ -146,7 +155,7 @@ const UserWidget = ({ userId, picturePath }) => {
                   {totalComments}
                 </Typography>
                 <Typography color={medium} fontSize="0.875rem">comments</Typography>
-                </Box>
+              </Box>
             </Box>
           </Box>
         </Box>
@@ -163,19 +172,23 @@ const UserWidget = ({ userId, picturePath }) => {
           />
         )}
       </FlexBetween>
-     {bio && (
+
+      {bio && (
         <Box mt="0.5rem">
-          <Typography color={medium} sx={{ fontStyle: 'italic',  whiteSpace: 'pre-wrap'}}>
+         <Typography
+          color={medium}
+          sx={{ fontStyle: 'italic', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+        >
+
             {bio}
           </Typography>
         </Box>
       )}
 
-      {/* Edit Profile Modal */}
       {isOwnProfile && (
         <EditProfileModal 
           open={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
+          onClose={handleModalClose}
           user={user}
         />
       )}

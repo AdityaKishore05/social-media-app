@@ -38,7 +38,7 @@ const Navbar = () => {
   return (
     <FlexBetween width="100%"
         backdropFilter="blur(12px)"
-        boxShadow="10px 0px 10px 0 rgba(0, 0, 0, 0.5)"
+        boxShadow="10px 0px 10px 0 rgba(0, 0, 0, 0.15)"
         borderBottom="1px solid rgba(255, 255, 255, 0.15)"
         p="1rem 6%">
       <FlexBetween gap="1.75rem">
