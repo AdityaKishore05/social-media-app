@@ -185,7 +185,7 @@ const Form = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <div id="googleSignInButton"></div>
+          <div id="googleSignInButton" style={{display: "flex" ,justifyContent: "center"}}></div>
         )}
       </Box>
 
