@@ -62,10 +62,12 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
             variant="h5"
             fontWeight="500"
             sx={{
+              wordBreak: "break-word",
+              whiteSpace: "pre-wrap",
               "&:hover": {
                 color: palette.primary.light,
                 cursor: "pointer",
-              },
+              }
             }}
           >
             {name}

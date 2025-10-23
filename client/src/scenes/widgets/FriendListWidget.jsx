@@ -165,6 +165,7 @@ const FriendListWidget = ({ userId }) => {
                 name={`${friend.firstName} ${friend.lastName}`}
                 subtitle={friend.bio || ""}
                 userPicturePath={friend.picturePath}
+                
               />
             ))}
           </Box>

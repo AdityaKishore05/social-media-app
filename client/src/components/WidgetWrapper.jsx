@@ -14,7 +14,6 @@ const WidgetWrapper = styled(Box)(({ theme }) => ({
   transition: "all 0.3s ease",
   
   "&:hover": {
-    transform: "translateY(-2px)",
     boxShadow: theme.palette.mode === "dark"
       ? "0 8px 20px rgba(0, 0, 0, 0.4)"
       : "0 8px 20px rgba(0, 0, 0, 0.12)",

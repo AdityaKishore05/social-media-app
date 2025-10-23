@@ -179,13 +179,13 @@ const Form = () => {
       )}
 
       {/* GOOGLE SIGN IN BUTTON */}
-      <Box sx={{ mb: 2 }}>
+      <Box mb="2">
         {isLoading ? (
           <Box display="flex" justifyContent="center">
             <CircularProgress />
           </Box>
         ) : (
-          <div id="googleSignInButton" style={{ width: "100%" }}></div>
+          <div id="googleSignInButton"></div>
         )}
       </Box>
 
