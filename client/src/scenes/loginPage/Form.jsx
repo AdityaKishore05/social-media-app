@@ -181,11 +181,11 @@ const Form = () => {
       {/* GOOGLE SIGN IN BUTTON */}
       <Box mb="2">
         {isLoading ? (
-          <Box display="flex" justifyContent="center" width="100%">
+          <Box display="flex" justifyContent="center">
             <CircularProgress />
           </Box>
         ) : (
-          <div id="googleSignInButton" style={{display: "flex" ,justifyContent: "center"}}></div>
+          <div id="googleSignInButton" style={{display: "flex" ,justifyContent: "center", width: "100%"}}></div>
         )}
       </Box>
 
