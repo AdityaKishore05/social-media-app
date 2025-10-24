@@ -181,7 +181,7 @@ const Form = () => {
       {/* GOOGLE SIGN IN BUTTON */}
       <Box mb="2">
         {isLoading ? (
-          <Box display="flex" justifyContent="center">
+          <Box display="flex" justifyContent="center" width="100%">
             <CircularProgress />
           </Box>
         ) : (
