@@ -252,13 +252,15 @@ const handleDrop = (acceptedFiles) => {
 
         <Button
             disabled={isPosting || (!post.trim() && mediaFiles.length === 0)}
+            onClick={handlePost}
             variant="contained"
-            sx={{
+          sx={{
+              borderRadius: "2rem",
               backgroundColor: isPosting ? palette.neutral.light : palette.primary.main,
               "&:hover": {
                 backgroundColor: isPosting ? palette.neutral.light : palette.primary.dark,
               },
-             }}
+          }}
         >
           {isPosting ? "POSTING..." : "POST"}
         </Button>

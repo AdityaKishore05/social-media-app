@@ -4,7 +4,6 @@ import {
 import { Box, Typography, useTheme } from "@mui/material";
 import UserImage from "components/UserImage";
 import FlexBetween from "components/FlexBetween";
-import WidgetWrapper from "components/WidgetWrapper";
 import EditProfileModal from "components/EditProfileModal";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState, useCallback } from "react";

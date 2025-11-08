@@ -507,12 +507,16 @@ const handleDelete = async () => {
             <Button
               disabled={!commentText.trim() || isCommenting}
               onClick={handleComment}
+              variant="contained"
               sx={{
                 color: palette.background.alt,
-                backgroundColor: primary,
                 borderRadius: "3rem",
                 minWidth: "80px",
                 flexShrink: 0,
+                backgroundColor: isCommenting ? palette.neutral.light : palette.primary.main,
+              "&:hover": {
+                backgroundColor: isCommenting ? palette.neutral.light : palette.primary.dark,
+              },
               }}
             >
               {isCommenting ? 'SENDING...' : 'SEND'}
