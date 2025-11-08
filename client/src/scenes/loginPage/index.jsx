@@ -6,7 +6,6 @@ import { useDispatch } from "react-redux";
 import { IconButton } from "@mui/material";
 import { setMode } from "state";
 import { DarkMode, LightMode } from "@mui/icons-material";
-import WidgetWrapper from "components/WidgetWrapper";
 
 const LoginPage = () => {
   const theme = useTheme();
@@ -32,7 +31,7 @@ const LoginPage = () => {
       <FlexBetween
         width="100%"
         backdropFilter="blur(12px)"
-        boxShadow="10px 0px 10px 0 rgba(0, 0, 0, 0.5)"
+        boxShadow="2px 0px 2px 0 rgba(0, 0, 0, 0.15)"
         borderBottom="1px solid rgba(255, 255, 255, 0.15)"
         p="1rem 6%"
       >
@@ -48,7 +47,7 @@ const LoginPage = () => {
         </IconButton>
       </FlexBetween>
 
-      <WidgetWrapper
+      <Box
         width={isNonMobileScreens ? "50%" : "93%"}
         p="2rem"
         m="2rem auto"
@@ -70,7 +69,7 @@ const LoginPage = () => {
           The social media platform for Gen Z
         </Typography>
         <Form />
-      </WidgetWrapper>
+      </Box>
     </Box>
   );
 };

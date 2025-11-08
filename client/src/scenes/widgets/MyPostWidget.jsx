@@ -14,7 +14,7 @@ import {
 import FlexBetween from "components/FlexBetween";
 import Dropzone from "react-dropzone";
 import UserImage from "components/UserImage";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
 import { useNavigate } from "react-router-dom";
@@ -84,30 +84,39 @@ const MyPostWidget = ({ picturePath }) => {
     }
   };
 
-  const handleDrop = (acceptedFiles) => {
-    const newFiles = acceptedFiles.slice(0, 20 - mediaFiles.length);
-    
-    if (mediaFiles.length + newFiles.length > 20) {
-      alert('Maximum 20 items allowed per post');
+  // Cleanup previews when unmounting or clearing mediaFiles
+useEffect(() => {
+  return () => {
+    mediaFiles.forEach(file => URL.revokeObjectURL(file.preview));
+  };
+}, [mediaFiles]);
+
+
+const handleDrop = (acceptedFiles) => {
+  const newFiles = acceptedFiles.slice(0, 20 - mediaFiles.length).map(file => {
+    file.preview = URL.createObjectURL(file);
+    return file;
+  });
+
+  if (mediaFiles.length + newFiles.length > 20) {
+    alert('Maximum 20 items allowed per post');
+    return;
+  }
+
+  for (const file of newFiles) {
+    const isVideo = file.type.startsWith('video/');
+    const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert(`${file.name} is too large. Max size: ${isVideo ? '50MB' : '10MB'}`);
       return;
     }
+  }
 
-    // Check file sizes
-    for (const file of newFiles) {
-      const isVideo = file.type.startsWith('video/');
-      const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
-      
-      if (file.size > maxSize) {
-        alert(`${file.name} is too large. Max size: ${isVideo ? '50MB' : '10MB'}`);
-        return;
-      }
-    }
-
-    setMediaFiles([...mediaFiles, ...newFiles]);
-  };
+  setMediaFiles([...mediaFiles, ...newFiles]);
+};
 
   return (
-    <Box m="1.5rem">
+    <Box m="1rem">
       <FlexBetween gap="1.5rem">
         <Box onClick={() => navigate(`/profile/${_id}`)} sx={{ cursor: 'pointer' }}>
           <UserImage 
@@ -242,21 +251,14 @@ const MyPostWidget = ({ picturePath }) => {
         </FlexBetween>
 
         <Button
-          disabled={isPosting || (!post.trim() && mediaFiles.length === 0)}
-          onClick={handlePost}
-          sx={{
-            color: palette.background.alt,
-            backgroundColor: palette.primary.main,
-            borderRadius: "3rem",
-            opacity: isPosting ? 0.7 : 1,
-            "&:hover": {
-              cursor: (isPosting || (!post.trim() && mediaFiles.length === 0)) ? "not-allowed" : "pointer",
-              backgroundColor: palette.primary.dark,
-            },
-            "&:disabled": {
-              backgroundColor: palette.neutral.light,
-            }
-          }}
+            disabled={isPosting || (!post.trim() && mediaFiles.length === 0)}
+            variant="contained"
+            sx={{
+              backgroundColor: isPosting ? palette.neutral.light : palette.primary.main,
+              "&:hover": {
+                backgroundColor: isPosting ? palette.neutral.light : palette.primary.dark,
+              },
+             }}
         >
           {isPosting ? "POSTING..." : "POST"}
         </Button>

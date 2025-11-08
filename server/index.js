@@ -12,6 +12,7 @@ import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
 import { v2 as cloudinary } from "cloudinary";
 
+
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

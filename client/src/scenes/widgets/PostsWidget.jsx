@@ -11,158 +11,88 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const getPosts = useCallback(async (forceRefresh = false) => {
+  const fetchPosts = useCallback(async (url, errorPrefix) => {
     if (!token) return;
-    
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const timestamp = forceRefresh ? `?_t=${Date.now()}` : '';
-      const response = await fetch(`https://getsocialnow.onrender.com/posts${timestamp}`, {
-        method: "GET",
-        headers: { 
+      const response = await fetch(url, {
+        headers: {
           Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+          "Cache-Control": "no-cache, no-store, must-revalidate",
         },
       });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch posts: ${response.status} ${response.statusText}`);
-      }
-      
+
+      if (!response.ok) throw new Error(`${errorPrefix}: ${response.status}`);
+
       const data = await response.json();
-      const postsArray = Array.isArray(data) ? data : [];
-      
-      dispatch(setPosts({ posts: postsArray }));
-      console.log('Posts fetched successfully:', postsArray.length);
-      
-    } catch (error) {
-      console.error("Failed to fetch posts:", error);
-      setError(error.message);
+      dispatch(setPosts({ posts: Array.isArray(data) ? data : [] }));
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
   }, [dispatch, token]);
 
-  const getUserPosts = useCallback(async (forceRefresh = false) => {
-    if (!token || !userId) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const timestamp = forceRefresh ? `?_t=${Date.now()}` : '';
-      const response = await fetch(
-        `https://getsocialnow.onrender.com/posts/${userId}/posts${timestamp}`,
-        {
-          method: "GET",
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          },
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user posts: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      const postsArray = Array.isArray(data) ? data : [];
-      
-      dispatch(setPosts({ posts: postsArray }));
-      console.log('User posts fetched successfully:', postsArray.length);
-      
-    } catch (error) {
-      console.error("Failed to fetch user posts:", error);
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [dispatch, token, userId]);
+  const getFeedPosts = useCallback(() => {
+    fetchPosts(`https://getsocialnow.onrender.com/posts?_t=${Date.now()}`, "Failed to fetch posts");
+  }, [fetchPosts]);
 
-  const handleRefresh = useCallback(() => {
-    if (isProfile && userId) {
-      getUserPosts(true);
-    } else if (!isProfile) {
-      getPosts(true);
-    }
-  }, [isProfile, userId, getUserPosts, getPosts]);
+  const getUserPosts = useCallback(() => {
+    fetchPosts(`https://getsocialnow.onrender.com/posts/${userId}/posts?_t=${Date.now()}`, "Failed to fetch user posts");
+  }, [fetchPosts, userId]);
 
   useEffect(() => {
-    if (isProfile && userId) {
-      getUserPosts(false);
-    } else if (!isProfile) {
-      getPosts(false);
-    }
-  }, [isProfile, userId, getUserPosts, getPosts]);
+    if (!token) return;
+    isProfile ? getUserPosts() : getFeedPosts();
+  }, [token, userId, isProfile, getFeedPosts, getUserPosts]);
 
-  if (isLoading) {
+  const handleRefresh = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    isProfile ? getUserPosts() : getFeedPosts();
+  };
+
+  if (isLoading)
+    return <Typography align="center" sx={{ mt: 2 }}>Loading posts...</Typography>;
+
+  if (error)
     return (
-      <Box sx={{ mt: 2, textAlign: 'center' }}>
-        <Typography>Loading posts...</Typography>
+      <Box sx={{ mt: 2, textAlign: "center" }}>
+        <Typography color="error" sx={{ mb: 2 }}>Error: {error}</Typography>
+        <Button onClick={handleRefresh} variant="contained">Retry</Button>
       </Box>
     );
-  }
 
-  if (error) {
+  if (!posts?.length)
     return (
-      <Box sx={{ mt: 2, textAlign: 'center' }}>
-        <Typography color="error" sx={{ mb: 2 }}>
-          Error: {error}
-        </Typography>
-        <Button onClick={handleRefresh} variant="contained">
-          Retry
-        </Button>
-      </Box>
-    );
-  }
-
-  if (!posts || posts.length === 0) {
-    return (
-      <Box sx={{ mt: 2, textAlign: 'center' }}>
+      <Box sx={{ mt: 2, textAlign: "center" }}>
         <Typography sx={{ mb: 2 }}>
           {isProfile ? "No posts yet." : "No posts to display."}
         </Typography>
-        <Button onClick={handleRefresh} variant="outlined">
-          Refresh
-        </Button>
+        <Button onClick={handleRefresh} variant="outlined">Refresh</Button>
       </Box>
     );
-  }
 
   return (
     <Box>
-      {posts.map((post) => {
-        if (!post || !post._id) {
-          console.warn('Invalid post data:', post);
-          return null;
-        }
-
-        return (
-          <PostWidget
-            key={post._id}
-            postId={post._id}
-            postUserId={post.userId}
-            name={`${post.firstName} ${post.lastName}`}
-            description={post.description}
-            userPicturePath={post.userPicturePath}
-            likes={post.likes || {}}
-            comments={post.comments || []}
-            // NEW FORMAT
-            mediaItems={post.mediaItems || []}
-            // OLD FORMAT - for backward compatibility
-            picturePath={post.picturePath}
-            videoPath={post.videoPath}
-            createdAt={post.createdAt}
-          />
-        );
-      })}
+      {posts.map((post) => (
+        <PostWidget
+          key={post._id}
+          postId={post._id}
+          postUserId={post.userId}
+          name={`${post.firstName} ${post.lastName}`}
+          description={post.description}
+          userPicturePath={post.userPicturePath}
+          likes={post.likes || {}}
+          comments={post.comments || []}
+          mediaItems={post.mediaItems || []}
+          picturePath={post.picturePath}
+          videoPath={post.videoPath}
+          createdAt={post.createdAt}
+        />
+      ))}
     </Box>
   );
 };

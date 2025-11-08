@@ -81,17 +81,15 @@ const UserWidget = ({ userId, picturePath }) => {
 
   if (error) {
     return (
-      <WidgetWrapper>
         <Typography color="error">Error loading user: {error}</Typography>
-      </WidgetWrapper>
     );
   }
 
   if (!user) {
     return (
-      <WidgetWrapper>
-        <Typography>Loading user...</Typography>
-      </WidgetWrapper>
+        <Box display="flex" justifyContent="center">
+         <Typography>Loading user...</Typography>
+        </Box>
     );
   }
 

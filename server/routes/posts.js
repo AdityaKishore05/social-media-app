@@ -6,34 +6,34 @@ import {
   likePost,
   commentPost,
   deletePost,
+  likeComment,
 } from "../controllers/posts.js";
 import multer from "multer";
 import { verifyToken } from "../middleware/auth.js";
 import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "@fluidjs/multer-cloudinary"; // NEW
+import { CloudinaryStorage } from "@fluidjs/multer-cloudinary";
+
 const router = express.Router();
 
 // ============================================
-// MULTER CONFIGURATION (with Cloudinary)
+// MULTER CONFIGURATION (Cloudinary)
 // ============================================
-
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "social-media-app", // Folder name in Cloudinary
-    resource_type: "auto", // Automatically detect image or video
+    folder: "social-media-app",
+    resource_type: "auto",
     allowed_formats: ["jpg", "png", "jpeg", "mp4", "mov", "avi", "webp"],
   },
 });
 
 const upload = multer({
-  storage, // Use Cloudinary storage
+  storage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB (Absolute max limit for videos)
-    files: 20, // Max 20 files
+    fileSize: 50 * 1024 * 1024, // 50MB max
+    files: 20,
   },
   fileFilter: (req, file, cb) => {
-    // Redundant check, but good for fast-fail
     if (
       file.mimetype.startsWith("image/") ||
       file.mimetype.startsWith("video/")
@@ -58,13 +58,14 @@ router.get("/:userId/posts", verifyToken, getUserPosts);
 
 /* UPDATE */
 router.patch("/:id/comment", verifyToken, commentPost);
+router.patch("/:id/comment/:commentId/like", verifyToken, likeComment);
 router.patch("/:id/like", verifyToken, likePost);
 
 /* DELETE */
 router.delete("/:id/delete", verifyToken, deletePost);
 
 // ============================================
-// ERROR HANDLING FOR MULTER
+// MULTER ERROR HANDLER
 // ============================================
 router.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
@@ -78,12 +79,9 @@ router.use((error, req, res, next) => {
         message: "Too many files. Maximum 20 files per post.",
       });
     }
-    return res.status(400).json({
-      message: error.message,
-    });
+    return res.status(400).json({ message: error.message });
   }
 
-  // Handle other errors (like fileFilter)
   if (error) {
     return res.status(400).json({ message: error.message });
   }

@@ -394,38 +394,90 @@ const handleDelete = async () => {
       {isComments && (
         <Box m="0.5rem">
           {comments && comments.length > 0 ? (
-            comments.map((comment, index) => {
-              const commentId = comment._id || `comment-${index}`;
-              const commentName = comment.firstName && comment.lastName 
-                ? `${comment.firstName} ${comment.lastName}`
-                : comment.name || 'Unknown User';
-              const commentContent = comment.commentText || comment.text || comment;
+  comments.map((comment, index) => {
+    const commentId = comment._id || `comment-${index}`;
+    const commentName = comment.firstName && comment.lastName 
+      ? `${comment.firstName} ${comment.lastName}`
+      : comment.name || 'Unknown User';
+    const commentContent = comment.commentText || comment.text || comment;
+    const commentLikes = comment.likes || {};
+    const commentLikeCount = Object.keys(commentLikes).length;
+    const isCommentLiked = Boolean(commentLikes[loggedInUserId]);
 
-              return (
-                <Box key={commentId}>
-                  <Typography 
-                    sx={{ 
-                      color: main, 
-                      m: "0.5rem 0.5rem", 
-                      wordWrap: "break-word",
-                      overflowWrap: "break-word",
-                      whiteSpace: "pre-wrap",
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    <span style={{ fontWeight: 500 }}>
-                      {commentName}
-                    </span>
-                    {` - ${commentContent}`}
-                  </Typography>
-                </Box>
-              );
-            })
+    return (
+      <Box key={commentId} sx={{ m: "0.5rem 0.5rem" }}>
+        <FlexBetween alignItems="flex-start" gap="0.5rem">
+          {/* Left side: comment content */}
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              sx={{
+                color: main,
+                wordWrap: "break-word",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              <span style={{ fontWeight: 500 }}>{commentName}</span>
+              {` - ${commentContent}`}
+            </Typography>
+
+            {/* 🕒 time below comment */}
+            <Typography
+              variant="caption"
+              color={palette.neutral.mediumMain}
+              sx={{ ml: "0.2rem" }}
+            >
+              {comment.createdAt ? formatDate(comment.createdAt) : "Just now"}
+            </Typography>
+          </Box>
+
+          {/* Right side: small like icon for each comment */}
+          <FlexBetween gap="0.25rem">
+            <IconButton
+              size="small"
+              sx={{ p: "2px" }}
+              onClick={async () => {
+                try {
+                  const response = await fetch(
+                    `https://getsocialnow.onrender.com/posts/${postId}/comment/${commentId}/like`,
+                    {
+                      method: "PATCH",
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({ userId: loggedInUserId }),
+                    }
+                  );
+
+                  if (response.ok) {
+                    const updatedPost = await response.json();
+                    dispatch(setPost({ post: updatedPost }));
+                  }
+                } catch (error) {
+                  console.error("Failed to like comment:", error);
+                }
+              }}
+            >
+              {isCommentLiked ? (
+                <FavoriteOutlined sx={{ fontSize: "1rem", color: primary }} />
+              ) : (
+                <FavoriteBorderOutlined sx={{ fontSize: "1rem" }} />
+              )}
+            </IconButton>
+            {commentLikeCount > 0 && (
+              <Typography variant="caption">{commentLikeCount}</Typography>
+            )}
+          </FlexBetween>
+        </FlexBetween>
+      </Box>
+    );
+  })
           ) : (
-            <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem", fontStyle: 'italic' }}>
+            <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem", fontStyle: "italic" }}>
               No comments yet
             </Typography>
           )}
+
           
           <FlexBetween gap="1.5rem" mt="0.5rem" alignItems="flex-end" mb="1rem">
             <InputBase

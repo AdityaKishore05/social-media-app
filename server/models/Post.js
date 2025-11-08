@@ -89,6 +89,11 @@ const postSchema = mongoose.Schema(
           type: Date,
           default: Date.now,
         },
+        likes: {
+          type: Map,
+          of: Boolean,
+          default: {},
+        },
       },
     ],
     isDeleted: {
@@ -103,7 +108,7 @@ const postSchema = mongoose.Schema(
   }
 );
 
-// Add compound indexes
+// Compound indexes
 postSchema.index({ userId: 1, createdAt: -1 });
 postSchema.index({ isDeleted: 1, createdAt: -1 });
 
@@ -115,35 +120,31 @@ postSchema.pre(/^find/, function (next) {
   next();
 });
 
-// Instance method for soft delete
+// Soft delete
 postSchema.methods.softDelete = function () {
   this.isDeleted = true;
   return this.save();
 };
 
-// Static method to find including deleted posts
+// Static method to include deleted
 postSchema.statics.findWithDeleted = function (query = {}) {
   return this.find({ ...query, includeDeleted: true });
 };
 
-// UPDATED: Validation - allow either old or new format
+// Validation: must have description or media
 postSchema.pre("save", function (next) {
-  if (!this.isNew) {
-    return next();
-  }
+  if (!this.isNew) return next();
 
   const hasDescription = this.description && this.description.trim().length > 0;
   const hasNewMedia = this.mediaItems && this.mediaItems.length > 0;
   const hasOldMedia = this.picturePath || this.videoPath;
 
   if (!hasDescription && !hasNewMedia && !hasOldMedia) {
-    const error = new Error("Post must have either description or media");
-    return next(error);
+    return next(new Error("Post must have either description or media"));
   }
 
   next();
 });
 
 const Post = mongoose.model("Post", postSchema);
-
 export default Post;

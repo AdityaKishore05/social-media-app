@@ -78,9 +78,9 @@ const FriendListWidget = ({ userId }) => {
    
   if (isLoading) {
     return (
-      <WidgetWrapper>
+      <Box display="flex" justifyContent="center" pt="20px">
         <Typography>Loading friends...</Typography>
-      </WidgetWrapper>
+      </Box>
     );
   }
 

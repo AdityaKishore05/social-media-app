@@ -37,8 +37,7 @@ const Navbar = () => {
 
   return (
     <FlexBetween width="100%"
-        backdropFilter="blur(12px)"
-        boxShadow="10px 0px 10px 0 rgba(0, 0, 0, 0.15)"
+        boxShadow="2px 0px 2px 0 rgba(0, 0, 0, 0.15)"
         borderBottom="1px solid rgba(255, 255, 255, 0.15)"
         p="1rem 6%">
       <FlexBetween gap="1.75rem">
@@ -108,12 +107,14 @@ const Navbar = () => {
           bottom="0"
           height="100%"
           zIndex="10"
-          maxWidth="500px"
-          minWidth="300px"
           backgroundColor={background}
+          boxShadow="2px 0px 2px 0 rgba(0, 0, 0, 0.15)"
+          borderLeft="1px solid rgba(255, 255, 255, 0.15)"
+          p="1rem"
+          transition="all 4s ease-in-out"
         >
           {/* CLOSE ICON */}
-          <Box display="flex" justifyContent="flex-end" p="1rem">
+          <Box display="flex" justifyContent="flex-end" mb="20px">
             <IconButton
               onClick={() => setIsMobileMenuToggled(!isMobileMenuToggled)}
             >
@@ -122,12 +123,12 @@ const Navbar = () => {
           </Box>
 
           {/* MENU ITEMS */}
-          <FlexBetween
+          <Box
             display="flex"
             flexDirection="column"
-            justifyContent="center"
+            justifyContent="space-between"
             alignItems="center"
-            gap="3rem"
+            height="70vh"
           >
             <IconButton
               onClick={() => dispatch(setMode())}
@@ -144,7 +145,6 @@ const Navbar = () => {
                 value={fullName}
                 sx={{
                   backgroundColor: neutralLight,
-                  width: "200px",
                   borderRadius: "0.25rem",
                   p: "0.25rem 1rem",
                   "& .MuiSvgIcon-root": {
@@ -165,7 +165,7 @@ const Navbar = () => {
                 </MenuItem>
               </Select>
             </FormControl>
-          </FlexBetween>
+          </Box>
         </Box>
       )}
     </FlexBetween>
