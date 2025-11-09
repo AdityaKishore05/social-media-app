@@ -405,7 +405,7 @@ const handleDelete = async () => {
     const isCommentLiked = Boolean(commentLikes[loggedInUserId]);
 
     return (
-      <Box key={commentId} sx={{ m: "0.5rem 0.5rem" }}>
+      <Box key={commentId} sx={{ m: "0.5rem" }}>
         <FlexBetween alignItems="flex-start" gap="0.5rem">
           {/* Left side: comment content */}
           <Box sx={{ flex: 1 }}>
