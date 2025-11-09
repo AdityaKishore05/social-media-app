@@ -349,14 +349,14 @@ const handleDelete = async () => {
       display="flex"
       flexDirection="column"
       sx={{ 
-        mx: "1rem",
+        m: "1rem",
         wordWrap: "break-word",
         overflowWrap: "break-word",
         whiteSpace: "pre-wrap",
         wordBreak: "break-word",
       }}
       >
-        {description ? `${name} - ${description}` : null}
+        {description ? `${description}` : null}
       </Typography>
 
       <FlexBetween mx="0.5rem" mb="0.5rem">

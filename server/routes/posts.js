@@ -58,7 +58,7 @@ router.get("/:userId/posts", verifyToken, getUserPosts);
 
 /* UPDATE */
 router.patch("/:id/comment", verifyToken, commentPost);
-router.patch("/:id/comment/:commentId/like", verifyToken, likeComment);
+router.patch("/:postId/comment/:commentId/like", verifyToken, likeComment);
 router.patch("/:id/like", verifyToken, likePost);
 
 /* DELETE */

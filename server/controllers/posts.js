@@ -176,23 +176,32 @@ export const likePost = async (req, res) => {
 =========================== */
 export const likeComment = async (req, res) => {
   try {
-    const { postId, commentId } = req.params; // ✅ match route param names
+    const { postId, commentId } = req.params; // ✅ must match your router
     const { userId } = req.body;
 
+    console.log("🧩 likeComment hit:", { postId, commentId, userId }); // debug log
+
+    // 1️⃣ Find post
     const post = await Post.findById(postId);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
+    // 2️⃣ Find comment
     const comment = post.comments.id(commentId);
     if (!comment) return res.status(404).json({ message: "Comment not found" });
 
+    // 3️⃣ Toggle like
     if (!comment.likes) comment.likes = new Map();
-
     const isLiked = comment.likes.get(userId);
-    if (isLiked) comment.likes.delete(userId);
-    else comment.likes.set(userId, true);
+    if (isLiked) {
+      comment.likes.delete(userId);
+    } else {
+      comment.likes.set(userId, true);
+    }
 
+    // 4️⃣ Save the updated post
     await post.save();
 
+    // 5️⃣ Fetch with user info (to send to frontend)
     const user = await User.findById(post.userId);
     const populatedPost = {
       ...post._doc,
@@ -203,12 +212,14 @@ export const likeComment = async (req, res) => {
       videoPath: post.videoPath || "",
     };
 
+    console.log("✅ Comment like toggled successfully");
     res.status(200).json(populatedPost);
   } catch (err) {
-    console.error("LIKE COMMENT ERROR:", err);
+    console.error("❌ LIKE COMMENT ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
+
 
 
 /* ===========================
