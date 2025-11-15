@@ -11,9 +11,7 @@ import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
 import { v2 as cloudinary } from "cloudinary";
-import notificationRoutes from "./routes/notifications.js";
-import http from "http";
-import { Server } from "socket.io";
+
 
 
 /* CONFIGURATIONS */
@@ -21,40 +19,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config();
 const app = express();
-
-// after you create express app `app` and `server`:
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: process.env.CLIENT_ORIGIN || "http://localhost:3000" },
-});
-
-// Map userId -> socketId(s)
-const onlineUsers = new Map();
-
-io.on("connection", (socket) => {
-  console.log("Socket connected:", socket.id);
-
-  // client should emit 'register' after connecting with their userId
-  socket.on("register", (userId) => {
-    if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
-    onlineUsers.get(userId).add(socket.id);
-    console.log("Registered user", userId, "->", socket.id);
-  });
-
-  socket.on("disconnect", () => {
-    // remove socket id from all user sets
-    for (const [userId, socketSet] of onlineUsers.entries()) {
-      socketSet.delete(socket.id);
-      if (socketSet.size === 0) onlineUsers.delete(userId);
-    }
-    console.log("Socket disconnected:", socket.id);
-  });
-});
-
-// Make io and onlineUsers available to controllers:
-app.set("io", io);
-app.set("onlineUsers", onlineUsers);
-
 
 // Add cache-busting middleware FIRST
 app.use((req, res, next) => {
@@ -104,9 +68,6 @@ app.use(
     ],
   })
 );
-
-app.use("/notifications", notificationRoutes);
-
 
 // Add preflight handling
 app.options("*", cors());
@@ -279,7 +240,8 @@ if (process.env.NODE_ENV === "development") {
 
 /* MONGOOSE SETUP */
 const PORT = process.env.PORT || 6001;
-mongoose.connect(process.env.MONGO_URL, {
+mongoose
+  .connect(process.env.MONGO_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })

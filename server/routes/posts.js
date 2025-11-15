@@ -7,12 +7,12 @@ import {
   commentPost,
   deletePost,
   likeComment,
+  deleteComment
 } from "../controllers/posts.js";
 import multer from "multer";
 import { verifyToken } from "../middleware/auth.js";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "@fluidjs/multer-cloudinary";
-import { getNotifications } from "../controllers/posts.js";
 
 const router = express.Router();
 
@@ -56,13 +56,14 @@ router.post("/", verifyToken, upload.array("mediaFiles", 20), createPost);
 /* READ */
 router.get("/", verifyToken, getFeedPosts);
 router.get("/:userId/posts", verifyToken, getUserPosts);
-router.get("/notifications/:userId", verifyToken, getNotifications);
 
 
 /* UPDATE */
 router.patch("/:id/comment", verifyToken, commentPost);
 router.patch("/:postId/comment/:commentId/like", verifyToken, likeComment);
 router.patch("/:id/like", verifyToken, likePost);
+router.patch("/:postId/comment/:commentId/delete", verifyToken, deleteComment);
+
 
 /* DELETE */
 router.delete("/:id/delete", verifyToken, deletePost);

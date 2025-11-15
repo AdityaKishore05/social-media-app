@@ -415,73 +415,113 @@ const handleDelete = async () => {
     const commentLikeCount = Object.keys(commentLikes).length;
     const isCommentLiked = Boolean(commentLikes[loggedInUserId]);
 
-    return (
-      <Box key={commentId} sx={{ m: "0.5rem" }}>
-        <FlexBetween alignItems="flex-start" gap="0.5rem">
-          {/* Left side: comment content */}
-          <Box sx={{ flex: 1 }}>
-            <Typography
-              sx={{
-                color: main,
-                wordWrap: "break-word",
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              <span style={{ fontWeight: 500 }}>{commentName}</span>
-              {` - ${commentContent}`}
-            </Typography>
+   return (
+  <Box key={commentId} sx={{ m: "0.5rem" }}>
+    <FlexBetween alignItems="flex-start" gap="0.5rem">
+      
+      {/* Left side: comment content */}
+      <Box sx={{ flex: 1 }}>
+        <Typography
+          sx={{
+            color: main,
+            wordWrap: "break-word",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          <span style={{ fontWeight: 500 }}>{commentName}</span>
+          {` - ${commentContent}`}
+        </Typography>
 
-            {/* 🕒 time below comment */}
-            <Typography
-              variant="caption"
-              color={palette.neutral.mediumMain}
-              sx={{ ml: "0.2rem" }}
-            >
-              {comment.createdAt ? formatDate(comment.createdAt) : "Just now"}
-            </Typography>
-          </Box>
-
-          {/* Right side: small like icon for each comment */}
-          <FlexBetween gap="0.25rem">
-            <IconButton
-              size="small"
-              sx={{ p: "2px" }}
-              onClick={async () => {
-                try {
-                  const response = await fetch(
-                    `https://getsocialnow.onrender.com/posts/${postId}/comment/${commentId}/like`,
-                    {
-                      method: "PATCH",
-                      headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify({ userId: loggedInUserId }),
-                    }
-                  );
-
-                  if (response.ok) {
-                    const updatedPost = await response.json();
-                    dispatch(setPost({ post: updatedPost }));
-                  }
-                } catch (error) {
-                  console.error("Failed to like comment:", error);
-                }
-              }}
-            >
-              {isCommentLiked ? (
-                <FavoriteOutlined sx={{ fontSize: "1rem", color: primary }} />
-              ) : (
-                <FavoriteBorderOutlined sx={{ fontSize: "1rem" }} />
-              )}
-            </IconButton>
-            {commentLikeCount > 0 && (
-              <Typography variant="caption">{commentLikeCount}</Typography>
-            )}
-          </FlexBetween>
-        </FlexBetween>
+        {/* Time */}
+        <Typography
+          variant="caption"
+          color={palette.neutral.mediumMain}
+          sx={{ ml: "0.2rem" }}
+        >
+          {comment.createdAt ? formatDate(comment.createdAt) : "Just now"}
+        </Typography>
       </Box>
-    );
+
+      {/* Right side actions */}
+      <FlexBetween gap="0.35rem">
+        
+        {/* LIKE COMMENT */}
+        <IconButton
+          size="small"
+          sx={{ p: "2px" }}
+          onClick={async () => {
+            try {
+              const response = await fetch(
+                `https://getsocialnow.onrender.com/posts/${postId}/comment/${commentId}/like`,
+                {
+                  method: "PATCH",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ userId: loggedInUserId }),
+                }
+              );
+
+              if (response.ok) {
+                const updatedPost = await response.json();
+                dispatch(setPost({ post: updatedPost }));
+              }
+            } catch (error) {
+              console.error("Failed to like comment:", error);
+            }
+          }}
+        >
+          {isCommentLiked ? (
+            <FavoriteOutlined sx={{ fontSize: "1rem", color: primary }} />
+          ) : (
+            <FavoriteBorderOutlined sx={{ fontSize: "1rem" }} />
+          )}
+        </IconButton>
+
+        {commentLikeCount > 0 && (
+          <Typography variant="caption">{commentLikeCount}</Typography>
+        )}
+
+        {/* DELETE COMMENT — only for author or post owner */}
+        {(comment.userId === loggedInUserId || loggedInUserId === postUserId) && (
+          <IconButton
+            size="small"
+            sx={{ p: "2px" }}
+            onClick={async () => {
+              if (!window.confirm("Delete this comment?")) return;
+
+              try {
+                const response = await fetch(
+                  `https://getsocialnow.onrender.com/posts/${postId}/comment/${commentId}/delete`,
+                  {
+                    method: "PATCH",
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ userId: loggedInUserId }),
+                  }
+                );
+
+                if (response.ok) {
+                  const updatedPost = await response.json();
+                  dispatch(setPost({ post: updatedPost }));
+                }
+              } catch (error) {
+                console.error("Failed to delete comment:", error);
+              }
+            }}
+          >
+            <DeleteOutline sx={{ fontSize: "1rem", color: palette.error.main }} />
+          </IconButton>
+        )}
+
+      </FlexBetween>
+    </FlexBetween>
+  </Box>
+);
+
   })
           ) : (
             <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem", fontStyle: "italic" }}>
