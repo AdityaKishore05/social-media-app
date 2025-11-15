@@ -1,39 +1,59 @@
+// controllers/posts.js
 import Post from "../models/Post.js";
 import User from "../models/User.js";
+import Notification from "../models/Notification.js";
 import mongoose from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
 
-/* ===========================
-   CREATE POST
-=========================== */
+/**
+ * Utility: emit notification to online sockets (if any)
+ * NOTE: req.app must have "io" and "onlineUsers"
+ */
+const emitNotification = (req, note) => {
+  try {
+    const io = req.app.get("io");
+    const onlineUsers = req.app.get("onlineUsers");
+    if (!io || !onlineUsers) return;
+    const sockets = onlineUsers.get(note.toUserId);
+    if (sockets) {
+      for (const sid of sockets) {
+        io.to(sid).emit("notification", note);
+      }
+    }
+  } catch (err) {
+    console.error("emitNotification error", err);
+  }
+};
+
+/* CREATE POST */
 export const createPost = async (req, res) => {
   try {
     const { userId, description } = req.body;
-    const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+    const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
-    if (!userId) {
+    if (!userId)
       return res.status(400).json({ message: "User ID is required" });
-    }
 
     const hasFiles = req.files && req.files.length > 0;
     if (!description?.trim() && !hasFiles) {
-      return res.status(400).json({
-        message: "Post must have either description or media",
-      });
+      return res
+        .status(400)
+        .json({ message: "Post must have either description or media" });
     }
 
     let mediaItems = [];
-
     if (hasFiles) {
       for (const file of req.files) {
         if (file.mimetype.startsWith("image/") && file.size > MAX_IMAGE_SIZE) {
-          cloudinary.uploader.destroy(file.public_id);
-          return res.status(400).json({
-            message: `Image '${file.originalname}' exceeds 10MB limit.`,
-          });
+          // delete from cloudinary if already uploaded
+          if (file.public_id) cloudinary.uploader.destroy(file.public_id);
+          return res
+            .status(400)
+            .json({
+              message: `Image '${file.originalname}' exceeds 10MB limit.`,
+            });
         }
       }
-
       mediaItems = req.files.map((file) => ({
         url: file.path,
         type: file.mimetype.startsWith("video/") ? "video" : "image",
@@ -57,6 +77,23 @@ export const createPost = async (req, res) => {
 
     await newPost.save();
 
+    // Notify followers of new post
+    const followers = user.followers || [];
+    const notificationsToCreate = followers
+      .filter((f) => f !== userId)
+      .map((followerId) => ({
+        toUserId: followerId,
+        fromUserId: userId,
+        type: "new_post",
+        postId: newPost._id,
+      }));
+    if (notificationsToCreate.length > 0) {
+      const created = await Notification.insertMany(notificationsToCreate);
+      // emit to followers who are online
+      created.forEach((note) => emitNotification(req, note));
+    }
+
+    // Return feed (populated)
     const posts = await Post.find().sort({ createdAt: -1 });
     const populatedPosts = await Promise.all(
       posts.map(async (post) => {
@@ -76,16 +113,15 @@ export const createPost = async (req, res) => {
     res.status(201).json(populatedPosts.filter(Boolean));
   } catch (err) {
     console.error("CREATE POST ERROR:", err);
-    if (req.files) {
-      req.files.forEach((file) => cloudinary.uploader.destroy(file.public_id));
-    }
+    if (req.files)
+      req.files.forEach(
+        (f) => f.public_id && cloudinary.uploader.destroy(f.public_id)
+      );
     res.status(500).json({ message: err.message });
   }
 };
 
-/* ===========================
-   GET FEED POSTS
-=========================== */
+/* GET FEED POSTS */
 export const getFeedPosts = async (req, res) => {
   try {
     const posts = await Post.find().sort({ createdAt: -1 });
@@ -110,9 +146,7 @@ export const getFeedPosts = async (req, res) => {
   }
 };
 
-/* ===========================
-   GET USER POSTS
-=========================== */
+/* GET USER POSTS */
 export const getUserPosts = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -138,12 +172,10 @@ export const getUserPosts = async (req, res) => {
   }
 };
 
-/* ===========================
-   LIKE POST
-=========================== */
+/* LIKE POST */
 export const likePost = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // post id
     const { userId } = req.body;
     const post = await Post.findById(id);
     if (!post) return res.status(404).json({ message: "Post not found" });
@@ -154,12 +186,23 @@ export const likePost = async (req, res) => {
 
     await post.save();
 
-    const user = await User.findById(post.userId);
+    // create notification only when newly liked and not liking own post
+    if (!isLiked && post.userId !== userId) {
+      const note = await Notification.create({
+        toUserId: post.userId,
+        fromUserId: userId,
+        type: "like",
+        postId: post._id,
+      });
+      emitNotification(req, note);
+    }
+
+    const postOwner = await User.findById(post.userId);
     const populatedPost = {
       ...post._doc,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      userPicturePath: user.picturePath,
+      firstName: postOwner.firstName,
+      lastName: postOwner.lastName,
+      userPicturePath: postOwner.picturePath,
       picturePath: post.picturePath || "",
       videoPath: post.videoPath || "",
     };
@@ -171,72 +214,66 @@ export const likePost = async (req, res) => {
   }
 };
 
-/* ===========================
-   LIKE COMMENT
-=========================== */
+/* LIKE COMMENT */
 export const likeComment = async (req, res) => {
   try {
-    const { postId, commentId } = req.params; // ✅ must match your router
+    // router should be: router.patch("/:postId/comment/:commentId/like", ...)
+    const { postId, commentId } = req.params;
     const { userId } = req.body;
 
-    console.log("🧩 likeComment hit:", { postId, commentId, userId }); // debug log
-
-    // 1️⃣ Find post
     const post = await Post.findById(postId);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    // 2️⃣ Find comment
     const comment = post.comments.id(commentId);
     if (!comment) return res.status(404).json({ message: "Comment not found" });
 
-    // 3️⃣ Toggle like
+    // ensure comment.likes is a Map-like
     if (!comment.likes) comment.likes = new Map();
     const isLiked = comment.likes.get(userId);
-    if (isLiked) {
-      comment.likes.delete(userId);
-    } else {
-      comment.likes.set(userId, true);
-    }
+    if (isLiked) comment.likes.delete(userId);
+    else comment.likes.set(userId, true);
 
-    // 4️⃣ Save the updated post
     await post.save();
 
-    // 5️⃣ Fetch with user info (to send to frontend)
-    const user = await User.findById(post.userId);
+    if (!isLiked && comment.userId && comment.userId !== userId) {
+      const note = await Notification.create({
+        toUserId: comment.userId,
+        fromUserId: userId,
+        type: "like_comment",
+        postId: post._id,
+        commentId,
+      });
+      emitNotification(req, note);
+    }
+
+    const postOwner = await User.findById(post.userId);
     const populatedPost = {
       ...post._doc,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      userPicturePath: user.picturePath,
+      firstName: postOwner.firstName,
+      lastName: postOwner.lastName,
+      userPicturePath: postOwner.picturePath,
       picturePath: post.picturePath || "",
       videoPath: post.videoPath || "",
     };
 
-    console.log("✅ Comment like toggled successfully");
     res.status(200).json(populatedPost);
   } catch (err) {
-    console.error("❌ LIKE COMMENT ERROR:", err);
+    console.error("LIKE COMMENT ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
 
-
-
-/* ===========================
-   COMMENT ON POST
-=========================== */
+/* COMMENT POST */
 export const commentPost = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // post id
     const { userId, commentText } = req.body;
 
-    if (!commentText?.trim()) {
+    if (!commentText?.trim())
       return res.status(400).json({ message: "Comment text cannot be empty." });
-    }
 
     const post = await Post.findById(id);
     const user = await User.findById(userId);
-
     if (!post) return res.status(404).json({ message: "Post not found." });
     if (!user) return res.status(404).json({ message: "User not found." });
 
@@ -248,11 +285,21 @@ export const commentPost = async (req, res) => {
       userPicturePath: user.picturePath,
       commentText: commentText.trim(),
       createdAt: new Date(),
-      likes: {}, // ✅ ensure likes field exists
+      likes: {},
     };
 
     post.comments.push(newComment);
     await post.save();
+
+    if (post.userId !== userId) {
+      const note = await Notification.create({
+        toUserId: post.userId,
+        fromUserId: userId,
+        type: "comment",
+        postId: post._id,
+      });
+      emitNotification(req, note);
+    }
 
     const postUser = await User.findById(post.userId);
     const populatedPost = {
@@ -271,9 +318,7 @@ export const commentPost = async (req, res) => {
   }
 };
 
-/* ===========================
-   DELETE POST
-=========================== */
+/* DELETE POST */
 export const deletePost = async (req, res) => {
   try {
     const { id } = req.params;
@@ -282,12 +327,10 @@ export const deletePost = async (req, res) => {
 
     const post = await Post.findById(id);
     if (!post) return res.status(404).json({ message: "Post not found." });
-
-    if (post.userId !== userId) {
+    if (post.userId !== userId)
       return res
         .status(403)
         .json({ message: "Not authorized to delete this post." });
-    }
 
     await Post.findByIdAndDelete(id);
 
@@ -313,6 +356,35 @@ export const deletePost = async (req, res) => {
     res.status(200).json(populatedPosts.filter(Boolean));
   } catch (err) {
     console.error("DELETE POST ERROR:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* GET NOTIFICATIONS (helpful helper if you want to include here) */
+export const getNotifications = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const notes = await Notification.find({ toUserId: userId })
+      .sort({ createdAt: -1 })
+      .lean();
+    // optionally enrich with fromUserName/fromUserPicture
+    const enriched = await Promise.all(
+      notes.map(async (n) => {
+        const fromUser = await User.findById(n.fromUserId).select(
+          "firstName lastName picturePath"
+        );
+        return {
+          ...n,
+          fromUserName: fromUser
+            ? `${fromUser.firstName} ${fromUser.lastName}`
+            : "Unknown",
+          fromUserPicture: fromUser ? fromUser.picturePath : "",
+        };
+      })
+    );
+    res.status(200).json(enriched);
+  } catch (err) {
+    console.error("GET NOTIFICATIONS ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };

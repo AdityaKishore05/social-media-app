@@ -12,6 +12,7 @@ import multer from "multer";
 import { verifyToken } from "../middleware/auth.js";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "@fluidjs/multer-cloudinary";
+import { getNotifications } from "../controllers/posts.js";
 
 const router = express.Router();
 
@@ -55,6 +56,8 @@ router.post("/", verifyToken, upload.array("mediaFiles", 20), createPost);
 /* READ */
 router.get("/", verifyToken, getFeedPosts);
 router.get("/:userId/posts", verifyToken, getUserPosts);
+router.get("/notifications/:userId", verifyToken, getNotifications);
+
 
 /* UPDATE */
 router.patch("/:id/comment", verifyToken, commentPost);
