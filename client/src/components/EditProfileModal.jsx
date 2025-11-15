@@ -123,8 +123,7 @@ const EditProfileModal = ({ open, onClose, user }) => {
       PaperProps={{
         sx: {
           borderRadius: "12px",
-          // Remove elevation prop, use sx instead
-        }
+          backgroundColor: theme.palette.background.default        }
       }}
     >
       <DialogTitle

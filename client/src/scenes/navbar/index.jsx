@@ -106,16 +106,25 @@ const Navbar = () => {
       {/* MOBILE NAV ---------------------------------------------------- */}
       {!isNonMobileScreens && isMobileMenuToggled && (
         <Box
-          position="fixed"
-          right="0"
-          bottom="0"
-          height="100%"
-          width="70%"
-          zIndex="10"
-          backgroundColor={theme.palette.background.default}
-          boxShadow="0px 0px 10px rgba(0,0,0,0.4)"
-          p="1rem"
-        >
+          sx={{
+            position: "fixed",
+            inset: 0,       // FULL SCREEN OVERLAY
+            width: "70%",
+            left: "auto",
+            zIndex: 2000,
+            background: theme.palette.mode === "dark"
+              ? "rgba(15, 20, 35, 0.45)"
+              : "rgba(255, 255, 255, 0.55)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
+            boxShadow: "-4px 0px 20px rgba(0,0,0,0.25)",
+            borderLeft: theme.palette.mode === "dark"
+              ? "1px solid rgba(255,255,255,0.15)"
+              : "1px solid rgba(0,0,0,0.1)",
+            p: "1.5rem",
+            }}
+          >
+
           {/* CLOSE ICON */}
           <Box display="flex" justifyContent="flex-end">
             <IconButton onClick={() => setIsMobileMenuToggled(false)}>
@@ -130,7 +139,6 @@ const Navbar = () => {
             gap="2rem"
             mt="2rem"
           >
-            {/* Theme */}
             <IconButton onClick={() => dispatch(setMode())}>
               {theme.palette.mode === "dark" ? <DarkMode /> : <LightMode />}
             </IconButton>
@@ -140,20 +148,19 @@ const Navbar = () => {
                 value={fullName}
                 sx={{
                   backgroundColor: theme.palette.neutral.light,
-                  borderRadius: "0.25rem",
+                  borderRadius: "0.5rem",
                   p: "0.25rem 1rem",
                 }}
                 input={<InputBase />}
               >
                 <MenuItem value={fullName}>{fullName}</MenuItem>
-                <MenuItem onClick={() => dispatch(setLogout())}>
-                  Logout
-                </MenuItem>
+                <MenuItem onClick={() => dispatch(setLogout())}>Logout</MenuItem>
               </Select>
             </FormControl>
           </Box>
         </Box>
-      )}
+      )}  
+
     </FlexBetween>
   );
 };
