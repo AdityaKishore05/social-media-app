@@ -78,13 +78,18 @@ const Navbar = () => {
           <FormControl variant="standard" value={fullName}>
             <Select
               value={fullName}
-              sx={{
+              sx= {{
                 backgroundColor: theme.palette.neutral.light,
-                borderRadius: "0.25rem",
-                p: "0.25rem 1rem",
-              }}
-              input={<InputBase />}
-            >
+                borderRadius: "0.5rem",
+                p: "0.25rem 0.5rem",
+                width: "fit-content",        // ⭐ expands automatically
+                maxWidth: "200px",
+                display: "flex",
+                alignItems: "center",
+                whiteSpace: "nowrap",       // prevent wrapping
+                overflow: "visible",}}
+                input={< InputBase />}
+              >
               <MenuItem value={fullName}>
                 <Typography>{fullName}</Typography>
               </MenuItem>
@@ -104,62 +109,70 @@ const Navbar = () => {
       )}
 
       {/* MOBILE NAV ---------------------------------------------------- */}
-      {!isNonMobileScreens && isMobileMenuToggled && (
-        <Box
+{!isNonMobileScreens && isMobileMenuToggled && (
+  <Box
+    sx={{
+      position: "fixed",
+      top: 0,
+      right: 0,
+      height: "100vh",
+      width: "75%",                     // Sidebar width
+      zIndex: 2000,
+      backgroundColor: theme.palette.mode === "dark"
+        ? "#05051fff"                     // SOLID visible dark color
+        : "#FFFFFF",                    // SOLID visible light color
+      overflowY: "auto",
+      boxShadow: "-4px 0 20px rgba(0,0,0,0.4)",
+      p: "1.5rem",
+      transition: "transform 0.3s ease",
+    }}
+  >
+    {/* CLOSE BUTTON */}
+    <Box display="flex" justifyContent="flex-end">
+      <IconButton onClick={() => setIsMobileMenuToggled(false)}>
+        <Close sx={{ color: theme.palette.neutral.main }} />
+      </IconButton>
+    </Box>
+
+    {/* CONTENT */}
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      gap="2rem"
+      mt="2rem"
+    >
+      <IconButton onClick={() => dispatch(setMode())}>
+        {theme.palette.mode === "dark"
+          ? <DarkMode sx={{ color: "white" }} />
+          : <LightMode sx={{ color: "black" }} />}
+      </IconButton>
+
+      <FormControl>
+        <Select
+          value={fullName}
           sx={{
-            position: "fixed",
-            inset: 0,       // FULL SCREEN OVERLAY
-            width: "70%",
-            left: "auto",
-            zIndex: 2000,
-            background: theme.palette.mode === "dark"
-              ? "rgba(15, 20, 35, 0.45)"
-              : "rgba(255, 255, 255, 0.55)",
-            backdropFilter: "blur(18px)",
-            WebkitBackdropFilter: "blur(18px)",
-            boxShadow: "-4px 0px 20px rgba(0,0,0,0.25)",
-            borderLeft: theme.palette.mode === "dark"
-              ? "1px solid rgba(255,255,255,0.15)"
-              : "1px solid rgba(0,0,0,0.1)",
-            p: "1.5rem",
-            }}
-          >
+            backgroundColor: theme.palette.neutral.light,
+            borderRadius: "0.5rem",
+            p: "0.25rem 0.5rem",
+            width: "fit-content",        // ⭐ expands automatically
+            maxWidth: "200px",
+            display: "flex",
+            alignItems: "center",
+            whiteSpace: "nowrap",         // prevent wrapping
+            overflow: "visible",          // ⭐ no truncation
+          }}
 
-          {/* CLOSE ICON */}
-          <Box display="flex" justifyContent="flex-end">
-            <IconButton onClick={() => setIsMobileMenuToggled(false)}>
-              <Close />
-            </IconButton>
-          </Box>
+          input={<InputBase />}
+        >
+          <MenuItem value={fullName}>{fullName}</MenuItem>
+          <MenuItem onClick={() => dispatch(setLogout())}>Logout</MenuItem>
+        </Select>
+      </FormControl>
+    </Box>
+  </Box>
+)}
 
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            gap="2rem"
-            mt="2rem"
-          >
-            <IconButton onClick={() => dispatch(setMode())}>
-              {theme.palette.mode === "dark" ? <DarkMode /> : <LightMode />}
-            </IconButton>
-
-            <FormControl variant="standard">
-              <Select
-                value={fullName}
-                sx={{
-                  backgroundColor: theme.palette.neutral.light,
-                  borderRadius: "0.5rem",
-                  p: "0.25rem 1rem",
-                }}
-                input={<InputBase />}
-              >
-                <MenuItem value={fullName}>{fullName}</MenuItem>
-                <MenuItem onClick={() => dispatch(setLogout())}>Logout</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </Box>
-      )}  
 
     </FlexBetween>
   );
