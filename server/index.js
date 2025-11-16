@@ -11,14 +11,22 @@ import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
 import { v2 as cloudinary } from "cloudinary";
-
-
+import { logger } from "./utils/logger.js";
+import { apiLimiter, authLimiter, postLimiter } from "./middleware/rateLimiter.js";
+import { sanitizeMongo, sanitizeInput } from "./middleware/sanitize.js";
 
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config();
 const app = express();
+
+// Apply general rate limiter to all routes
+app.use("/api", apiLimiter);
+
+// Apply specific rate limiters before routes
+app.use("/auth", authLimiter);
+app.use("/posts", postLimiter);
 
 // Add cache-busting middleware FIRST
 app.use((req, res, next) => {
@@ -83,14 +91,14 @@ cloudinary.config({
 });
 
 // Verify Cloudinary configuration
-console.log("===== CLOUDINARY CONFIG CHECK =====");
-console.log("Cloud Name:", process.env.CLOUDINARY_CLOUD_NAME || "MISSING");
-console.log("API Key:", process.env.CLOUDINARY_API_KEY ? "EXISTS" : "MISSING");
-console.log(
+logger.info("===== CLOUDINARY CONFIG CHECK =====");
+logger.info("Cloud Name:", process.env.CLOUDINARY_CLOUD_NAME || "MISSING");
+logger.info("API Key:", process.env.CLOUDINARY_API_KEY ? "EXISTS" : "MISSING");
+logger.info(
   "API Secret:",
   process.env.CLOUDINARY_API_SECRET ? "EXISTS" : "MISSING"
 );
-console.log("===================================");
+logger.info("===================================");
 
 // MULTER CONFIGURATION - Use memory storage for Cloudinary uploads
 const storage = multer.memoryStorage();
@@ -110,6 +118,9 @@ const upload = multer({
     }
   },
 });
+
+app.use(sanitizeMongo);
+app.use(sanitizeInput);
 
 /* ROUTES - Mount route handlers */
 app.use("/auth", authRoutes);
@@ -132,11 +143,11 @@ app.get("/health", (req, res) => {
 
 // Error handling middleware
 app.use((error, req, res, next) => {
-  console.error("=== SERVER ERROR ===");
-  console.error("Error name:", error.name);
-  console.error("Error message:", error.message);
-  console.error("Error stack:", error.stack);
-  console.error("===================");
+  logger.error("=== SERVER ERROR ===");
+  logger.error("Error name:", error.name);
+  logger.error("Error message:", error.message);
+  logger.error("Error stack:", error.stack);
+  logger.error("===================");
 
   if (error instanceof multer.MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") {
@@ -166,7 +177,7 @@ app.use((error, req, res, next) => {
 
 // Handle 404s
 app.use("*", (req, res) => {
-  console.log("404 - Route not found:", req.method, req.originalUrl);
+  logger.info("404 - Route not found:", req.method, req.originalUrl);
   res.status(404).json({
     message: "Route not found",
     path: req.originalUrl,
@@ -247,15 +258,15 @@ mongoose
   })
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`✓ Server running on port ${PORT}`);
-      console.log(`✓ Environment: ${process.env.NODE_ENV || "development"}`);
-      console.log(
+      logger.info(`✓ Server running on port ${PORT}`);
+      logger.info(`✓ Environment: ${process.env.NODE_ENV || "development"}`);
+      logger.info(
         `✓ Cloudinary configured: ${!!process.env.CLOUDINARY_CLOUD_NAME}`
       );
     });
   })
   .catch((error) => {
-    console.error("✗ MongoDB connection error:", error);
+    logger.error("✗ MongoDB connection error:", error);
     process.exit(1);
   });
 
