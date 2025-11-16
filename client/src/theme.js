@@ -72,7 +72,7 @@ export const themeSettings = (mode) => {
        main: darkMode ? "#E6EEF8" : "#374151",
        mediumMain: darkMode ? "#9AA4B2" : "#6B7280",
        medium: darkMode ? "#7B8696" : "#9CA3AF",
-       light: darkMode ? "#0B1220" : "#F3F4F6",
+       light: darkMode ? "#282d38ff" : "#e5e5e6ff",
      },
      background: {
        default: darkMode ? "#071029" : "#F7FAFF",
