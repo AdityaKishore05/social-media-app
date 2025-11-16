@@ -256,6 +256,38 @@ const PostWidget = ({
                   }}
                 />
               )}
+              {items.length > 1 && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: 10,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    display: "flex",
+                    gap: "6px",
+                    zIndex: 20,
+                  }}
+                >
+                  {items.map((_, index) => (
+                    <Box
+                      key={index}
+                      onClick={() => setCurrentIndex(index)}
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        
+                        borderRadius: "50%",
+                        backgroundColor:
+                          index === currentIndex
+                            ? "white"
+                            : "rgba(255,255,255,0.4)",
+                        transition: "all 0.25s ease",
+                        cursor: "pointer",
+                      }}
+                    />
+                  ))}
+                </Box>
+              )}
 
               {items.length > 1 && (
                 <>
@@ -342,7 +374,7 @@ const PostWidget = ({
                         </Box>
                         <Box sx={{ display: "flex", flexDirection: "column"}}>
                     
-                          <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 0.5 }}>
+                          <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 0.5, p: 1}}>
                             <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem", ml: 1}}>
                             {c.createdAt ? formatCommentDate(c.createdAt) : "Just now"}
                           </Typography>
@@ -350,7 +382,7 @@ const PostWidget = ({
                             size="small"
                             onClick={() => toggleCommentLike(cid)}
                             aria-label="like comment"
-                            sx={{ p: 0.5 }}
+                            sx={{ p: 0 }}
                           >
                             {cIsLiked ? <FavoriteOutlined sx={{ color: primary, fontSize: 16}} /> : <FavoriteBorderOutlined sx={{ fontSize: 16 }} />}
                           </IconButton>
@@ -358,7 +390,7 @@ const PostWidget = ({
 
                           {/* delete allowed for comment author or post owner */}
                           {(c.userId === loggedInUserId || loggedInUserId === postUserId) && (
-                            <IconButton size="small" onClick={() => deleteComment(cid)} aria-label="delete comment" sx={{ p: 0.5 }}>
+                            <IconButton size="small" onClick={() => deleteComment(cid)} aria-label="delete comment">
                               <DeleteOutline sx={{ fontSize: 16, color: "error.main" }} />
                             </IconButton>                 
                           )}
