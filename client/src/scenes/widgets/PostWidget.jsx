@@ -87,6 +87,22 @@ const PostWidget = ({
     if (days < 7) return `${days}d ago`;
     return d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
   };
+  const formatCommentDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+
+    const diffMs = now - date;
+    const mins = Math.floor(diffMs / 60000);
+    const hours = Math.floor(mins / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
+
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m`;
+    if (hours < 24) return `${hours}h`;
+    if (days < 7) return `${days}d`;
+    return `${weeks}w`;
+  };
 
   // ---------- network handlers ----------
   const patchLike = async () => {
@@ -319,16 +335,17 @@ const PostWidget = ({
                       <Box key={cid} sx={{ display: "flex",gap: 1, alignItems: "flex-start", mb: 1 }}>
                         <Avatar src={c.userPicturePath} sx={{ width: 35, height: 35 }} />
                         <Box sx={{ flex: 1 }}>
-                          <Typography sx={{ fontWeight: 600, fontSize: "0.75rem", mb: -1 }}>{authorName}</Typography>
-                          <Typography variant="caption" sx={{ color: "text.secondary"}}>
-                            {c.createdAt ? formatDate(c.createdAt) : "Just now"}
-                          </Typography>
-                          <Typography sx={{ color: main, fontSize: "0.95rem", mt: -0.5 }}>{c.commentText ?? c.text ?? ""}</Typography>
+                          <Typography sx={{ fontWeight: 600, fontSize: "0.75rem"}}>{authorName}</Typography>
                           
+                          <Typography sx={{ color: main, fontSize: "0.95rem", mt: -0.5 }}>{c.commentText ?? c.text ?? ""}</Typography>
+
                         </Box>
-                        <Box sx={{ display: "flex", flexDirection: "cOLUMN"}}>
+                        <Box sx={{ display: "flex", flexDirection: "column"}}>
                     
-                        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 0.5}}>
+                          <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 0.5 }}>
+                            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem", ml: 1}}>
+                            {c.createdAt ? formatCommentDate(c.createdAt) : "Just now"}
+                          </Typography>
                           <IconButton
                             size="small"
                             onClick={() => toggleCommentLike(cid)}
