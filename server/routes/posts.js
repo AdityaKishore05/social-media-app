@@ -21,7 +21,6 @@ import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "@fluidjs/multer-cloudinary";
 import { postLimiter } from "../middleware/rateLimiter.js";
 
-
 const router = express.Router();
 
 // ============================================

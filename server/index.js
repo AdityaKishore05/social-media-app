@@ -21,13 +21,6 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 const app = express();
 
-// Apply general rate limiter to all routes
-app.use("/api", apiLimiter);
-
-// Apply specific rate limiters before routes
-app.use("/auth", authLimiter);
-app.use("/posts", postLimiter);
-
 // Add cache-busting middleware FIRST
 app.use((req, res, next) => {
   // Disable caching for all API routes
@@ -52,6 +45,15 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
+
+// Move rate limiters here (after body parser, before sanitization)
+app.use("/api", apiLimiter);
+app.use("/auth", authLimiter);
+app.use("/posts", postLimiter);
+
+// Then sanitization
+app.use(sanitizeMongo);
+app.use(sanitizeInput);
 
 // ENHANCED CORS configuration
 app.use(
@@ -118,9 +120,6 @@ const upload = multer({
     }
   },
 });
-
-app.use(sanitizeMongo);
-app.use(sanitizeInput);
 
 /* ROUTES - Mount route handlers */
 app.use("/auth", authRoutes);

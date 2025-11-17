@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import { rateLimit } from "express-rate-limit";
 
 // General API rate limiter
 export const apiLimiter = rateLimit({
@@ -25,5 +25,5 @@ export const postLimiter = rateLimit({
   max: 10, // Limit each IP to 10 posts per minute
   message: "Too many posts created, please slow down.",
   standardHeaders: true,
-  legacyHeaders: false,
+legacyHeaders: false,
 });
