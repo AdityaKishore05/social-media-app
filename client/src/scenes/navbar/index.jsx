@@ -34,7 +34,7 @@ import { toast } from "react-toastify";
 
 const Navbar = () => {
   const [isMobileMenuToggled, setIsMobileMenuToggled] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
