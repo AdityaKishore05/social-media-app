@@ -95,6 +95,7 @@ app.use(cors(corsOptions));
 // THEN rate limiters
 app.use("/api", apiLimiter);
 app.use("/auth", authLimiter);
+app.use("/posts", postRoutes);  // ONLY ONE
 
 // THEN sanitization
 app.use(sanitizeInput);
@@ -141,8 +142,6 @@ const upload = multer({
 /* ROUTES - Mount route handlers */
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
-// Post routes - authentication handled inside the router
-app.use("/posts", postRoutes);
 
 // Add a health check endpoint
 app.get("/health", (req, res) => {
