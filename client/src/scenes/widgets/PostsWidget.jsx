@@ -168,11 +168,19 @@ const PostsWidget = ({ userId, isProfile = false, pageSize = 10, enablePolling =
 
   // stable wrapper for loadMore that uses refs
   const loadMorePosts = useCallback(() => {
-    if (isFetchingRef.current) return;
-    if (!hasMoreRef.current) return;
-    const nextPage = pageRef.current + 1;
-    fetchPage({ page: nextPage, append: true });
-  }, [fetchPage]);
+  if (isProfile) {
+    fetchPosts(
+      API_ENDPOINTS.POSTS.GET_USER_POSTS(userId, page + 1, pageSize),
+      "Failed to fetch more posts"
+    );
+  } else {
+    fetchPosts(
+      API_ENDPOINTS.POSTS.GET_FEED(page + 1, pageSize),
+      "Failed to fetch more posts"
+    );
+  }
+}, [isProfile, userId, page, fetchPosts, pageSize]);
+
 
   // expose through ref for IntersectionObserver callback without re-creating observer
   useEffect(() => {
