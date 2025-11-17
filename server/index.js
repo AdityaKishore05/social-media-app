@@ -12,7 +12,11 @@ import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
 import { v2 as cloudinary } from "cloudinary";
 import { logger } from "./utils/logger.js";
-import { apiLimiter, authLimiter, postLimiter } from "./middleware/rateLimiter.js";
+import {
+  apiLimiter,
+  authLimiter,
+  postLimiter,
+} from "./middleware/rateLimiter.js";
 import { sanitizeMongo, sanitizeInput } from "./middleware/sanitize.js";
 
 /* CONFIGURATIONS */
@@ -88,7 +92,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-
 // THEN rate limiters
 app.use("/api", apiLimiter);
 app.use("/auth", authLimiter);
@@ -97,9 +100,6 @@ app.use("/posts", postLimiter);
 // THEN sanitization
 app.use(sanitizeMongo);
 app.use(sanitizeInput);
-
-// Add preflight handling
-app.options("*", cors());
 
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
