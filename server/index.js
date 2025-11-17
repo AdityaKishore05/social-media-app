@@ -43,7 +43,6 @@ app.use((req, res, next) => {
 // Lines 43-80: Body parsers, helmet, CORS FIRST, then rate limiters
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use(helmet());
 // Helmet configuration - adjust for OAuth
 app.use(
   helmet({
@@ -89,8 +88,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Preflight handler - MUST use same CORS config
-app.options("*", cors(corsOptions));
 
 // THEN rate limiters
 app.use("/api", apiLimiter);
