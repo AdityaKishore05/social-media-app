@@ -40,44 +40,66 @@ app.use((req, res, next) => {
   next();
 });
 
+// Lines 43-80: Body parsers, helmet, CORS FIRST, then rate limiters
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(helmet());
+// Helmet configuration - adjust for OAuth
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: false, // Allow OAuth popups
+    crossOriginEmbedderPolicy: false, // Allow embedding
+  })
+);
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
 
-// Move rate limiters here (after body parser, before sanitization)
+// CORS - MUST BE BEFORE RATE LIMITERS
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "https://getsocialnow.onrender.com",
+  "https://getsocialnow.netlify.app",
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+    "Cache-Control",
+    "Pragma",
+    "Expires",
+  ],
+  exposedHeaders: ["Authorization"],
+};
+
+app.use(cors(corsOptions));
+
+// Preflight handler - MUST use same CORS config
+app.options("*", cors(corsOptions));
+
+// THEN rate limiters
 app.use("/api", apiLimiter);
 app.use("/auth", authLimiter);
 app.use("/posts", postLimiter);
 
-// Then sanitization
+// THEN sanitization
 app.use(sanitizeMongo);
 app.use(sanitizeInput);
-
-// ENHANCED CORS configuration
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "https://getsocialnow.onrender.com",
-      "https://getsocialnow.netlify.app",
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Origin",
-      "X-Requested-With",
-      "Content-Type",
-      "Accept",
-      "Authorization",
-      "Cache-Control",
-      "Pragma",
-      "Expires",
-    ],
-  })
-);
 
 // Add preflight handling
 app.options("*", cors());
