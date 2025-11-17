@@ -280,8 +280,8 @@ const PostWidget = ({
                   position: "relative",
                   width: "100%",
                   overflow: "hidden",
-                  height: isNonMobileScreens ? 0 : 360,
-                  ...(isNonMobileScreens ? { paddingTop: "60%" } : {}),
+                  height: isNonMobileScreens ? "auto" : 360,
+                  paddingTop: isNonMobileScreens ? "60%" : 0, // fixes black box
                   display: "flex",
                   background: "black",
                   alignItems: "center",
@@ -290,6 +290,7 @@ const PostWidget = ({
                     outline: `2px solid ${theme.palette.primary.main}`,
                     outlineOffset: 2,
                   },
+
                 }}
               >
                 {mediaError[currentIndex] ? (
