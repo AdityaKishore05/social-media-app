@@ -95,7 +95,7 @@ app.use(cors(corsOptions));
 // THEN rate limiters
 app.use("/api", apiLimiter);
 app.use("/auth", authLimiter);
-app.use("/posts", postLimiter);
+app.use("/posts", postRoutes);
 
 // THEN sanitization
 app.use(sanitizeInput);

@@ -51,10 +51,18 @@ const PostsWidget = ({ userId, isProfile = false }) => {
           },
         });
 
-        if (!response.ok)
-          throw new Error(`${errorPrefix}: ${response.status}`);
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`${errorPrefix}: ${text}`);
+        }
 
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          const text = await response.text();
+          throw new Error(`${errorPrefix}: ${text}`);
+        }
         const postsArray = Array.isArray(data) ? data : data.posts || [];
 
         if (isInitial) {
