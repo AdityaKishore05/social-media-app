@@ -21,7 +21,6 @@ import {
   ChevronRight,
   Share,
   Close,
-  Fullscreen,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import FlexBetween from "components/FlexBetween";
