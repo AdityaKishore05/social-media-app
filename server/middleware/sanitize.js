@@ -4,7 +4,6 @@ import { JSDOM } from "jsdom";
 const { window } = new JSDOM("");
 const DOMPurify = createDOMPurify(window);
 
-
 export const sanitizeInput = (req, res, next) => {
   if (req.body) {
     Object.keys(req.body).forEach((key) => {

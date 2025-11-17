@@ -6,6 +6,8 @@ import { useDispatch } from "react-redux";
 import { IconButton } from "@mui/material";
 import { setMode } from "state";
 import { DarkMode, LightMode } from "@mui/icons-material";
+import { API_ENDPOINTS } from "config";
+
 
 const LoginPage = () => {
   const theme = useTheme();
@@ -17,8 +19,7 @@ const LoginPage = () => {
     const wakeUpServer = async () => {
       try {
         console.log("Waking up server...");
-        await fetch("https://getsocialnow.onrender.com/health");
-        console.log("Server is awake");
+        await fetch(API_ENDPOINTS.HEALTH);        console.log("Server is awake");
       } catch (error) {
         console.log("Server wake-up ping sent");
       }

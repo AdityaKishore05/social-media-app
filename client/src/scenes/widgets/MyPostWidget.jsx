@@ -18,6 +18,12 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPosts } from "state";
 import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "config";
+import { LinearProgress } from "@mui/material";
+import { toast } from "react-toastify";
+import axios from "axios"; // npm install axios
+
+
 
 const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
@@ -32,55 +38,61 @@ const MyPostWidget = ({ picturePath }) => {
   const mediumMain = palette.neutral.mediumMain;
   const medium = palette.neutral.medium;
   const [mediaFiles, setMediaFiles] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
 
   const handlePost = async () => {
     if (isPosting) return;
     if (!post.trim() && mediaFiles.length === 0) {
-      alert("Please add a description or select media.");
+      toast.error("Please add a description or select media.");
       return;
     }
-    
+  
     setIsPosting(true);
-    
+    setUploadProgress(0);
+  
     try {
       const formData = new FormData();
       formData.append("userId", _id);
       formData.append("description", post.trim());
-      
+  
       if (mediaFiles.length > 0) {
         mediaFiles.forEach((file) => {
           formData.append("mediaFiles", file);
         });
         formData.append("mediaType", "mixed");
       }
-
-      const response = await fetch(`https://getsocialnow.onrender.com/posts`, {
-        method: "POST",
-        headers: { 
+  
+      const response = await axios.post(API_ENDPOINTS.POSTS.CREATE, formData, {
+        headers: {
           Authorization: `Bearer ${token}`,
         },
-        body: formData,
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setUploadProgress(percentCompleted);
+        },
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to create post: ${response.status} - ${errorText}`);
-      }
-
-      const posts = await response.json();
+  
+      const posts = response.data;
       if (Array.isArray(posts)) {
         dispatch(setPosts({ posts }));
       }
-      
+  
       setMediaFiles([]);
       setPost("");
       setIsMediaUpload(false);
-      
+      setUploadProgress(0);
+      toast.success("Post created successfully!");
+      localStorage.removeItem("postDraft");
+      localStorage.removeItem("postDraftMedia");
     } catch (error) {
-      console.error('Error creating post:', error);
-      alert(`Failed to create post: ${error.message}`);
+      console.error("Error creating post:", error);
+      toast.error(`Failed to create post: ${error.response?.data?.message || error.message}`);
     } finally {
       setIsPosting(false);
+      setUploadProgress(0);
     }
   };
 
@@ -99,7 +111,7 @@ const handleDrop = (acceptedFiles) => {
   });
 
   if (mediaFiles.length + newFiles.length > 20) {
-    alert('Maximum 20 items allowed per post');
+    toast.error('Maximum 20 items allowed per post');
     return;
   }
 
@@ -107,13 +119,33 @@ const handleDrop = (acceptedFiles) => {
     const isVideo = file.type.startsWith('video/');
     const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert(`${file.name} is too large. Max size: ${isVideo ? '50MB' : '10MB'}`);
+      toast.error(`${file.name} is too large. Max size: ${isVideo ? '50MB' : '10MB'}`);
       return;
     }
   }
 
   setMediaFiles([...mediaFiles, ...newFiles]);
 };
+
+useEffect(() => {
+  const draft = localStorage.getItem("postDraft");
+  const draftMedia = localStorage.getItem("postDraftMedia");
+  
+  if (draft) {
+    setPost(draft);
+  }
+  
+  // Note: Media files can't be stored in localStorage, so we only restore text
+}, []);
+
+useEffect(() => {
+  if (post.trim()) {
+    localStorage.setItem("postDraft", post);
+  } else {
+    localStorage.removeItem("postDraft");
+  }
+}, [post]);
+
 
   return (
     <Box m="1rem">
@@ -225,6 +257,12 @@ const handleDrop = (acceptedFiles) => {
               </Box>
             )}
           </Dropzone>
+        </Box>
+      )}
+      {isPosting && (
+        <Box sx={{ mt: 1 }}>
+          <LinearProgress variant="determinate" value={uploadProgress} />
+          <Typography variant="caption">{Math.round(uploadProgress)}%</Typography>
         </Box>
       )}
 

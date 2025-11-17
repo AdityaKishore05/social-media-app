@@ -5,9 +5,16 @@ import {
   addRemoveFriend,
 } from "../controllers/users.js";
 import { verifyToken } from "../middleware/auth.js";
+import {
+  validateUpdateUser,
+  validateUserId,
+  validateSearchQuery,
+  validatePagination,
+} from "../middleware/validation.js";
 import multer from "multer";
 import User from "../models/User.js";
 import { v2 as cloudinary } from "cloudinary";
+import { logger } from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -33,25 +40,59 @@ export const upload = multer({
   },
 });
 
+/* SEARCH */
+router.get(
+  "/search/:query",
+  verifyToken,
+  validateSearchQuery,
+  async (req, res) => {
+    try {
+      const { query } = req.params;
+      if (!query || query.trim().length < 2) {
+        return res
+          .status(400)
+          .json({ message: "Search query must be at least 2 characters" });
+      }
+
+      const users = await User.find({
+        $or: [
+          { firstName: { $regex: query.trim(), $options: "i" } },
+          { lastName: { $regex: query.trim(), $options: "i" } },
+          { email: { $regex: query.trim(), $options: "i" } },
+        ],
+      })
+        .select("firstName lastName picturePath email _id bio")
+        .limit(20)
+        .lean();
+
+      res.status(200).json(users);
+    } catch (err) {
+      logger.error("SEARCH USERS ERROR:", err);
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
 /* READ */
-router.get("/:id", verifyToken, getUser);
-router.get("/:id/friends", verifyToken, getUserFriends);
+router.get("/:id", verifyToken, validateUserId, getUser);
+router.get("/:id/friends", verifyToken, validateUserId, getUserFriends);
 
 /* UPDATE - CRITICAL: Put specific routes BEFORE dynamic routes */
 // This must come BEFORE /:id/:friendId
 router.patch(
   "/:id/update",
   verifyToken,
-  upload.single("picture"), // This should accept "picture" not "media"
+  validateUserId,
+  validateUpdateUser,
+  upload.single("picture"),
   async (req, res) => {
     try {
       const { id } = req.params;
       const { firstName, lastName, bio } = req.body;
 
-      console.log("===== UPDATE USER REQUEST =====");
-      console.log("User ID:", id);
-      console.log("Body:", { firstName, lastName, bio });
-      console.log("Has file:", !!req.file);
+      logger.info("===== UPDATE USER REQUEST =====");
+      logger.info("User ID:", id);
+      logger.info("Body:", { firstName, lastName, bio });
+      logger.info("Has file:", !!req.file);
 
       // Find the user
       const user = await User.findById(id);
@@ -69,8 +110,8 @@ router.patch(
       // Handle profile picture upload
       if (req.file) {
         try {
-          console.log("Uploading profile picture to Cloudinary...");
-          console.log("File info:", {
+          logger.info("Uploading profile picture to Cloudinary...");
+          logger.info("File info:", {
             originalname: req.file.originalname,
             mimetype: req.file.mimetype,
             size: req.file.size,
@@ -90,9 +131,9 @@ router.patch(
           });
 
           updateData.picturePath = uploadResult.secure_url;
-          console.log("✓ Profile picture uploaded:", uploadResult.secure_url);
+          logger.info("✓ Profile picture uploaded:", uploadResult.secure_url);
         } catch (uploadError) {
-          console.error("Cloudinary upload error:", uploadError);
+          logger.error("Cloudinary upload error:", uploadError);
           return res.status(500).json({
             message: "Failed to upload profile picture",
             error: uploadError.message,
@@ -117,10 +158,10 @@ router.patch(
         bio: updatedUser.bio,
       };
 
-      console.log("✓ User updated successfully");
+      logger.info("✓ User updated successfully");
       res.status(200).json(userResponse);
     } catch (error) {
-      console.error("UPDATE USER ERROR:", error);
+      logger.error("UPDATE USER ERROR:", error);
       res.status(500).json({
         message: "Failed to update user profile",
         error: error.message,
@@ -130,6 +171,6 @@ router.patch(
 );
 
 // This must come AFTER /:id/update
-router.patch("/:id/:friendId", verifyToken, addRemoveFriend);
+router.patch("/:id/:friendId", verifyToken, validateUserId, addRemoveFriend);
 
 export default router;

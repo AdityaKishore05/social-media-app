@@ -6,6 +6,7 @@ import Navbar from "scenes/navbar";
 import FriendListWidget from "scenes/widgets/FriendListWidget";
 import PostsWidget from "scenes/widgets/PostsWidget";
 import UserWidget from "scenes/widgets/UserWidget";
+import { API_ENDPOINTS } from "config";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -17,18 +18,15 @@ const ProfilePage = () => {
   const getUser = useCallback(async () => {
     if (!userId) return;
     try {
-      const response = await fetch(
-        `https://getsocialnow.onrender.com/users/${userId}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        }
-      );
+      const response = await fetch(API_ENDPOINTS.USERS.GET_USER(userId), {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch user: ${response.status}`);

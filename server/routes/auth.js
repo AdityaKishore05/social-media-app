@@ -1,9 +1,14 @@
 import express from "express";
-import { login, googleAuth } from "../controllers/auth.js";
+import { login, googleAuth, register } from "../controllers/auth.js";
+import {
+  validateRegister,
+  validateLogin,
+  validateGoogleAuth,
+} from "../middleware/validation.js";
 
 const router = express.Router();
 
-router.post("/login", login);
-router.post("/google", googleAuth); // NEW: Google OAuth route
-
+router.post("/register", validateRegister, register);
+router.post("/login", validateLogin, login);
+router.post("/google", validateGoogleAuth, googleAuth);
 export default router;

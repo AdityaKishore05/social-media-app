@@ -1,10 +1,14 @@
 import User from "../models/User.js";
+import { logger } from "../utils/logger.js";
 
 /* READ */
 export const getUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id);
+    const user = await User.findById(id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
     res.status(200).json(user);
   } catch (err) {
     res.status(404).json({ message: err.message });
@@ -14,18 +18,20 @@ export const getUser = async (req, res) => {
 export const getUserFriends = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id);
+    const user = await User.findById(id).select("friends").lean();
 
-    const friends = await Promise.all(
-      user.friends.map((id) => User.findById(id))
-    );
-    const formattedFriends = friends.map(
-      ({ _id, firstName, lastName, picturePath }) => {
-        return { _id, firstName, lastName, picturePath };
-      }
-    );
-    res.status(200).json(formattedFriends);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Batch fetch all friends
+    const friends = await User.find({ _id: { $in: user.friends } })
+      .select("_id firstName lastName picturePath")
+      .lean();
+
+    res.status(200).json(friends);
   } catch (err) {
+    logger.error("GET USER FRIENDS ERROR:", err);
     res.status(404).json({ message: err.message });
   }
 };
@@ -56,20 +62,18 @@ export const addRemoveFriend = async (req, res) => {
     }
 
     // Get updated user with populated friends
-    const updatedUser = await User.findById(id);
-    const friends = await Promise.all(
-      updatedUser.friends.map((friendId) => User.findById(friendId))
-    );
+    const updatedUser = await User.findById(id).select("friends").lean();
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    const formattedFriends = friends.map(
-      ({ _id, firstName, lastName, picturePath }) => {
-        return { _id, firstName, lastName, picturePath };
-      }
-    );
-
-    res.status(200).json(formattedFriends);
+    const friends = await User.find({ _id: { $in: updatedUser.friends } })
+      .select("_id firstName lastName picturePath")
+      .lean();
+    // Lines 74-75 - CORRECT
+    res.status(200).json(friends);
   } catch (err) {
-    console.error("Error in addRemoveFriend:", err);
+    logger.error("Error in addRemoveFriend:", err);
     res.status(500).json({ message: err.message });
   }
 };

@@ -2,8 +2,80 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { OAuth2Client } from "google-auth-library";
+import { logger } from "../utils/logger.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Register function
+export const register = async (req, res) => {
+  try {
+    const { firstName, lastName, email, password, picturePath } = req.body;
+
+    // Validation
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (password.length < 5) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 5 characters" });
+    }
+
+    if (firstName.length < 2 || firstName.length > 50) {
+      return res
+        .status(400)
+        .json({ message: "First name must be between 2 and 50 characters" });
+    }
+
+    if (lastName.length < 2 || lastName.length > 50) {
+      return res
+        .status(400)
+        .json({ message: "Last name must be between 2 and 50 characters" });
+    }
+
+    const existingUser = await User.findOne({
+      email: email.toLowerCase().trim(),
+    });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ message: "User already exists with this email" });
+    }
+
+    const salt = await bcrypt.genSalt();
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.toLowerCase().trim(),
+      password: passwordHash,
+      picturePath: picturePath || "",
+      friends: [],
+      bio: "",
+      emailVerified: false,
+    });
+
+    const savedUser = await newUser.save();
+    const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET);
+
+    const userResponse = {
+      _id: savedUser._id,
+      firstName: savedUser.firstName,
+      lastName: savedUser.lastName,
+      email: savedUser.email,
+      picturePath: savedUser.picturePath,
+      friends: savedUser.friends,
+      bio: savedUser.bio,
+    };
+
+    res.status(201).json({ token, user: userResponse });
+  } catch (err) {
+    logger.error("REGISTER ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
 
 // Existing login function - keep it
 export const login = async (req, res) => {
@@ -34,6 +106,7 @@ export const login = async (req, res) => {
 
     res.status(200).json({ token, user: userResponse });
   } catch (err) {
+    logger.error("LOGIN ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -43,8 +116,8 @@ export const googleAuth = async (req, res) => {
   try {
     const { credential } = req.body;
 
-    console.log("===== GOOGLE AUTH REQUEST =====");
-    console.log("Verifying Google token...");
+    logger.info("===== GOOGLE AUTH REQUEST =====");
+    logger.info("Verifying Google token...");
 
     // Verify the Google token
     const ticket = await client.verifyIdToken({
@@ -53,7 +126,7 @@ export const googleAuth = async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    console.log("Google user data:", {
+    logger.info("Google user data:", {
       email: payload.email,
       name: payload.name,
       picture: payload.picture,
@@ -80,7 +153,7 @@ export const googleAuth = async (req, res) => {
 
     if (!user) {
       // Create new user
-      console.log("Creating new user from Google data...");
+      logger.info("Creating new user from Google data...");
       isNewUser = true;
 
       user = new User({
@@ -96,9 +169,9 @@ export const googleAuth = async (req, res) => {
       });
 
       await user.save();
-      console.log("✓ New user created:", user._id);
+      logger.info("✓ New user created:", user._id);
     } else {
-      console.log("✓ Existing user found:", user._id);
+      logger.info("✓ Existing user found:", user._id);
 
       // Update Google data if needed
       let hasUpdates = false;
@@ -124,7 +197,7 @@ export const googleAuth = async (req, res) => {
 
       if (hasUpdates) {
         await user.save();
-        console.log("✓ User data updated");
+        logger.info("✓ User data updated");
       }
     }
 
@@ -143,7 +216,7 @@ export const googleAuth = async (req, res) => {
       emailVerified: user.emailVerified,
     };
 
-    console.log("===== AUTH SUCCESS =====");
+    logger.info("===== AUTH SUCCESS =====");
 
     res.status(200).json({
       user: userResponse,
@@ -151,9 +224,9 @@ export const googleAuth = async (req, res) => {
       message: isNewUser ? "Account created successfully" : "Login successful",
     });
   } catch (error) {
-    console.error("===== GOOGLE AUTH ERROR =====");
-    console.error("Error:", error.message);
-    console.error("Stack:", error.stack);
+    logger.error("===== GOOGLE AUTH ERROR =====");
+    logger.error("Error:", error.message);
+    logger.error("Stack:", error.stack);
 
     res.status(500).json({
       message: "Google authentication failed",

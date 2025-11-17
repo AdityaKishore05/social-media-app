@@ -3,6 +3,7 @@ import Post from "../models/Post.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
+import { logger } from "../utils/logger.js";
 
 /* CREATE POST */
 export const createPost = async (req, res) => {
@@ -26,11 +27,9 @@ export const createPost = async (req, res) => {
         if (file.mimetype.startsWith("image/") && file.size > MAX_IMAGE_SIZE) {
           // delete from cloudinary if already uploaded
           if (file.public_id) cloudinary.uploader.destroy(file.public_id);
-          return res
-            .status(400)
-            .json({
-              message: `Image '${file.originalname}' exceeds 10MB limit.`,
-            });
+          return res.status(400).json({
+            message: `Image '${file.originalname}' exceeds 10MB limit.`,
+          });
         }
       }
       mediaItems = req.files.map((file) => ({
@@ -40,7 +39,10 @@ export const createPost = async (req, res) => {
       }));
     }
 
-    const user = await User.findById(userId);
+    // Line 45 - FIXED
+    const user = await User.findById(userId)
+      .select("firstName lastName picturePath")
+      .lean();
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const newPost = new Post({
@@ -56,14 +58,28 @@ export const createPost = async (req, res) => {
 
     await newPost.save();
 
-    // Return feed (populated)
-    const posts = await Post.find().sort({ createdAt: -1 });
-    const populatedPosts = await Promise.all(
-      posts.map(async (post) => {
-        const postUser = await User.findById(post.userId);
+    // Return feed (populated) - FIXED VERSION
+    const query = { isDeleted: { $ne: true } };
+    const posts = await Post.find(query)
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    // Batch fetch all unique user IDs
+    const userIds = [...new Set(posts.map((p) => p.userId))];
+    const users = await User.find({ _id: { $in: userIds } })
+      .select("firstName lastName picturePath")
+      .lean();
+
+    // Create a map for O(1) lookup
+    const userMap = new Map(users.map((u) => [u._id.toString(), u]));
+
+    const populatedPosts = posts
+      .map((post) => {
+        const postUser = userMap.get(post.userId);
         if (!postUser) return null;
         return {
-          ...post._doc,
+          ...post,
           firstName: postUser.firstName,
           lastName: postUser.lastName,
           userPicturePath: postUser.picturePath,
@@ -71,11 +87,11 @@ export const createPost = async (req, res) => {
           videoPath: post.videoPath || "",
         };
       })
-    );
+      .filter(Boolean);
 
-    res.status(201).json(populatedPosts.filter(Boolean));
+    res.status(201).json(populatedPosts);
   } catch (err) {
-    console.error("CREATE POST ERROR:", err);
+    logger.error("CREATE POST ERROR:", err);
     if (req.files)
       req.files.forEach(
         (f) => f.public_id && cloudinary.uploader.destroy(f.public_id)
@@ -87,13 +103,35 @@ export const createPost = async (req, res) => {
 /* GET FEED POSTS */
 export const getFeedPosts = async (req, res) => {
   try {
-    const posts = await Post.find().sort({ createdAt: -1 });
-    const postsWithUser = await Promise.all(
-      posts.map(async (post) => {
-        const user = await User.findById(post.userId);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const query = { isDeleted: { $ne: true } };
+    const totalPosts = await Post.countDocuments(query);
+
+    const posts = await Post.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Batch fetch all unique user IDs
+    const userIds = [...new Set(posts.map((p) => p.userId))];
+    const users = await User.find({ _id: { $in: userIds } })
+      .select("firstName lastName picturePath")
+      .lean();
+
+    // Create a map for O(1) lookup
+    const userMap = new Map(users.map((u) => [u._id.toString(), u]));
+
+    // Map posts with user data
+    const postsWithUser = posts
+      .map((post) => {
+        const user = userMap.get(post.userId);
         if (!user) return null;
         return {
-          ...post._doc,
+          ...post,
           firstName: user.firstName,
           lastName: user.lastName,
           userPicturePath: user.picturePath,
@@ -101,10 +139,16 @@ export const getFeedPosts = async (req, res) => {
           videoPath: post.videoPath || "",
         };
       })
-    );
-    res.status(200).json(postsWithUser.filter(Boolean));
+      .filter(Boolean);
+
+    res.status(200).json({
+      posts: postsWithUser,
+      currentPage: page,
+      totalPages: Math.ceil(totalPosts / limit),
+      totalPosts,
+    });
   } catch (err) {
-    console.error("GET FEED POSTS ERROR:", err);
+    logger.error("GET FEED POSTS ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -113,24 +157,45 @@ export const getFeedPosts = async (req, res) => {
 export const getUserPosts = async (req, res) => {
   try {
     const { userId } = req.params;
-    const posts = await Post.find({ userId }).sort({ createdAt: -1 });
-    const postsWithUser = await Promise.all(
-      posts.map(async (post) => {
-        const user = await User.findById(post.userId);
-        if (!user) return null;
-        return {
-          ...post._doc,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          userPicturePath: user.picturePath,
-          picturePath: post.picturePath || "",
-          videoPath: post.videoPath || "",
-        };
-      })
-    );
-    res.status(200).json(postsWithUser.filter(Boolean));
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const query = { userId, isDeleted: { $ne: true } };
+    const totalPosts = await Post.countDocuments(query);
+
+    const posts = await Post.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Fetch user data once
+    const user = await User.findById(userId)
+      .select("firstName lastName picturePath")
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const postsWithUser = posts.map((post) => ({
+      ...post,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userPicturePath: user.picturePath,
+      picturePath: post.picturePath || "",
+      videoPath: post.videoPath || "",
+    }));
+
+    res.status(200).json({
+      posts: postsWithUser,
+      currentPage: page,
+      totalPages: Math.ceil(totalPosts / limit),
+      totalPosts,
+    });
   } catch (err) {
-    console.error("GET USER POSTS ERROR:", err);
+    logger.error("GET USER POSTS ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -138,7 +203,7 @@ export const getUserPosts = async (req, res) => {
 /* LIKE POST */
 export const likePost = async (req, res) => {
   try {
-    const { id } = req.params; // post id
+    const { id } = req.params;
     const { userId } = req.body;
     const post = await Post.findById(id);
     if (!post) return res.status(404).json({ message: "Post not found" });
@@ -149,8 +214,14 @@ export const likePost = async (req, res) => {
 
     await post.save();
 
+    const postOwner = await User.findById(post.userId)
+      .select("firstName lastName picturePath")
+      .lean();
 
-    const postOwner = await User.findById(post.userId);
+    if (!postOwner) {
+      return res.status(404).json({ message: "Post owner not found" });
+    }
+
     const populatedPost = {
       ...post._doc,
       firstName: postOwner.firstName,
@@ -162,7 +233,7 @@ export const likePost = async (req, res) => {
 
     res.status(200).json(populatedPost);
   } catch (err) {
-    console.error("LIKE POST ERROR:", err);
+    logger.error("LIKE POST ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -170,7 +241,6 @@ export const likePost = async (req, res) => {
 /* LIKE COMMENT */
 export const likeComment = async (req, res) => {
   try {
-    // router should be: router.patch("/:postId/comment/:commentId/like", ...)
     const { postId, commentId } = req.params;
     const { userId } = req.body;
 
@@ -180,7 +250,6 @@ export const likeComment = async (req, res) => {
     const comment = post.comments.id(commentId);
     if (!comment) return res.status(404).json({ message: "Comment not found" });
 
-    // ensure comment.likes is a Map-like
     if (!comment.likes) comment.likes = new Map();
     const isLiked = comment.likes.get(userId);
     if (isLiked) comment.likes.delete(userId);
@@ -188,7 +257,14 @@ export const likeComment = async (req, res) => {
 
     await post.save();
 
-    const postOwner = await User.findById(post.userId);
+    const postOwner = await User.findById(post.userId)
+      .select("firstName lastName picturePath")
+      .lean();
+
+    if (!postOwner) {
+      return res.status(404).json({ message: "Post owner not found" });
+    }
+
     const populatedPost = {
       ...post._doc,
       firstName: postOwner.firstName,
@@ -200,7 +276,7 @@ export const likeComment = async (req, res) => {
 
     res.status(200).json(populatedPost);
   } catch (err) {
-    console.error("LIKE COMMENT ERROR:", err);
+    logger.error("LIKE COMMENT ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -208,14 +284,17 @@ export const likeComment = async (req, res) => {
 /* COMMENT POST */
 export const commentPost = async (req, res) => {
   try {
-    const { id } = req.params; // post id
+    const { id } = req.params;
     const { userId, commentText } = req.body;
 
     if (!commentText?.trim())
       return res.status(400).json({ message: "Comment text cannot be empty." });
 
     const post = await Post.findById(id);
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
+      .select("firstName lastName picturePath")
+      .lean();
+
     if (!post) return res.status(404).json({ message: "Post not found." });
     if (!user) return res.status(404).json({ message: "User not found." });
 
@@ -227,13 +306,20 @@ export const commentPost = async (req, res) => {
       userPicturePath: user.picturePath,
       commentText: commentText.trim(),
       createdAt: new Date(),
-      likes: {},
+      likes: new Map(),
     };
 
     post.comments.push(newComment);
     await post.save();
 
-    const postUser = await User.findById(post.userId);
+    const postUser = await User.findById(post.userId)
+      .select("firstName lastName picturePath")
+      .lean();
+
+    if (!postUser) {
+      return res.status(404).json({ message: "Post owner not found" });
+    }
+
     const populatedPost = {
       ...post._doc,
       firstName: postUser.firstName,
@@ -245,7 +331,7 @@ export const commentPost = async (req, res) => {
 
     res.status(200).json(populatedPost);
   } catch (err) {
-    console.error("COMMENT POST ERROR:", err);
+    logger.error("COMMENT POST ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -264,18 +350,30 @@ export const deletePost = async (req, res) => {
         .status(403)
         .json({ message: "Not authorized to delete this post." });
 
-    await Post.findByIdAndDelete(id);
+    // Use soft delete instead of hard delete
+    await post.softDelete();
 
-    const posts = profileUserId
-      ? await Post.find({ userId: profileUserId }).sort({ createdAt: -1 })
-      : await Post.find().sort({ createdAt: -1 });
+    // Get updated posts list
+    const query = profileUserId
+      ? { userId: profileUserId, isDeleted: { $ne: true } }
+      : { isDeleted: { $ne: true } };
 
-    const populatedPosts = await Promise.all(
-      posts.map(async (p) => {
-        const postUser = await User.findById(p.userId);
+    const posts = await Post.find(query).sort({ createdAt: -1 }).lean();
+
+    // Batch fetch users for better performance
+    const userIds = [...new Set(posts.map((p) => p.userId))];
+    const users = await User.find({ _id: { $in: userIds } })
+      .select("firstName lastName picturePath")
+      .lean();
+
+    const userMap = new Map(users.map((u) => [u._id.toString(), u]));
+
+    const populatedPosts = posts
+      .map((p) => {
+        const postUser = userMap.get(p.userId);
         if (!postUser) return null;
         return {
-          ...p._doc,
+          ...p,
           firstName: postUser.firstName,
           lastName: postUser.lastName,
           userPicturePath: postUser.picturePath,
@@ -283,11 +381,11 @@ export const deletePost = async (req, res) => {
           videoPath: p.videoPath || "",
         };
       })
-    );
+      .filter(Boolean);
 
-    res.status(200).json(populatedPosts.filter(Boolean));
+    res.status(200).json(populatedPosts);
   } catch (err) {
-    console.error("DELETE POST ERROR:", err);
+    logger.error("DELETE POST ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -308,7 +406,9 @@ export const deleteComment = async (req, res) => {
 
     // Only post owner OR comment owner can delete
     if (post.userId !== userId && comment.userId !== userId) {
-      return res.status(403).json({ message: "Not authorized to delete this comment" });
+      return res
+        .status(403)
+        .json({ message: "Not authorized to delete this comment" });
     }
 
     // Remove comment
@@ -318,19 +418,27 @@ export const deleteComment = async (req, res) => {
 
     await post.save();
 
-    // Return updated post with user info
-    const postUser = await User.findById(post.userId);
+    // Line 414 - FIXED
+    const postUser = await User.findById(post.userId)
+      .select("firstName lastName picturePath")
+      .lean();
+
+    if (!postUser) {
+      return res.status(404).json({ message: "Post owner not found" });
+    }
+
     const populatedPost = {
       ...post._doc,
       firstName: postUser.firstName,
       lastName: postUser.lastName,
       userPicturePath: postUser.picturePath,
+      picturePath: post.picturePath || "",
+      videoPath: post.videoPath || "",
     };
 
     res.status(200).json(populatedPost);
   } catch (err) {
-    console.error("DELETE COMMENT ERROR:", err);
+    logger.error("DELETE COMMENT ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
-

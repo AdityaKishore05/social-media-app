@@ -7,15 +7,15 @@ import {
   commentPost,
   deletePost,
   likeComment,
-  deleteComment
+  deleteComment,
 } from "../controllers/posts.js";
 import multer from "multer";
 import { verifyToken } from "../middleware/auth.js";
-import { 
-  validateCreatePost, 
-  validatePostId, 
+import {
+  validateCreatePost,
+  validatePostId,
   validateComment,
-  validatePagination 
+  validatePagination,
 } from "../middleware/validation.js";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "@fluidjs/multer-cloudinary";
@@ -58,18 +58,39 @@ const upload = multer({
 // ============================================
 
 // Apply to create route specifically
-router.post("/", verifyToken, postLimiter, validateCreatePost, upload.array("mediaFiles", 20), createPost);
+router.post(
+  "/",
+  verifyToken,
+  postLimiter,
+  validateCreatePost,
+  upload.array("mediaFiles", 20),
+  createPost
+);
 /* READ */
 router.get("/", verifyToken, validatePagination, getFeedPosts);
 router.get("/:userId/posts", verifyToken, validatePagination, getUserPosts);
 
-
 /* UPDATE */
-router.patch("/:id/comment", verifyToken, validatePostId, validateComment, commentPost);
-router.patch("/:postId/comment/:commentId/like", verifyToken, validatePostId, likeComment);
+router.patch(
+  "/:id/comment",
+  verifyToken,
+  validatePostId,
+  validateComment,
+  commentPost
+);
+router.patch(
+  "/:postId/comment/:commentId/like",
+  verifyToken,
+  validatePostId,
+  likeComment
+);
 router.patch("/:id/like", verifyToken, validatePostId, likePost);
-router.patch("/:postId/comment/:commentId/delete", verifyToken, validatePostId, deleteComment);
-
+router.patch(
+  "/:postId/comment/:commentId/delete",
+  verifyToken,
+  validatePostId,
+  deleteComment
+);
 
 /* DELETE */
 router.delete("/:id/delete", verifyToken, validatePostId, deletePost);

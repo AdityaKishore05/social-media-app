@@ -33,6 +33,7 @@ const Form = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // Add this line
         body: JSON.stringify({
           credential: response.credential,
         }),

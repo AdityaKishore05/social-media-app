@@ -3,9 +3,9 @@ import { body, param, query, validationResult } from "express-validator";
 export const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       message: "Validation failed",
-      errors: errors.array() 
+      errors: errors.array(),
     });
   }
   next();
@@ -38,9 +38,7 @@ export const validateLogin = [
     .isEmail()
     .normalizeEmail()
     .withMessage("Valid email is required"),
-  body("password")
-    .notEmpty()
-    .withMessage("Password is required"),
+  body("password").notEmpty().withMessage("Password is required"),
   handleValidationErrors,
 ];
 
@@ -72,9 +70,7 @@ export const validateUpdateUser = [
 ];
 
 export const validateUserId = [
-  param("id")
-    .isMongoId()
-    .withMessage("Invalid user ID format"),
+  param("id").isMongoId().withMessage("Invalid user ID format"),
   handleValidationErrors,
 ];
 
@@ -88,9 +84,7 @@ export const validateSearchQuery = [
 
 // Post validation
 export const validateCreatePost = [
-  body("userId")
-    .isMongoId()
-    .withMessage("Valid user ID is required"),
+  body("userId").isMongoId().withMessage("Valid user ID is required"),
   body("description")
     .optional()
     .trim()
@@ -100,16 +94,12 @@ export const validateCreatePost = [
 ];
 
 export const validatePostId = [
-  param("id")
-    .isMongoId()
-    .withMessage("Invalid post ID format"),
+  param("id").isMongoId().withMessage("Invalid post ID format"),
   handleValidationErrors,
 ];
 
 export const validateComment = [
-  body("userId")
-    .isMongoId()
-    .withMessage("Valid user ID is required"),
+  body("userId").isMongoId().withMessage("Valid user ID is required"),
   body("commentText")
     .trim()
     .isLength({ min: 1, max: 1000 })
