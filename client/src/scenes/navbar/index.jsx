@@ -1,4 +1,4 @@
-import { useState} from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   IconButton,
@@ -9,30 +9,81 @@ import {
   FormControl,
   useTheme,
   useMediaQuery,
+  Autocomplete,
+  TextField,
+  ListItem,
+  ListItemAvatar,
+  Avatar,
+  ListItemText,
+  Paper,
+  CircularProgress,
 } from "@mui/material";
 import {
   DarkMode,
   LightMode,
   Menu,
   Close,
+  Search as SearchIcon,
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { setMode, setLogout } from "state";
 import { useNavigate } from "react-router-dom";
 import FlexBetween from "components/FlexBetween";
+import { API_ENDPOINTS } from "config";
+import { toast } from "react-toastify";
 
 const Navbar = () => {
   const [isMobileMenuToggled, setIsMobileMenuToggled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchTimeoutRef = useRef(null);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
-
+  const token = useSelector((state) => state.token);
   const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
   const theme = useTheme();
 
-
   const fullName = `${user.firstName} ${user.lastName}`;
+
+  const handleSearch = async (query) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(API_ENDPOINTS.USERS.SEARCH(query), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Search failed");
+        const users = await res.json();
+        setSearchResults(users);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to search users");
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <FlexBetween
@@ -47,7 +98,7 @@ const Navbar = () => {
         zIndex: 50,
       }}
     >
-      {/* LOGO ----------------------------------------------------------- */}
+      {/* LOGO */}
       <FlexBetween gap="1.75rem">
         <Typography
           fontWeight="bold"
@@ -60,12 +111,69 @@ const Navbar = () => {
         </Typography>
       </FlexBetween>
 
-      {/* DESKTOP NAV ---------------------------------------------------- */}
+      {/* DESKTOP NAV */}
       {isNonMobileScreens ? (
-        <FlexBetween gap="1rem">
+        <FlexBetween gap="1rem" sx={{ flex: 1, maxWidth: "600px", mx: 2 }}>
+          {/* SEARCH BAR */}
+          <Autocomplete
+            freeSolo
+            open={searchOpen}
+            onOpen={() => setSearchOpen(true)}
+            onClose={() => setSearchOpen(false)}
+            options={searchResults}
+            getOptionLabel={(option) =>
+              typeof option === "string"
+                ? option
+                : `${option.firstName} ${option.lastName}`
+            }
+            onInputChange={(e, value) => {
+              setSearchQuery(value);
+              handleSearch(value);
+            }}
+            loading={isSearching}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Search users..."
+                size="small"
+                sx={{ width: "100%" }}
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />,
+                  endAdornment: (
+                    <>
+                      {isSearching ? <CircularProgress size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <ListItem
+                {...props}
+                onClick={() => {
+                  navigate(`/profile/${option._id}`);
+                  setSearchOpen(false);
+                  setSearchQuery("");
+                }}
+                sx={{ cursor: "pointer" }}
+              >
+                <ListItemAvatar>
+                  <Avatar src={option.picturePath} />
+                </ListItemAvatar>
+                <ListItemText
+                  primary={`${option.firstName} ${option.lastName}`}
+                  secondary={option.email}
+                />
+              </ListItem>
+            )}
+            PaperComponent={(props) => (
+              <Paper {...props} sx={{ mt: 1 }} />
+            )}
+          />
 
-
-          {/* 🌙 / ☀ Theme Switch */}
+          {/* Theme Switch */}
           <IconButton onClick={() => dispatch(setMode())}>
             {theme.palette.mode === "dark" ? (
               <DarkMode sx={{ fontSize: "25px" }} />
@@ -78,102 +186,134 @@ const Navbar = () => {
           <FormControl variant="standard" value={fullName}>
             <Select
               value={fullName}
-              sx= {{
+              sx={{
                 backgroundColor: theme.palette.neutral.light,
                 borderRadius: "0.5rem",
                 p: "0.25rem 0.5rem",
-                width: "fit-content",        // ⭐ expands automatically
+                width: "fit-content",
                 maxWidth: "200px",
                 display: "flex",
                 alignItems: "center",
-                whiteSpace: "nowrap",       // prevent wrapping
-                overflow: "visible",}}
-                input={< InputBase />}
-              >
+                whiteSpace: "nowrap",
+                overflow: "visible",
+              }}
+              input={<InputBase />}
+            >
               <MenuItem value={fullName}>
                 <Typography>{fullName}</Typography>
               </MenuItem>
-
-              <MenuItem onClick={() => dispatch(setLogout())}>
-                Logout
+              <MenuItem onClick={() => navigate(`/profile/${user._id}`)}>
+                Profile
               </MenuItem>
+              <MenuItem onClick={() => dispatch(setLogout())}>Logout</MenuItem>
             </Select>
           </FormControl>
         </FlexBetween>
       ) : (
-        <IconButton
-          onClick={() => setIsMobileMenuToggled(!isMobileMenuToggled)}
-        >
+        <IconButton onClick={() => setIsMobileMenuToggled(!isMobileMenuToggled)}>
           <Menu />
         </IconButton>
       )}
 
-      {/* MOBILE NAV ---------------------------------------------------- */}
-{!isNonMobileScreens && isMobileMenuToggled && (
-  <Box
-    sx={{
-      position: "fixed",
-      top: 0,
-      right: 0,
-      height: "100vh",
-      width: "75%",                     // Sidebar width
-      zIndex: 2000,
-      backgroundColor: theme.palette.mode === "dark"
-        ? "#05051fff"                     // SOLID visible dark color
-        : "#FFFFFF",                    // SOLID visible light color
-      overflowY: "auto",
-      boxShadow: "-4px 0 20px rgba(0,0,0,0.4)",
-      p: "1.5rem",
-      transition: "transform 0.3s ease",
-    }}
-  >
-    {/* CLOSE BUTTON */}
-    <Box display="flex" justifyContent="flex-end">
-      <IconButton onClick={() => setIsMobileMenuToggled(false)}>
-        <Close sx={{ color: theme.palette.neutral.main }} />
-      </IconButton>
-    </Box>
-
-    {/* CONTENT */}
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      gap="2rem"
-      mt="2rem"
-    >
-      <IconButton onClick={() => dispatch(setMode())}>
-        {theme.palette.mode === "dark"
-          ? <DarkMode sx={{ color: "white" }} />
-          : <LightMode sx={{ color: "black" }} />}
-      </IconButton>
-
-      <FormControl>
-        <Select
-          value={fullName}
+      {/* MOBILE NAV */}
+      {!isNonMobileScreens && isMobileMenuToggled && (
+        <Box
           sx={{
-            backgroundColor: theme.palette.neutral.light,
-            borderRadius: "0.5rem",
-            p: "0.25rem 0.5rem",
-            width: "fit-content",        // ⭐ expands automatically
-            maxWidth: "200px",
-            display: "flex",
-            alignItems: "center",
-            whiteSpace: "nowrap",         // prevent wrapping
-            overflow: "visible",          // ⭐ no truncation
+            position: "fixed",
+            top: 0,
+            right: 0,
+            height: "100vh",
+            width: "75%",
+            zIndex: 2000,
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#05051fff" : "#FFFFFF",
+            overflowY: "auto",
+            boxShadow: "-4px 0 20px rgba(0,0,0,0.4)",
+            p: "1.5rem",
+            transition: "transform 0.3s ease",
           }}
-
-          input={<InputBase />}
         >
-          <MenuItem value={fullName}>{fullName}</MenuItem>
-          <MenuItem onClick={() => dispatch(setLogout())}>Logout</MenuItem>
-        </Select>
-      </FormControl>
-    </Box>
-  </Box>
-)}
+          <Box display="flex" justifyContent="flex-end">
+            <IconButton onClick={() => setIsMobileMenuToggled(false)}>
+              <Close sx={{ color: theme.palette.neutral.main }} />
+            </IconButton>
+          </Box>
 
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap="2rem"
+            mt="2rem"
+          >
+            <Autocomplete
+              freeSolo
+              options={searchResults}
+              getOptionLabel={(option) =>
+                typeof option === "string"
+                  ? option
+                  : `${option.firstName} ${option.lastName}`
+              }
+              onInputChange={(e, value) => handleSearch(value)}
+              loading={isSearching}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Search users..."
+                  fullWidth
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: <SearchIcon sx={{ mr: 1 }} />,
+                  }}
+                />
+              )}
+              renderOption={(props, option) => (
+                <ListItem
+                  {...props}
+                  onClick={() => {
+                    navigate(`/profile/${option._id}`);
+                    setIsMobileMenuToggled(false);
+                  }}
+                >
+                  <ListItemAvatar>
+                    <Avatar src={option.picturePath} />
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={`${option.firstName} ${option.lastName}`}
+                  />
+                </ListItem>
+              )}
+              sx={{ width: "100%" }}
+            />
 
+            <IconButton onClick={() => dispatch(setMode())}>
+              {theme.palette.mode === "dark" ? (
+                <DarkMode sx={{ color: "white" }} />
+              ) : (
+                <LightMode sx={{ color: "black" }} />
+              )}
+            </IconButton>
+
+            <FormControl fullWidth>
+              <Select
+                value={fullName}
+                sx={{
+                  backgroundColor: theme.palette.neutral.light,
+                  borderRadius: "0.5rem",
+                  p: "0.25rem 0.5rem",
+                }}
+                input={<InputBase />}
+              >
+                <MenuItem value={fullName}>{fullName}</MenuItem>
+                <MenuItem onClick={() => navigate(`/profile/${user._id}`)}>
+                  Profile
+                </MenuItem>
+                <MenuItem onClick={() => dispatch(setLogout())}>Logout</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </Box>
+      )}
     </FlexBetween>
   );
 };
