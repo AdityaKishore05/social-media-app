@@ -270,134 +270,136 @@ const PostWidget = ({
 
           {/* Media */}
           {items.length > 0 && (
-            <Box {...swipeHandlers} sx={{ mt: 1 }}>
-              <Box
-                tabIndex={0}
-                onKeyDown={handleKeyDown}
-                role="img"
-                aria-label={`Post media ${currentIndex + 1} of ${items.length}`}
-                sx={{
-                  position: "relative",
-                  width: "100%",
-                  overflow: "hidden",
-                  height: isNonMobileScreens ? "auto" : 360,
-                  paddingTop: isNonMobileScreens ? "60%" : 0, // fixes black box
-                  display: "flex",
-                  background: "black",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  "&:focus": {
-                    outline: `2px solid ${theme.palette.primary.main}`,
-                    outlineOffset: 2,
-                  },
+           <Box
+  {...swipeHandlers}
+  sx={{
+    mt: 1,
+  }}
+>
+  <Box
+    tabIndex={0}
+    onKeyDown={handleKeyDown}
+    role="img"
+    aria-label={`Post media ${currentIndex + 1} of ${items.length}`}
+    sx={{
+      position: "relative",
+      width: "100%",
+      height: isNonMobileScreens ? "520px" : "360px",   // 👈 FIXED HEIGHT
+      overflow: "hidden",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "black",
+      borderRadius: "12px",
+    }}
+  >
+    {/* MEDIA */}
+    {mediaError[currentIndex] ? (
+      <Typography color="text.secondary">Failed to load</Typography>
+    ) : items[currentIndex].type === "video" ? (
+      <video
+        controls
+        src={items[currentIndex].url}
+        onError={() =>
+          setMediaError((p) => ({ ...p, [currentIndex]: true }))
+        }
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+        }}
+      />
+    ) : (
+      <img
+        src={items[currentIndex].url}
+        alt="post media"
+        onClick={() => openLightbox(currentIndex)}
+        onError={() =>
+          setMediaError((p) => ({ ...p, [currentIndex]: true }))
+        }
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          cursor: "pointer",
+        }}
+      />
+    )}
 
-                }}
-              >
-                {mediaError[currentIndex] ? (
-                  <Typography color="text.secondary">Failed to load</Typography>
-                ) : items[currentIndex].type === "video" ? (
-                  <video
-                    controls
-                    src={items[currentIndex].url}
-                    onError={() => setMediaError((p) => ({ ...p, [currentIndex]: true }))}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "contain",
-                      position: "absolute",
-                      left: 0,
-                      top: 0,
-                    }}
-                  />
-                ) : (
-                  <Box
-                    onClick={() => openLightbox(currentIndex)}
-                    sx={{ cursor: "pointer", position: "relative", width: "100%", height: "100%" }}
-                  >
-                    <img
-                      src={items[currentIndex].url}
-                      alt="post media"
-                      onError={() => setMediaError((p) => ({ ...p, [currentIndex]: true }))}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "contain",
-                        display: "block",
-                        position: "absolute",
-                        left: 0,
-                        top: 0,
-                      }}
-                    />
-                    <IconButton
-                      sx={{
-                        position: "absolute",
-                        top: 8,
-                        right: 8,
-                        backgroundColor: "rgba(0,0,0,0.5)",
-                        color: "white",
-                        "&:hover": { backgroundColor: "rgba(0,0,0,0.7)" },
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openLightbox(currentIndex);
-                      }}
-                    >
-                      <Fullscreen />
-                    </IconButton>
-                  </Box>
-                )}
+    {/* DOTS */}
+    {items.length > 1 && (
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: 12,
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          gap: 1,
+        }}
+      >
+        {items.map((_, index) => (
+          <Box
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            sx={{
+              width: index === currentIndex ? 10 : 8,
+              height: index === currentIndex ? 10 : 8,
+              borderRadius: "50%",
+              backgroundColor:
+                index === currentIndex ? "white" : "rgba(255,255,255,0.5)",
+              transition: "all 0.25s ease",
+              cursor: "pointer",
+            }}
+          />
+        ))}
+      </Box>
+    )}
 
-                {items.length > 1 && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      bottom: 10,
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      display: "flex",
-                      gap: "6px",
-                      zIndex: 20,
-                    }}
-                  >
-                    {items.map((_, index) => (
-                      <Box
-                        key={index}
-                        onClick={() => setCurrentIndex(index)}
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          backgroundColor: index === currentIndex ? "white" : "rgba(255,255,255,0.4)",
-                          transition: "all 0.25s ease",
-                          cursor: "pointer",
-                        }}
-                      />
-                    ))}
-                  </Box>
-                )}
+    {/* CHEVRONS */}
+    {items.length > 1 && (
+      <>
+        <IconButton
+          onClick={() =>
+            setCurrentIndex(
+              (old) => (old - 1 + items.length) % items.length
+            )
+          }
+          sx={{
+            position: "absolute",
+            left: 10,
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "rgba(0,0,0,0.5)",
+            color: "white",
+            "&:hover": { backgroundColor: "rgba(0,0,0,0.7)" },
+          }}
+        >
+          <ChevronLeft />
+        </IconButton>
 
-                {items.length > 1 && (
-                  <>
-                    <IconButton
-                      onClick={() => setCurrentIndex((p) => (p - 1 + items.length) % items.length)}
-                      sx={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.35)", color: "white" }}
-                      size="large"
-                      aria-label="prev media"
-                    >
-                      <ChevronLeft />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => setCurrentIndex((p) => (p + 1) % items.length)}
-                      sx={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.35)", color: "white" }}
-                      size="large"
-                      aria-label="next media"
-                    >
-                      <ChevronRight />
-                    </IconButton>
-                  </>
-                )}
-              </Box>
-            </Box>
+        <IconButton
+          onClick={() =>
+            setCurrentIndex((old) => (old + 1) % items.length)
+          }
+          sx={{
+            position: "absolute",
+            right: 10,
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "rgba(0,0,0,0.5)",
+            color: "white",
+            "&:hover": { backgroundColor: "rgba(0,0,0,0.7)" },
+          }}
+        >
+          <ChevronRight />
+        </IconButton>
+      </>
+    )}
+  </Box>
+</Box>
+
+
           )}
 
           {/* Description */}

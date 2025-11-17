@@ -113,7 +113,7 @@ const Navbar = () => {
 
       {/* DESKTOP NAV */}
       {isNonMobileScreens ? (
-        <FlexBetween gap="1rem" sx={{ flex: 1, maxWidth: "600px", mx: 2 }}>
+        <FlexBetween gap="1rem" sx={{ flex: 1, maxWidth: "500px", mx: 2 }}>
           {/* SEARCH BAR */}
           <Autocomplete
             freeSolo
@@ -124,8 +124,9 @@ const Navbar = () => {
             getOptionLabel={(option) =>
               typeof option === "string"
                 ? option
-                : `${option.firstName} ${option.lastName}`
+                : `${option.firstName} ${option.lastName} (${option.email})`
             }
+
             onInputChange={(e, value) => {
               setSearchQuery(value);
               handleSearch(value);
@@ -136,7 +137,7 @@ const Navbar = () => {
                 {...params}
                 placeholder="Search users..."
                 size="small"
-                sx={{ width: "100%" }}
+                sx={{ width: "300px" }}
                 InputProps={{
                   ...params.InputProps,
                   startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />,
