@@ -1,25 +1,15 @@
-import mongoSanitize from "express-mongo-sanitize";
 import createDOMPurify from "isomorphic-dompurify";
-import { logger } from "../utils/logger.js"; // or correct path
+import { JSDOM } from "jsdom";
 
+const { window } = new JSDOM("");
+const DOMPurify = createDOMPurify(window);
 
-const DOMPurify = createDOMPurify();
-
-// Sanitize MongoDB operator injection
-export const sanitizeMongo = mongoSanitize({
-    replaceWith: "_",
-    onSanitize: ({ req, key }) => {
-      logger.warn(`MongoDB injection attempt detected in ${key}`);
-    },
-  });
-
-// Sanitize HTML/XSS
 export const sanitizeInput = (req, res, next) => {
   if (req.body) {
     Object.keys(req.body).forEach((key) => {
       if (typeof req.body[key] === "string") {
         req.body[key] = DOMPurify.sanitize(req.body[key], {
-          ALLOWED_TAGS: [], // Remove all HTML tags
+          ALLOWED_TAGS: [],
           ALLOWED_ATTR: [],
         });
       }
