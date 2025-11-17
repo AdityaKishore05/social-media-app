@@ -10,7 +10,7 @@ import { ScrollToTop } from "components/ScrollToTop";
 
 
 const HomePage = () => {
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [, setSearchOpen] = useState(false);
   useKeyboardShortcuts({
     "ctrl+k": () => setSearchOpen(true),
     escape: () => setSearchOpen(false),

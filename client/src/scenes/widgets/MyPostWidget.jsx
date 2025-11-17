@@ -16,7 +16,7 @@ import Dropzone from "react-dropzone";
 import UserImage from "components/UserImage";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setPosts } from "state";
+import { setPosts } from "state"; 
 import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "config";
 import { LinearProgress } from "@mui/material";
@@ -129,7 +129,6 @@ const handleDrop = (acceptedFiles) => {
 
 useEffect(() => {
   const draft = localStorage.getItem("postDraft");
-  const draftMedia = localStorage.getItem("postDraftMedia");
   
   if (draft) {
     setPost(draft);

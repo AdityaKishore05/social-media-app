@@ -1,6 +1,5 @@
 import React from "react";
 import { Box, Typography, Button } from "@mui/material";
-import { useTheme } from "@mui/material";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -33,7 +32,6 @@ class ErrorBoundary extends React.Component {
 }
 
 const ErrorFallback = ({ error, onReset }) => {
-  const theme = useTheme();
   return (
     <Box
       sx={{
