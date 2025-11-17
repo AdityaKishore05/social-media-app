@@ -17,7 +17,7 @@ import {
   authLimiter,
   postLimiter,
 } from "./middleware/rateLimiter.js";
-import { sanitizeMongo, sanitizeInput } from "./middleware/sanitize.js";
+import { sanitizeInput } from "./middleware/sanitize.js";
 
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
@@ -98,7 +98,6 @@ app.use("/auth", authLimiter);
 app.use("/posts", postLimiter);
 
 // THEN sanitization
-app.use(sanitizeMongo);
 app.use(sanitizeInput);
 
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
