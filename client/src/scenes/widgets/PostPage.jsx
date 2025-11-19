@@ -1,6 +1,7 @@
+// src/scenes/postPage/PostPage.jsx
 import { useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { API_ENDPOINTS } from "config";
 import { setPost } from "state";
 import PostWidget from "scenes/widgets/PostWidget";
@@ -9,35 +10,25 @@ import { Box, Typography } from "@mui/material";
 const PostPage = () => {
   const { postId } = useParams();
   const dispatch = useDispatch();
+  const token = useSelector((state) => state.token);
   const post = useSelector((state) => state.posts.find(p => p._id === postId));
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchSinglePost = async () => {
       try {
         const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId), {
-          headers: { "Content-Type": "application/json" }
+          headers: { Authorization: `Bearer ${token}` }
         });
-        
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || "Post not found");
-        }
-        
+        if (!res.ok) throw new Error("Post not found");
         const data = await res.json();
-        dispatch(setPost({ post: data }));
+        dispatch(setPost({ post: data })); // updates redux
       } catch (err) {
         console.error(err);
-        setError(err.message);
       }
     };
 
-    fetchSinglePost();
-  }, [postId, dispatch]);
-
-  if (error) {
-    return <Typography sx={{ mt: 4, textAlign: "center", color: "red" }}>{error}</Typography>;
-  }
+    if (!post) fetchSinglePost();
+  }, [postId, post, dispatch, token]);
 
   if (!post) {
     return <Typography sx={{ mt: 4, textAlign: "center" }}>Loading post...</Typography>;
