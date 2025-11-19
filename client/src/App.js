@@ -12,6 +12,7 @@ import { themeSettings } from "./theme";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PostPage from "scenes/widgets/PostPage";
 
+
 function App() {
   const mode = useSelector((state) => state.mode || "light");
   const token = useSelector((state) => state.token);

@@ -1,43 +1,55 @@
-// src/scenes/postPage/PostPage.jsx
+// src/scenes/widgets/PostPage.jsx
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { useEffect } from "react";
+import { Helmet } from "react-helmet";   // 👈 ADD THIS
 import { API_ENDPOINTS } from "config";
-import { setPost } from "state";
-import PostWidget from "scenes/widgets/PostWidget";
-import { Box, Typography } from "@mui/material";
+import PostWidget from "./PostWidget";
 
 const PostPage = () => {
-  const { postId } = useParams();
-  const dispatch = useDispatch();
-  const token = useSelector((state) => state.token);
-  const post = useSelector((state) => state.posts.find(p => p._id === postId));
+  const { id } = useParams();
+  const [post, setPost] = useState(null);
 
   useEffect(() => {
-    const fetchSinglePost = async () => {
+    const fetchPost = async () => {
       try {
-        const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId), {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error("Post not found");
+        const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(id));
+        if (!res.ok) throw new Error("Failed to fetch post");
         const data = await res.json();
-        dispatch(setPost({ post: data })); // updates redux
+        setPost(data);
       } catch (err) {
         console.error(err);
       }
     };
 
-    if (!post) fetchSinglePost();
-  }, [postId, post, dispatch, token]);
+    fetchPost();
+  }, [id]);
 
-  if (!post) {
-    return <Typography sx={{ mt: 4, textAlign: "center" }}>Loading post...</Typography>;
-  }
+  if (!post) return <div>Loading...</div>;
 
   return (
-    <Box sx={{ maxWidth: "600px", mx: "auto", mt: 4 }}>
+    <>
+      {/* ⭐️ HELMET HERE ⭐️ */}
+      <Helmet>
+        <title>{post?.firstName} {post?.lastName}'s Post | GSN</title>
+        <meta name="description" content={post?.description?.slice(0, 150)} />
+
+        {/* OpenGraph (Facebook / LinkedIn) */}
+        <meta property="og:title" content={`${post?.firstName} ${post?.lastName}'s Post`} />
+        <meta property="og:description" content={post?.description?.slice(0, 150)} />
+        <meta property="og:image" content={post?.mediaItems?.[0]?.url || "/default.jpg"} />
+        <meta property="og:url" content={`https://getsocialnow.netlify.app/post/${id}`} />
+        <meta property="og:type" content="website" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${post?.firstName} ${post?.lastName}'s Post`} />
+        <meta name="twitter:description" content={post?.description?.slice(0, 150)} />
+        <meta name="twitter:image" content={post?.mediaItems?.[0]?.url || "/default.jpg"} />
+      </Helmet>
+
+      {/* MAIN UI */}
       <PostWidget {...post} />
-    </Box>
+    </>
   );
 };
 
