@@ -37,6 +37,7 @@ function App() {
                 path="/profile/:userId"
                 element={isAuth ? <ProfilePage /> : <Navigate to="/" />}
               />
+              
             </Routes>
           </ErrorBoundary>
         </ThemeProvider>

@@ -442,3 +442,31 @@ export const deleteComment = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// GET SINGLE POST BY ID
+export const getSinglePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const post = await Post.findById(id).lean();
+
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    // Get user data
+    const user = await User.findById(post.userId)
+      .select("firstName lastName picturePath")
+      .lean();
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({
+      ...post,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userPicturePath: user.picturePath,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+

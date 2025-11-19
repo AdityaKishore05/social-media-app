@@ -8,6 +8,7 @@ import {
   deletePost,
   likeComment,
   deleteComment,
+  getSinglePost
 } from "../controllers/posts.js";
 import multer from "multer";
 import { verifyToken } from "../middleware/auth.js";
@@ -69,6 +70,7 @@ router.post(
 
 /* READ */
 router.get("/", verifyToken, validatePagination, getFeedPosts);
+router.get("/:id", verifyToken, getSinglePost);
 router.get("/:userId/posts", verifyToken, validatePagination, getUserPosts);
 
 /* UPDATE */
