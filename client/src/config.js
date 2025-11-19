@@ -19,7 +19,7 @@ export const API_ENDPOINTS = {
   },
   POSTS: {
     CREATE: `${API_BASE_URL}/posts`,
-    GET_SINGLE: (id) => `${API_BASE_URL}/posts/${id}`,
+    GET_SINGLE: (postId) => `/posts/${postId}`,
     GET_FEED: (page = 1, limit = 10) =>
       `${API_BASE_URL}/posts?page=${page}&limit=${limit}`,
     GET_USER_POSTS: (userId, page = 1, limit = 10) =>

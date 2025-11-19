@@ -10,14 +10,14 @@ import { Box, Typography } from "@mui/material";
 const PostPage = () => {
   const { postId } = useParams();
   const dispatch = useDispatch();
-  const token = useSelector((state) => state.token);
+ const token = useSelector((state) => state.token) || null;
   const post = useSelector((state) => state.posts.find(p => p._id === postId));
 
   useEffect(() => {
     const fetchSinglePost = async () => {
       try {
         const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId), {
-          headers: { Authorization: `Bearer ${token}` }
+         headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
         if (!res.ok) throw new Error("Post not found");
         const data = await res.json();

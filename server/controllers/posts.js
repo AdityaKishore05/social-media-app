@@ -443,9 +443,24 @@ export const deleteComment = async (req, res) => {
   }
 };
 
+// GET SINGLE POST (PUBLIC)
 export const getSinglePost = async (req, res) => {
-  const post = await Post.findById(req.params.id);
-  if (!post) return res.status(404).json({ message: "Not found" });
-  res.json(post);
+  try {
+    const { id } = req.params;
+    const post = await Post.findById(id).lean();
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const user = await User.findById(post.userId)
+      .select("firstName lastName picturePath")
+      .lean();
+
+    res.status(200).json({
+      ...post,
+      firstName: user?.firstName,
+      lastName: user?.lastName,
+      userPicturePath: user?.picturePath,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
-    
