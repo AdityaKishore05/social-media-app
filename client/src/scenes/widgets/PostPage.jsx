@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from "config";
 import { setPost } from "state";
 import PostWidget from "scenes/widgets/PostWidget";
 import { Box, Typography } from "@mui/material";
+import { navigate } from "react-router-dom";
 
 const PostPage = () => {
   const { postId } = useParams();
