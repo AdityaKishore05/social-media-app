@@ -15,21 +15,21 @@ const PostPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchSinglePost = async () => {
-      try {
-        const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId), {
-        });
-        if (!res.ok) throw new Error("Post not found");
-        const data = await res.json();
-        dispatch(setPost({ post: data }));
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-      }
-    };
+  const fetchSinglePost = async () => {
+    try {
+      const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId));
+      if (!res.ok) throw new Error("Post not found");
 
-    fetchSinglePost();
-  }, [postId, token, dispatch]);
+      const data = await res.json();
+      dispatch(setPost({ post: data }));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  fetchSinglePost();
+}, [postId, dispatch]);
+
 
   if (error) {
     return <Typography sx={{ mt: 4, textAlign: "center", color: "red" }}>{error}</Typography>;

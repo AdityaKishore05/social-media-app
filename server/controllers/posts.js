@@ -444,23 +444,28 @@ export const deleteComment = async (req, res) => {
 };
 
 // GET SINGLE POST (PUBLIC)
-export const getSinglePost = async (req, res) => {
+const fetchSinglePost = async () => {
+  const isLoggedIn = !!token; // check if token exists
+
+  const url = isLoggedIn
+    ? API_ENDPOINTS.POSTS.GET_SINGLE(postId)
+    : API_ENDPOINTS.POSTS.GET_PUBLIC(postId); // <=== USE PUBLIC
+
   try {
-    const { id } = req.params;
-    const post = await Post.findById(id).lean();
-    if (!post) return res.status(404).json({ message: "Post not found" });
+    const res = await fetch(
+      url,
+      isLoggedIn
+        ? {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        : {}
+    ); // no headers when public
 
-    const user = await User.findById(post.userId)
-      .select("firstName lastName picturePath")
-      .lean();
-
-    res.status(200).json({
-      ...post,
-      firstName: user?.firstName,
-      lastName: user?.lastName,
-      userPicturePath: user?.picturePath,
-    });
+    if (!res.ok) throw new Error("Post not found");
+    const data = await res.json();
+    dispatch(setPost({ post: data }));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
   }
 };
+
