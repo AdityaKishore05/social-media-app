@@ -33,10 +33,6 @@ const PostPage = () => {
   if (!post) {
     return <Typography sx={{ mt: 4, textAlign: "center" }}>Loading post...</Typography>;
   }
-  
-  if (!userId) {
-  return <Navigate to="/home" replace />;
-}
 
   return (
     <Box sx={{ maxWidth: "600px", mx: "auto", mt: 4 }}>
