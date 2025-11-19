@@ -38,7 +38,7 @@ function App() {
                 path="/profile/:userId"
                 element={isAuth ? <ProfilePage /> : <Navigate to="/" />}
               />
-               <Route
+              <Route
                 path="/post/:postId"
                 element={isAuth ? <PostPage /> : <Navigate to="/" />}
               />

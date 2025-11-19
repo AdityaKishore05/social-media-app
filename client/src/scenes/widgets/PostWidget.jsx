@@ -226,31 +226,23 @@ const PostWidget = ({
     setIsLightboxOpen(true);
   };
 
-  const handleShare = async () => {
-    const postUrl = `${window.location.origin}/post/${postId}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${name}'s post`,
-          text: description || "Check out this post!",
-          url: postUrl,
-        });
-        toast.success("Shared successfully!");
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Share error:", err);
-        }
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(postUrl);
-        toast.success("Link copied to clipboard!");
-      } catch (err) {
-        console.error("Copy error:", err);
-        toast.error("Failed to copy link");
-      }
-    }
-  };
+const handleShare = async () => {
+  const postUrl = `${window.location.origin}/post/${postId}`;
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: `${name}'s post`,
+        text: description || "Check out this post!",
+        url: postUrl,
+      });
+      toast.success("Shared successfully!");
+    } catch (err) {}
+  } else {
+    await navigator.clipboard.writeText(postUrl);
+    toast.success("Link copied!");
+  }
+};
+
 
   const handleKeyDown = (e) => {
     if (e.key === "ArrowLeft") {
