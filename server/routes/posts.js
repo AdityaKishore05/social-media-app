@@ -72,26 +72,29 @@ router.post(
 router.get("/public/:postId", async (req, res) => {
   try {
     const { postId } = req.params;
-    const post = await Post.findById(postId).lean(); // FIX: await is required
+    const post = await Post.findById(postId).lean();
 
     if (!post || post.isDeleted) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    const user = await User.findById(post.userId) // FIX – add await
+    const user = await User.findById(post.userId)
       .select("firstName lastName picturePath")
       .lean();
 
-    res.status(200).json({
+    return res.status(200).json({
       ...post,
       firstName: user?.firstName || "Unknown",
       lastName: user?.lastName || "",
       userPicturePath: user?.picturePath || "",
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 });
+// ⚠ THIS MUST BE BELOW
+router.get("/:id", getSinglePost);
+
 router.get("/", verifyToken, validatePagination, getFeedPosts);
 router.get("/:id", getSinglePost);
 router.get("/:userId/posts", verifyToken, validatePagination, getUserPosts);
