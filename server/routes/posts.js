@@ -92,9 +92,6 @@ router.get("/public/:postId", async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 });
-// ⚠ THIS MUST BE BELOW
-router.get("/:id", getSinglePost);
-
 router.get("/", verifyToken, validatePagination, getFeedPosts);
 router.get("/:id", getSinglePost);
 router.get("/:userId/posts", verifyToken, validatePagination, getUserPosts);
