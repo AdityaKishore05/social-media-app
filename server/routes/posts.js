@@ -16,41 +16,9 @@ import {
   validateComment,
   validatePagination,
 } from "../middleware/validation.js";
-import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "@fluidjs/multer-cloudinary";
-import { postLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
-// ============================================
-// MULTER CONFIGURATION (Cloudinary)
-// ============================================
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "social-media-app",
-    resource_type: "auto",
-    allowed_formats: ["jpg", "png", "jpeg", "mp4", "mov", "avi", "webp"],
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB max
-    files: 20,
-  },
-  fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype.startsWith("image/") ||
-      file.mimetype.startsWith("video/")
-    ) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only images and videos are allowed"), false);
-    }
-  },
-});
 
 // ============================================
 // ROUTES
