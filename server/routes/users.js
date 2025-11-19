@@ -9,7 +9,6 @@ import {
   validateUpdateUser,
   validateUserId,
   validateSearchQuery,
-  validatePagination,
 } from "../middleware/validation.js";
 import multer from "multer";
 import User from "../models/User.js";

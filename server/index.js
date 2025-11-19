@@ -15,7 +15,6 @@ import { logger } from "./utils/logger.js";
 import {
   apiLimiter,
   authLimiter,
-  postLimiter,
 } from "./middleware/rateLimiter.js";
 import { sanitizeInput } from "./middleware/sanitize.js";
 
