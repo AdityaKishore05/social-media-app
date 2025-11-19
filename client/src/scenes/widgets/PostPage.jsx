@@ -17,9 +17,9 @@ const PostPage = () => {
 
   useEffect(() => {
     if (!token) {
-      navigate("/");  // <-- 🔥 YOU WILL BE REDIRECTED IMMEDIATELY, AS YOU WANTED
+      navigate("/");   // 👈 REDIRECT FIRST
+      return;               // 👈 STOP further execution
     }
-  }, [token, navigate]);
 
   useEffect(() => {
     const fetchSinglePost = async () => {
