@@ -54,8 +54,11 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
         <UserImage image={userPicturePath} size="60px" name={name} />
         <Box
           onClick={() => {
-            navigate(`/profile/${friendId}`);
-          }}
+            if (!token) {
+              navigate(`/`); // redirect to login
+            } else {
+              navigate(`/profile/${friendId}`);
+            }}}
         >
           <Typography
             color={main}

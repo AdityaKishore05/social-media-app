@@ -445,17 +445,22 @@ export const deleteComment = async (req, res) => {
 
 // GET SINGLE POST (controller)
 // controllers/posts.js
-
 export const getSinglePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
-      .populate("userId", "firstName lastName picturePath")
-      .populate("comments.userId", "firstName lastName picturePath");
+      .populate("userId", "firstName lastName picturePath");
 
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    res.status(200).json(post);
+    res.json({
+      ...post.toObject(),
+      firstName: post.userId.firstName,
+      lastName: post.userId.lastName,
+      userPicturePath: post.userId.picturePath,
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+

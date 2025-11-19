@@ -1,41 +1,75 @@
 // src/scenes/postPage/PostPage.jsx
-import { useParams } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useParams} from "react-router-dom";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import { API_ENDPOINTS } from "config";
-import { setPost } from "state";
 import PostWidget from "scenes/widgets/PostWidget";
-import { Box, Typography } from "@mui/material";
 
 const PostPage = () => {
   const { postId } = useParams();
-  const dispatch = useDispatch();
-  const token = useSelector((state) => state.token);
-  const post = useSelector((state) => state.posts.find(p => p._id === postId));
-
+  const token = localStorage.getItem("token");    // 🔥 get token directly
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   useEffect(() => {
-    const fetchSinglePost = async () => {
+    let ignore = false;
+    const controller = new AbortController();
+
+    const fetchPost = async () => {
       try {
+        setLoading(true);
+        setError(null);
+
         const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId), {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
         });
-        if (!res.ok) throw new Error("Post not found");
+
+        if (!res.ok) {
+          throw new Error(`Post not found (${res.status})`);
+        }
+
         const data = await res.json();
-        dispatch(setPost({ post: data })); // updates redux
+        if (!ignore) {
+          setPost(data);
+        }
       } catch (err) {
-        console.error(err);
+        if (!ignore) setError(err.message);
+      } finally {
+        if (!ignore) setLoading(false);
       }
     };
 
-    if (!post) fetchSinglePost();
-  }, [postId, post, dispatch, token]);
+    fetchPost();
+    return () => {
+      ignore = true;
+      controller.abort();
+    };
+  }, [postId, token]);
 
-  if (!post) {
-    return <Typography sx={{ mt: 4, textAlign: "center" }}>Loading post...</Typography>;
+  // 🌀 LOADING
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <CircularProgress />
+        <Typography sx={{ ml: 2 }}>Loading post...</Typography>
+      </Box>
+    );
   }
 
+  // ❌ ERROR
+  if (error || !post) {
+    return (
+      <Box sx={{ textAlign: "center", mt: 4 }}>
+        <Typography color="error">{error || "Post not found"}</Typography>
+      </Box>
+    );
+  }
+  
+  // 👉 VALID POST
   return (
-    <Box sx={{ maxWidth: "600px", mx: "auto", mt: 4 }}>
+    <Box sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
       <PostWidget {...post} />
     </Box>
   );
