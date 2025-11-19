@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  createPost,
   getFeedPosts,
   getUserPosts,
   likePost,
@@ -13,8 +12,7 @@ import {
 import multer from "multer";
 import { verifyToken } from "../middleware/auth.js";
 import {
-  validateCreatePost,
-  validatePostId,
+
   validateComment,
   validatePagination,
 } from "../middleware/validation.js";
