@@ -1,5 +1,5 @@
 // src/scenes/postPage/PostPage.jsx
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { API_ENDPOINTS } from "config";
@@ -10,9 +10,9 @@ import { Box, Typography } from "@mui/material";
 const PostPage = () => {
   const { postId } = useParams();
   const dispatch = useDispatch();
- const token = useSelector((state) => state.token) || null;
+  const token = useSelector((state) => state.token) || null;
   const post = useSelector((state) => state.posts.find(p => p._id === postId));
-    const navigate = useNavigate();     // 👈 ADD THIS
+  const navigate = useNavigate();     // 👈 ADD THIS
 
 
   useEffect(() => {
