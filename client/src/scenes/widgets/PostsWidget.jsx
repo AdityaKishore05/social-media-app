@@ -293,12 +293,12 @@ const PostsWidget = ({ userId, isProfile = false, pageSize = 10, enablePolling =
   return (
     <Box>
       {posts.map((post, index) => (
-        <div key={post._id} ref={index === posts.length - 1 ? lastPostRef : null}>
+      <div  key={post._id} ref={index === posts.length - 1 ? lastPostRef : null}>
             <PostWidget
               postId={post._id}
-              postUserId={post.userId?._id || post.userId}  // FIXED ⚠
-              name={`${post.userId?.firstName || post.firstName} ${post.userId?.lastName || post.lastName}`}
-              userPicturePath={post.userId?.picturePath || post.userPicturePath}
+              postUserId={post.userId}  // FIXED ⚠
+              name={`${post.firstName} ${post.lastName}`}
+              userPicturePath={post.userPicturePath}
               description={post.description}
               likes={post.likes || {}}
               comments={post.comments || []}

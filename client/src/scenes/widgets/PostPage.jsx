@@ -1,75 +1,45 @@
 // src/scenes/postPage/PostPage.jsx
-import { useEffect, useState } from "react";
-import { useParams} from "react-router-dom";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { useParams } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { useEffect } from "react";
 import { API_ENDPOINTS } from "config";
+import { setPost } from "state";
 import PostWidget from "scenes/widgets/PostWidget";
+import { Box, Typography } from "@mui/material";
 
 const PostPage = () => {
   const { postId } = useParams();
-  const token = localStorage.getItem("token");    // 🔥 get token directly
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
+  const dispatch = useDispatch();
+  const token = useSelector((state) => state.token);
+  const post = useSelector((state) => state.posts.find(p => p._id === postId));
+
   useEffect(() => {
-    let ignore = false;
-    const controller = new AbortController();
-
-    const fetchPost = async () => {
+    const fetchSinglePost = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
         const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId), {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
+          headers: { Authorization: `Bearer ${token}` }
         });
-
-        if (!res.ok) {
-          throw new Error(`Post not found (${res.status})`);
-        }
-
+        if (!res.ok) throw new Error("Post not found");
         const data = await res.json();
-        if (!ignore) {
-          setPost(data);
-        }
+        dispatch(setPost({ post: data })); // updates redux
       } catch (err) {
-        if (!ignore) setError(err.message);
-      } finally {
-        if (!ignore) setLoading(false);
+        console.error(err);
       }
     };
 
-    fetchPost();
-    return () => {
-      ignore = true;
-      controller.abort();
-    };
-  }, [postId, token]);
+    if (!post) fetchSinglePost();
+  }, [postId, post, dispatch, token]);
 
-  // 🌀 LOADING
-  if (loading) {
-    return (
-      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Loading post...</Typography>
-      </Box>
-    );
-  }
-
-  // ❌ ERROR
-  if (error || !post) {
-    return (
-      <Box sx={{ textAlign: "center", mt: 4 }}>
-        <Typography color="error">{error || "Post not found"}</Typography>
-      </Box>
-    );
+  if (!post) {
+    return <Typography sx={{ mt: 4, textAlign: "center" }}>Loading post...</Typography>;
   }
   
-  // 👉 VALID POST
+  if (!userId) {
+  return <Navigate to="/home" replace />;
+}
+
   return (
-    <Box sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
+    <Box sx={{ maxWidth: "600px", mx: "auto", mt: 4 }}>
       <PostWidget {...post} />
     </Box>
   );

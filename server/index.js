@@ -15,10 +15,9 @@ import { logger } from "./utils/logger.js";
 import {
   apiLimiter,
   authLimiter,
+  postLimiter,
 } from "./middleware/rateLimiter.js";
 import { sanitizeInput } from "./middleware/sanitize.js";
-import path from "path";
-
 
 /* CONFIGURATIONS */
 const __filename = fileURLToPath(import.meta.url);
@@ -264,11 +263,6 @@ if (process.env.NODE_ENV === "development") {
     res.json({ routes });
   });
 }
-import path from "path";
-
-app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "public", "index.html"));
-});
 
 /* MONGOOSE SETUP */
 const PORT = process.env.PORT || 6001;
