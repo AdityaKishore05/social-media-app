@@ -58,19 +58,9 @@ const upload = multer({
 // ROUTES
 // ============================================
 
-// Apply to create route specifically
-router.post(
-  "/",
-  verifyToken,
-  postLimiter,
-  upload.array("mediaFiles", 20), // ⬅ multer FIRST (so req.body exists)
-  validateCreatePost, // ⬅ THEN validate body
-  createPost
-);
-
 /* READ */
 router.get("/", verifyToken, validatePagination, getFeedPosts);
-router.get("/:id", getSinglePost);
+router.get("/:id", verifyToken, getSinglePost);
 router.get("/:userId/posts", verifyToken, validatePagination, getUserPosts);
 
 /* UPDATE */
