@@ -283,7 +283,6 @@ const PostsWidget = ({ userId, isProfile = false, pageSize = 10, enablePolling =
   if (!posts || posts.length === 0) {
     return (
       <Box sx={{ mt: 2, textAlign: "center" }}>
-        <Typography sx={{ mb: 2 }}>{isProfile ? "No posts yet." : "No posts to display."}</Typography>
         <Button onClick={handleRefresh} variant="outlined">
           Refresh
         </Button>

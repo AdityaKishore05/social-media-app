@@ -202,7 +202,7 @@ useEffect(() => {
                   <input {...getInputProps()} />
                   <Typography sx={{ textAlign: 'center' }}>
                     {mediaFiles.length === 0 
-                      ? 'Click or drag photos/videos here (max 20)'
+                      ? 'Click or drag photos (1p<10MB) or videos (1v<50MB) (Max 20)'
                       : `${mediaFiles.length} file(s) selected`}
                   </Typography>
                 </Box>

@@ -559,6 +559,7 @@ const PostWidget = ({
           >
             {items[lightboxIndex]?.type === "video" ? (
               <video
+                onClick={() => setIsLightboxOpen(false)}
                 src={items[lightboxIndex].url}
                 controls
                 autoPlay
@@ -566,16 +567,19 @@ const PostWidget = ({
                   maxWidth: "100%",
                   maxHeight: "100%",
                   objectFit: "contain",
+                  cursor: "pointer",
                 }}
               />
             ) : (
-              <img
+                <img
+                onClick={() => setIsLightboxOpen(false)}
                 src={items[lightboxIndex]?.url}
                 alt="Fullscreen"
                 style={{
                   maxWidth: "100%",
                   maxHeight: "100%",
                   objectFit: "contain",
+                  cursor: "pointer",
                 }}
               />
             )}

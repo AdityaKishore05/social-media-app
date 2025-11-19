@@ -88,8 +88,8 @@ const Navbar = () => {
   return (
     <FlexBetween
       width="100%"
-      boxShadow="0px 2px 5px rgba(0,0,0,0.15)"
-      borderBottom="1px solid rgba(255,255,255,0.1)"
+      boxShadow="2px 0px 2px 0 rgba(0, 0, 0, 0.15)"
+      borderBottom="1px solid rgba(255, 255, 255, 0.15)"
       p="1rem 6%"
       sx={{
         position: "sticky",
@@ -135,7 +135,7 @@ const Navbar = () => {
             renderInput={(params) => (
               <TextField
                 {...params}
-                placeholder="Search users..."
+                placeholder="Search by name or email..."
                 size="small"
                 sx={{ width: "300px" }}
                 InputProps={{
@@ -251,16 +251,17 @@ const Navbar = () => {
               freeSolo
               options={searchResults}
               getOptionLabel={(option) =>
-                typeof option === "string"
-                  ? option
-                  : `${option.firstName} ${option.lastName}`
+               typeof option === "string"
+               ? option
+               : `${option.firstName} ${option.lastName} (${option.email})`
               }
+
               onInputChange={(e, value) => handleSearch(value)}
               loading={isSearching}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder="Search users..."
+                  placeholder="Search by name or email..."
                   fullWidth
                   InputProps={{
                     ...params.InputProps,

@@ -230,7 +230,7 @@ const Form = () => {
               },
             }}
           >
-            {isLoading ? "LOGGING IN..." : "LOGIN WITH EMAIL"}
+            {isLoading ? "JOINING IN..." : "JOIN WITH EMAIL"}
           </Button>
 
           <Typography
@@ -238,7 +238,7 @@ const Form = () => {
             textAlign="center"
             sx={{ mt: 1, color: palette.neutral.medium }}
           >
-           New users get automatically registered with Google
+            please wait for 30 sec for server to load...
           </Typography>
         </Box>
       </form>

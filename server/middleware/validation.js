@@ -93,10 +93,14 @@ export const validateCreatePost = [
   handleValidationErrors,
 ];
 
+// Validate postId AND commentId
 export const validatePostId = [
-  param("id").isMongoId().withMessage("Invalid post ID format"),
+  param("id").optional().isMongoId(),
+  param("postId").optional().isMongoId(),
+  param("commentId").optional().isMongoId(),
   handleValidationErrors,
 ];
+
 
 export const validateComment = [
   body("userId").isMongoId().withMessage("Valid user ID is required"),
