@@ -10,6 +10,7 @@ import LoginPage from "scenes/loginPage";
 import ProfilePage from "scenes/profilePage";
 import { themeSettings } from "./theme";
 import ErrorBoundary from "./components/ErrorBoundary";
+import PostPage from "scenes/widgets/PostPage";
 
 function App() {
   const mode = useSelector((state) => state.mode || "light");
@@ -37,7 +38,10 @@ function App() {
                 path="/profile/:userId"
                 element={isAuth ? <ProfilePage /> : <Navigate to="/" />}
               />
-              
+               <Route
+                path="/post/:postId"
+                element={isAuth ? <PostPage /> : <Navigate to="/" />}
+              />
             </Routes>
           </ErrorBoundary>
         </ThemeProvider>
