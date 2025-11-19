@@ -62,10 +62,11 @@ router.post(
   "/",
   verifyToken,
   postLimiter,
-  validateCreatePost,
-  upload.array("mediaFiles", 20),
+  upload.array("mediaFiles", 20), // ⬅ multer FIRST (so req.body exists)
+  validateCreatePost, // ⬅ THEN validate body
   createPost
 );
+
 /* READ */
 router.get("/", verifyToken, validatePagination, getFeedPosts);
 router.get("/:userId/posts", verifyToken, validatePagination, getUserPosts);
