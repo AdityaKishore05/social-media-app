@@ -1,4 +1,3 @@
-// src/scenes/postPage/PostPage.jsx
 import { useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
@@ -17,26 +16,24 @@ const PostPage = () => {
     const fetchSinglePost = async () => {
       try {
         const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId), {
-          headers: { "Accept": "application/json" }, // important!
+          headers: { "Content-Type": "application/json" }
         });
-
-        const text = await res.text(); // 🔥 FIRST read as text
-        try {
-          const data = JSON.parse(text); // Try parsing JSON
-          dispatch(setPost({ post: data }));
-        } catch {
-          throw new Error("Server returned HTML instead of JSON\n" + text.slice(0, 100));
+        
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || "Post not found");
         }
+        
+        const data = await res.json();
+        dispatch(setPost({ post: data }));
       } catch (err) {
         console.error(err);
-        setError(err.message || "Failed to load post");
+        setError(err.message);
       }
     };
 
     fetchSinglePost();
   }, [postId, dispatch]);
-
-
 
   if (error) {
     return <Typography sx={{ mt: 4, textAlign: "center", color: "red" }}>{error}</Typography>;
