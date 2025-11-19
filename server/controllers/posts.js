@@ -448,3 +448,4 @@ export const getSinglePost = async (req, res) => {
   if (!post) return res.status(404).json({ message: "Not found" });
   res.json(post);
 };
+    
