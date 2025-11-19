@@ -71,6 +71,24 @@ router.post(
 /* READ */
 router.get("/", verifyToken, validatePagination, getFeedPosts);
 router.get("/:id", verifyToken, getPostById);
+// ⭐ Add this BEFORE "/:userId/posts"
+router.get("/:id", verifyToken, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id)
+      .populate("userId", "firstName lastName picturePath")
+      .populate("comments.userId", "firstName lastName picturePath");
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    res.status(200).json(post);
+  } catch (err) {
+    console.error("GET_SINGLE error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 router.get("/:userId/posts", verifyToken, validatePagination, getUserPosts);
 
 /* UPDATE */
