@@ -10,7 +10,6 @@ import { Box, Typography } from "@mui/material";
 const PostPage = () => {
   const { postId } = useParams();
   const dispatch = useDispatch();
-  const token = useSelector((state) => state.token);
   const post = useSelector((state) => state.posts.find(p => p._id === postId));
   const [error, setError] = useState(null);
 
