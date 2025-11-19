@@ -15,30 +15,24 @@ const ProfilePage = () => {
   const loggedInUserId = useSelector((state) => state.user._id);
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
 
-  const getUser = useCallback(async () => {
-    if (!userId) return;
-    try {
-      const response = await fetch(API_ENDPOINTS.USERS.GET_USER(userId), {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      });
+const getUser = useCallback(async () => {
+  if (!userId) return;
+  try {
+    const response = await fetch(API_ENDPOINTS.USERS.GET_USER(userId), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("User data loaded for profile:", data.firstName, data.lastName);
-      setUser(data);
-    } catch (error) {
-      console.error("Error fetching user:", error);
+    if (!response.ok) {
+      throw new Error("User not found");
     }
-  }, [userId, token]);
+
+    const data = await response.json();
+    setUser(data);  // 👈 Must store user properly
+  } catch (err) {
+    setUser(null);  // 👈 Prevent infinite loading
+  }
+}, [userId, token]);
+
 
   useEffect(() => {
     getUser();
