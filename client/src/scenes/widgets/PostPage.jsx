@@ -6,13 +6,14 @@ import { API_ENDPOINTS } from "config";
 import { setPost } from "state";
 import PostWidget from "scenes/widgets/PostWidget";
 import { Box, Typography } from "@mui/material";
-import { navigate } from "react-router-dom";
 
 const PostPage = () => {
   const { postId } = useParams();
   const dispatch = useDispatch();
  const token = useSelector((state) => state.token) || null;
   const post = useSelector((state) => state.posts.find(p => p._id === postId));
+    const navigate = useNavigate();     // 👈 ADD THIS
+
 
   useEffect(() => {
     if (!token) {
