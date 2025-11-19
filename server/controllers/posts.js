@@ -443,7 +443,6 @@ export const deleteComment = async (req, res) => {
   }
 };
 
-// GET SINGLE POST (PUBLIC)
 export const getSinglePost = async (req, res) => {
   try {
     const { id } = req.params;
