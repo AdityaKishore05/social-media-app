@@ -18,7 +18,6 @@ const PostPage = () => {
     const fetchSinglePost = async () => {
       try {
         const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId), {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}, // 🔥 token only if exists
         });
         if (!res.ok) throw new Error("Post not found");
         const data = await res.json();
