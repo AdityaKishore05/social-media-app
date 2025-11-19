@@ -295,21 +295,19 @@ const PostsWidget = ({ userId, isProfile = false, pageSize = 10, enablePolling =
       {posts.map((post, index) => {
         const isLast = index === posts.length - 1;
         return (
-          <div key={post._id} ref={isLast ? lastPostRef : null}>
-            <PostWidget
-              postId={post._id}
-              postUserId={post.userId}
-              name={`${post.firstName} ${post.lastName}`}
-              description={post.description}
-              userPicturePath={post.userPicturePath}
-              likes={post.likes || {}}
-              comments={post.comments || []}
-              mediaItems={post.mediaItems || []}
-              picturePath={post.picturePath}
-              videoPath={post.videoPath}
-              createdAt={post.createdAt}
-            />
-          </div>
+          <PostWidget
+            postId={post._id}
+            postUserId={post.userId?._id || post.userId}   // 👈 FIXED
+            name={`${post.userId?.firstName || post.firstName} ${post.userId?.lastName || post.lastName}`}  // 👈 FIXED
+            description={post.description}
+            userPicturePath={post.userId?.picturePath || post.userPicturePath}  // 👈 FIXED
+            likes={post.likes || {}}
+            comments={post.comments || []}
+            mediaItems={post.mediaItems || []}
+            picturePath={post.picturePath}
+            videoPath={post.videoPath}
+            createdAt={post.createdAt}
+          />
         );
       })}
       {isLoadingMore && (
