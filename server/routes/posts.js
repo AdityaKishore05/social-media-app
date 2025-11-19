@@ -70,9 +70,7 @@ router.post(
 
 /* READ */
 router.get("/", verifyToken, validatePagination, getFeedPosts);
-router.get("/:id", verifyToken, getPostById);
-// ⭐ Add this BEFORE "/:userId/posts"
-router.get("/:id", verifyToken, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
       .populate("userId", "firstName lastName picturePath")
