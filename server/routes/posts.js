@@ -82,9 +82,10 @@ router.patch(
 router.patch(
   "/:postId/comment/:commentId/like",
   verifyToken,
-  validatePostId,
+  validatePostAndCommentId, // ⬅ FIXED
   likeComment
 );
+
 router.patch("/:id/like", verifyToken, validatePostId, likePost);
 router.patch(
   "/:postId/comment/:commentId/delete",

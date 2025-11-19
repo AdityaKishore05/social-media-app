@@ -93,13 +93,13 @@ export const validateCreatePost = [
   handleValidationErrors,
 ];
 
-// Validate postId AND commentId
-export const validatePostId = [
-  param("id").optional().isMongoId(),
-  param("postId").optional().isMongoId(),
-  param("commentId").optional().isMongoId(),
+// Validate both postId and commentId
+export const validatePostAndCommentId = [
+  param("postId").isMongoId().withMessage("Invalid post ID"),
+  param("commentId").isMongoId().withMessage("Invalid comment ID"),
   handleValidationErrors,
 ];
+
 
 
 export const validateComment = [
