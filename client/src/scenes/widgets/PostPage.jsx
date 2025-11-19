@@ -14,20 +14,28 @@ const PostPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-  const fetchSinglePost = async () => {
-    try {
-      const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId));
-      if (!res.ok) throw new Error("Post not found");
+    const fetchSinglePost = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId), {
+          headers: { "Accept": "application/json" }, // important!
+        });
 
-      const data = await res.json();
-      dispatch(setPost({ post: data }));
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+        const text = await res.text(); // 🔥 FIRST read as text
+        try {
+          const data = JSON.parse(text); // Try parsing JSON
+          dispatch(setPost({ post: data }));
+        } catch {
+          throw new Error("Server returned HTML instead of JSON\n" + text.slice(0, 100));
+        }
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Failed to load post");
+      }
+    };
 
-  fetchSinglePost();
-}, [postId, dispatch]);
+    fetchSinglePost();
+  }, [postId, dispatch]);
+
 
 
   if (error) {

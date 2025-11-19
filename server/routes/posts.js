@@ -72,14 +72,13 @@ router.post(
 router.get("/public/:postId", async (req, res) => {
   try {
     const { postId } = req.params;
-    const post = await Post.findById(postId).lean();
+    const post = await Post.findById(postId).lean(); // FIX: await is required
 
     if (!post || post.isDeleted) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Fetch user data
-    const user = await User.findById(post.userId)
+    const user = await User.findById(post.userId) // FIX – add await
       .select("firstName lastName picturePath")
       .lean();
 
