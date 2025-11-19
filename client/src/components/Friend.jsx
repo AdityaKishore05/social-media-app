@@ -58,7 +58,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
               navigate(`/`); // redirect to login
             } else {
               navigate(`/profile/${friendId}`);
-            }}}
+            }          }}
         >
           <Typography
             color={main}
