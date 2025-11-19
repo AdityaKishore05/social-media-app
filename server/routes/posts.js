@@ -67,27 +67,24 @@ router.get("/:userId/posts", verifyToken, validatePagination, getUserPosts);
 router.patch(
   "/:id/comment",
   verifyToken,
-  validatePostId,
   validateComment,
   commentPost
 );
 router.patch(
   "/:postId/comment/:commentId/like",
   verifyToken,
-  validatePostAndCommentId, // ⬅ FIXED
   likeComment
 );
 
-router.patch("/:id/like", verifyToken, validatePostId, likePost);
+router.patch("/:id/like", verifyToken, likePost);
 router.patch(
   "/:postId/comment/:commentId/delete",
   verifyToken,
-  validatePostId,
   deleteComment
 );
 
 /* DELETE */
-router.delete("/:id/delete", verifyToken, validatePostId, deletePost);
+router.delete("/:id/delete", verifyToken, deletePost);
 
 // ============================================
 // MULTER ERROR HANDLER
