@@ -8,7 +8,7 @@ import {
   deletePost,
   likeComment,
   deleteComment,
-  getPostById,
+  getSinglePost
 } from "../controllers/posts.js";
 import multer from "multer";
 import { verifyToken } from "../middleware/auth.js";
@@ -70,22 +70,7 @@ router.post(
 
 /* READ */
 router.get("/", verifyToken, validatePagination, getFeedPosts);
-router.get("/:id", async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id)
-      .populate("userId", "firstName lastName picturePath")
-      .populate("comments.userId", "firstName lastName picturePath");
-
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-
-    res.status(200).json(post);
-  } catch (err) {
-    console.error("GET_SINGLE error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+router.get("/:id", verifyToken, getSinglePost);
 
 router.get("/:userId/posts", verifyToken, validatePagination, getUserPosts);
 

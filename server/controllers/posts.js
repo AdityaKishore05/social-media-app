@@ -443,16 +443,9 @@ export const deleteComment = async (req, res) => {
   }
 };
 
-// GET SINGLE POST BY ID
-export const getPostById = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Post not found" });
-    res.status(200).json(post);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
+export const getSinglePost = async (req, res) => {
+  const post = await Post.findById(req.params.id);
+  if (!post) return res.status(404).json({ message: "Not found" });
+  res.json(post);
 };
-
-
+  

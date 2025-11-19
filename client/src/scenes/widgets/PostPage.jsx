@@ -1,153 +1,43 @@
-import { useEffect, useState } from "react";
+// src/scenes/postPage/PostPage.jsx
 import { useParams } from "react-router-dom";
-import { Box, CircularProgress, Typography } from "@mui/material";
-import { Helmet } from "react-helmet"; // make sure react-helmet is installed
+import { useSelector, useDispatch } from "react-redux";
+import { useEffect } from "react";
 import { API_ENDPOINTS } from "config";
-import PostWidget from "./PostWidget";
+import { setPost } from "state";
+import PostWidget from "scenes/widgets/PostWidget";
+import { Box, Typography } from "@mui/material";
 
 const PostPage = () => {
   const { postId } = useParams();
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const token = useSelector((state) => state.token);
+  const post = useSelector((state) => state.posts.find(p => p._id === postId));
 
   useEffect(() => {
-    let ignore = false;
-    const controller = new AbortController();
-
-    const fetchPost = async () => {
+    const fetchSinglePost = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
         const res = await fetch(API_ENDPOINTS.POSTS.GET_SINGLE(postId), {
-          signal: controller.signal,
-          // ❌ no Authorization header – public endpoint
+          headers: { Authorization: `Bearer ${token}` }
         });
-
-        if (!res.ok) {
-          const text = await res.text();
-          const msg =
-            text && text.startsWith("{")
-              ? JSON.parse(text).message || "Failed to load post"
-              : text || `Failed to load post (${res.status})`;
-          throw new Error(msg);
-        }
-
+        if (!res.ok) throw new Error("Post not found");
         const data = await res.json();
-        if (!ignore) {
-          setPost(data);
-        }
+        dispatch(setPost({ post: data })); // updates redux
       } catch (err) {
-        if (ignore || err.name === "AbortError") return;
-        console.error("PostPage fetch error:", err);
-        setError(err.message || "Failed to load post");
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
+        console.error(err);
       }
     };
 
-    if (postId) {
-      fetchPost();
-    }
+    if (!post) fetchSinglePost();
+  }, [postId, post, dispatch, token]);
 
-    return () => {
-      ignore = true;
-      controller.abort();
-    };
-  }, [postId]);
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          gap: 2,
-        }}
-      >
-        <CircularProgress />
-        <Typography>Loading post...</Typography>
-      </Box>
-    );
+  if (!post) {
+    return <Typography sx={{ mt: 4, textAlign: "center" }}>Loading post...</Typography>;
   }
-
-  if (error || !post) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          gap: 1,
-        }}
-      >
-        <Typography color="error" variant="h6">
-          {error || "Post not found"}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          The post might have been deleted or the link is invalid.
-        </Typography>
-      </Box>
-    );
-  }
-
-  const title = `${post.firstName} ${post.lastName}'s post on GSN`;
-  const desc = post.description || "Check out this post on GSN!";
-  const image =
-    post.mediaItems && post.mediaItems[0] && post.mediaItems[0].type === "image"
-      ? post.mediaItems[0].url
-      : undefined;
 
   return (
-    <>
-      {/* SEO / social preview */}
-      <Helmet>
-        <title>{title}</title>
-        <meta name="description" content={desc} />
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={desc} />
-        <meta
-          property="og:url"
-          content={`https://getsocialnow.netlify.app/post/${postId}`}
-        />
-        <meta property="og:type" content="article" />
-        {image && <meta property="og:image" content={image} />}
-      </Helmet>
-
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          mt: 4,
-          px: 2,
-        }}
-      >
-        <Box sx={{ width: "100%", maxWidth: 640 }}>
-          <PostWidget
-            postId={post._id}
-            postUserId={post.userId}
-            name={`${post.firstName} ${post.lastName}`}
-            description={post.description}
-            userPicturePath={post.userPicturePath}
-            likes={post.likes || {}}
-            comments={post.comments || []}
-            mediaItems={post.mediaItems || []}
-            picturePath={post.picturePath}
-            videoPath={post.videoPath}
-            createdAt={post.createdAt}
-          />
-        </Box>
-      </Box>
-    </>
+    <Box sx={{ maxWidth: "600px", mx: "auto", mt: 4 }}>
+      <PostWidget {...post} />
+    </Box>
   );
 };
 
