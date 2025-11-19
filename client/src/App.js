@@ -39,10 +39,7 @@ function App() {
                 path="/profile/:userId"
                 element={isAuth ? <ProfilePage /> : <Navigate to="/" />}
               />
-              <Route
-                path="/post/:postId"
-                element={isAuth ? <PostPage /> : <Navigate to="/" />}
-              />
+              <Route path="/post/:postId" element={<PostPage />} />
             </Routes>
           </ErrorBoundary>
         </ThemeProvider>

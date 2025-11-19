@@ -69,11 +69,12 @@ router.post(
 );
 
 /* READ */
-router.get("/public/:postId", async (req, res) => {
+router.get("/public/:id", async (req, res) => {
   try {
-    const { postId } = req.params;
-    const post = await Post.findById(postId).lean();
-    if (!post) return res.status(404).json({ message: "Post not found" });
+    const post = await Post.findById(req.params.id).lean();
+    if (!post || post.isDeleted) {
+      return res.status(404).json({ message: "Post not found" });
+    }
 
     const user = await User.findById(post.userId)
       .select("firstName lastName picturePath")
@@ -81,12 +82,12 @@ router.get("/public/:postId", async (req, res) => {
 
     res.status(200).json({
       ...post,
-      firstName: user?.firstName,
-      lastName: user?.lastName,
-      userPicturePath: user?.picturePath,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userPicturePath: user.picturePath,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Server error" });
   }
 });
 router.get("/", verifyToken, validatePagination, getFeedPosts);
