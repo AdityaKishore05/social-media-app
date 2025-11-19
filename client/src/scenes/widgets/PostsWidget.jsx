@@ -292,25 +292,23 @@ const PostsWidget = ({ userId, isProfile = false, pageSize = 10, enablePolling =
 
   return (
     <Box>
-      {posts.map((post, index) => {
-        const isLast = index === posts.length - 1;
-        return (
-          <PostWidget
-            postId={post._id}
-            postUserId={post.userId?._id || post.userId}   // 👈 FIXED
-            name={`${post.userId?.firstName || post.firstName} ${post.userId?.lastName || post.lastName}`}  // 👈 FIXED
-            description={post.description}
-            userPicturePath={post.userId?.picturePath || post.userPicturePath}  // 👈 FIXED
-            likes={post.likes || {}}
-            comments={post.comments || []}
-            mediaItems={post.mediaItems || []}
-            picturePath={post.picturePath}
-            videoPath={post.videoPath}
-            createdAt={post.createdAt}
-          />
-        );
-      })}
-      {isLoadingMore && (
+      {posts.map((post, index) => (
+        <div key={post._id} ref={index === posts.length - 1 ? lastPostRef : null}>
+            <PostWidget
+              postId={post._id}
+              postUserId={post.userId?._id || post.userId}  // FIXED ⚠
+              name={`${post.userId?.firstName || post.firstName} ${post.userId?.lastName || post.lastName}`}
+              userPicturePath={post.userId?.picturePath || post.userPicturePath}
+              description={post.description}
+              likes={post.likes || {}}
+              comments={post.comments || []}
+              mediaItems={post.mediaItems || []}
+              picturePath={post.picturePath}
+              videoPath={post.videoPath}
+              createdAt={post.createdAt}
+            />  </div>
+          ))}
+          {isLoadingMore && (
         <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
           <CircularProgress />
         </Box>
