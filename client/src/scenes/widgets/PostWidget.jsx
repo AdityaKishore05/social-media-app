@@ -229,6 +229,7 @@ const PostWidget = ({
 
 const handleShare = async () => {
   const postUrl = `${window.location.origin}/post/${postId}`;
+
   if (navigator.share) {
     try {
       await navigator.share({
@@ -237,10 +238,19 @@ const handleShare = async () => {
         url: postUrl,
       });
       toast.success("Shared successfully!");
-    } catch (err) {}
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        console.error("Share error:", err);
+      }
+    }
   } else {
-    await navigator.clipboard.writeText(postUrl);
-    toast.success("Link copied!");
+    try {
+      await navigator.clipboard.writeText(postUrl);
+      toast.success("Link copied to clipboard!");
+    } catch (err) {
+      console.error("Copy error:", err);
+      toast.error("Failed to copy link");
+    }
   }
 };
 

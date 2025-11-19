@@ -444,14 +444,36 @@ export const deleteComment = async (req, res) => {
 };
 
 // GET SINGLE POST BY ID
-export const getPostById = async (req, res) => {
+export const getSinglePost = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Post not found" });
-    res.status(200).json(post);
+    const { id } = req.params;
+
+    const post = await Post.findById(id).lean();
+    if (!post || post.isDeleted) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    const user = await User.findById(post.userId)
+      .select("firstName lastName picturePath")
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({ message: "Post owner not found" });
+    }
+
+    const populatedPost = {
+      ...post,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userPicturePath: user.picturePath,
+      picturePath: post.picturePath || "",
+      videoPath: post.videoPath || "",
+    };
+
+    return res.status(200).json(populatedPost);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    logger.error("GET SINGLE POST ERROR:", err);
+    return res.status(500).json({ message: err.message });
   }
 };
 
