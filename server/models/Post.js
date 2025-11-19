@@ -1,8 +1,3 @@
-// ============================================
-// 1. UPDATE Post Model Schema (models/Post.js)
-// ============================================
-// ADD these fields back to your Post schema:
-
 import mongoose from "mongoose";
 
 const postSchema = mongoose.Schema(
