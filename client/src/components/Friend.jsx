@@ -3,6 +3,7 @@ import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setFriends } from "state";
+import { API_ENDPOINTS } from "config";
 import FlexBetween from "./FlexBetween";
 import UserImage from "./UserImage";
 
@@ -23,7 +24,7 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
   const patchFriend = async () => {
     try {
       const response = await fetch(
-        `https://getsocialnow.onrender.com/users/${_id}/${friendId}`,
+        API_ENDPOINTS.USERS.ADD_REMOVE_FRIEND(_id, friendId),
         {
           method: "PATCH",
           headers: {
@@ -58,7 +59,8 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
               navigate(`/`); // redirect to login
             } else {
               navigate(`/profile/${friendId}`);
-            }          }}
+            }
+          }}
         >
           <Typography
             color={main}
@@ -84,12 +86,12 @@ const Friend = ({ friendId, name, subtitle, userPicturePath }) => {
       {friendId !== _id && (
         <IconButton
           onClick={() => patchFriend()}
-          sx={{ color: palette.background.alt}}
+          sx={{ color: palette.background.alt }}
         >
           {isFriend ? (
             <PersonRemoveOutlined sx={{ color: primaryDark }} />
           ) : (
-          <PersonAddOutlined sx={{ color: primaryDark }} />
+            <PersonAddOutlined sx={{ color: primaryDark }} />
           )}
         </IconButton>
       )}

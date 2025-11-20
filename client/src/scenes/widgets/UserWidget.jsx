@@ -9,17 +9,18 @@ import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { setUser } from "state"; // Import setUser action
+import { API_ENDPOINTS } from "config";
 
 const UserWidget = ({ userId, picturePath }) => {
   const dispatch = useDispatch();
   const posts = useSelector((state) => state.posts);
   const loggedInUser = useSelector((state) => state.user);
   const token = useSelector((state) => state.token);
-  
+
   const [user, setUserState] = useState(null);
   const [error, setError] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   const { palette } = useTheme();
   const navigate = useNavigate();
   const dark = palette.neutral.dark;
@@ -36,14 +37,14 @@ const UserWidget = ({ userId, picturePath }) => {
 
   const getUser = useCallback(async () => {
     if (!userId || !token) return;
-    
+
     try {
       setError(null);
       const response = await fetch(
-        `https://getsocialnow.onrender.com/users/${userId}`,
+        API_ENDPOINTS.USERS.GET_USER(userId),
         {
           method: "GET",
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
             'Cache-Control': 'no-cache, no-store, must-revalidate',
           },
@@ -57,7 +58,7 @@ const UserWidget = ({ userId, picturePath }) => {
       const data = await response.json();
       console.log('User widget data loaded:', data.firstName, data.lastName);
       setUserState(data);
-      
+
       // If this is the logged-in user, update Redux too
       if (userId === loggedInUser?._id) {
         dispatch(setUser({ user: data }));
@@ -80,21 +81,21 @@ const UserWidget = ({ userId, picturePath }) => {
 
   if (error) {
     return (
-        <Typography color="error">Error loading user: {error}</Typography>
+      <Typography color="error">Error loading user: {error}</Typography>
     );
   }
 
   if (!user) {
     return (
-        <Box display="flex" justifyContent="center">
-         <Typography>Loading user...</Typography>
-        </Box>
+      <Box display="flex" justifyContent="center">
+        <Typography>Loading user...</Typography>
+      </Box>
     );
   }
 
   const { firstName, lastName, friends, bio } = user;
-  const displayFriends = userId === loggedInUser?._id 
-    ? (loggedInUser.friends || friends || []) 
+  const displayFriends = userId === loggedInUser?._id
+    ? (loggedInUser.friends || friends || [])
     : (friends || []);
   const isOwnProfile = loggedInUser?._id === userId;
 
@@ -107,9 +108,9 @@ const UserWidget = ({ userId, picturePath }) => {
           onClick={() => navigate(`/profile/${userId}`)}
           sx={{ cursor: 'pointer', flex: 1 }}
         >
-          <UserImage 
-            image={user.picturePath} 
-            name={`${firstName} ${lastName}`} 
+          <UserImage
+            image={user.picturePath}
+            name={`${firstName} ${lastName}`}
           />
           <Box>
             <Typography
@@ -156,11 +157,11 @@ const UserWidget = ({ userId, picturePath }) => {
             </Box>
           </Box>
         </Box>
-        
+
         {isOwnProfile && (
-          <ManageAccountsOutlined 
+          <ManageAccountsOutlined
             onClick={() => setIsEditModalOpen(true)}
-            sx={{ 
+            sx={{
               cursor: 'pointer',
               '&:hover': {
                 color: palette.primary.main
@@ -172,10 +173,10 @@ const UserWidget = ({ userId, picturePath }) => {
 
       {bio && (
         <Box mt="0.5rem">
-         <Typography
-          color={medium}
-          sx={{ fontStyle: 'italic', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-        >
+          <Typography
+            color={medium}
+            sx={{ fontStyle: 'italic', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+          >
 
             {bio}
           </Typography>
@@ -183,7 +184,7 @@ const UserWidget = ({ userId, picturePath }) => {
       )}
 
       {isOwnProfile && (
-        <EditProfileModal 
+        <EditProfileModal
           open={isEditModalOpen}
           onClose={handleModalClose}
           user={user}

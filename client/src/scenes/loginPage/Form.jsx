@@ -11,6 +11,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setLogin } from "state";
+import { API_ENDPOINTS } from "config";
 
 const Form = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +19,6 @@ const Form = () => {
   const { palette } = useTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const API_URL = "https://getsocialnow.onrender.com";
 
   // Handle Google response - wrapped in useCallback to avoid recreating
   const handleGoogleResponse = useCallback(async (response) => {
@@ -28,12 +28,12 @@ const Form = () => {
     try {
       console.log("Google login successful, sending to backend...");
 
-      const res = await fetch(`${API_URL}/auth/google`, {
+      const res = await fetch(API_ENDPOINTS.AUTH.GOOGLE, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Add this line
+        credentials: "include",
         body: JSON.stringify({
           credential: response.credential,
         }),
@@ -57,35 +57,23 @@ const Form = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch, navigate]); // Add dependencies
+  }, [dispatch, navigate]);
 
   // Initialize Google Sign-In
   useEffect(() => {
     const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-    
+
     console.log("=== GOOGLE SIGN-IN SETUP ===");
     console.log("Client ID:", clientId);
-    console.log("Client ID length:", clientId?.length);
-    console.log("Google loaded:", !!window.google);
-    
-    // Validate Client ID
+
     if (!clientId) {
       console.error("❌ REACT_APP_GOOGLE_CLIENT_ID is not set!");
       setError("Google Sign-In is not configured. Missing Client ID.");
       return;
     }
-    
-    if (!clientId.includes('.apps.googleusercontent.com')) {
-      console.error("❌ Client ID format is incorrect!");
-      setError("Google Client ID is invalid. Must end with .apps.googleusercontent.com");
-      return;
-    }
-    
-    // Check if Google script is loaded
+
     if (window.google) {
       try {
-        console.log("Initializing Google Sign-In...");
-        
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: handleGoogleResponse,
@@ -93,7 +81,6 @@ const Form = () => {
           cancel_on_tap_outside: true,
         });
 
-        // Render the button
         const buttonDiv = document.getElementById("googleSignInButton");
         if (buttonDiv) {
           window.google.accounts.id.renderButton(
@@ -107,25 +94,11 @@ const Form = () => {
               logo_alignment: "left",
             }
           );
-          console.log("✓ Google Sign-In button rendered");
-        } else {
-          console.error("❌ Button container not found");
         }
-
-        console.log("✓ Google Sign-In initialized successfully");
       } catch (error) {
         console.error("❌ Error initializing Google Sign-In:", error);
         setError(`Failed to initialize Google Sign-In: ${error.message}`);
       }
-    } else {
-      console.warn("⚠️ Google Sign-In script not loaded yet. Retrying...");
-      // Retry after a short delay
-      const retryTimeout = setTimeout(() => {
-        if (window.google) {
-          window.location.reload();
-        }
-      }, 2000);
-      return () => clearTimeout(retryTimeout);
     }
   }, [palette.mode, handleGoogleResponse]);
 
@@ -139,7 +112,7 @@ const Form = () => {
     const password = e.target.password.value;
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -186,7 +159,7 @@ const Form = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <div id="googleSignInButton" style={{display: "flex" ,justifyContent: "center", width: "100%"}}></div>
+          <div id="googleSignInButton" style={{ display: "flex", justifyContent: "center", width: "100%" }}></div>
         )}
       </Box>
 

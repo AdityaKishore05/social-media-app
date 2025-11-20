@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import { useState } from "react";
+import { API_BASE_URL } from "config";
 
 const UserImage = ({ image, size = "60px", name = "" }) => {
   const [imageError, setImageError] = useState(false);
@@ -15,13 +16,13 @@ const UserImage = ({ image, size = "60px", name = "" }) => {
   // Function to generate a consistent color based on name
   const getColorFromName = (name) => {
     if (!name) return "#1976d2";
-    
+
     const colors = [
       "#1976d2", "#d32f2f", "#388e3c", "#f57c00",
       "#7b1fa2", "#c2185b", "#00796b", "#5d4037",
       "#455a64", "#e64a19", "#303f9f", "#0288d1"
     ];
-    
+
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -31,14 +32,14 @@ const UserImage = ({ image, size = "60px", name = "" }) => {
 
   const constructImageUrl = (imagePath) => {
     if (!imagePath) return null;
-    
+
     // If it's already a full URL (Cloudinary), return as is
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
-    
+
     // If it's a local file path, construct the full URL
-    return `https://getsocialnow.onrender.com/assets/${imagePath}`;
+    return `${API_BASE_URL}/assets/${imagePath}`;
   };
 
   const imageUrl = constructImageUrl(image);
