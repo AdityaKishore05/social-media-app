@@ -10,7 +10,7 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
-import { v2 as cloudinary } from "cloudinary";
+import { configureCloudinary } from "./config/cloudinary.js";
 import { logger } from "./utils/logger.js";
 import {
   apiLimiter,
@@ -101,42 +101,10 @@ app.use(sanitizeInput);
 
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
-// CLOUDINARY CONFIGURATION - Must be after dotenv.config()
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+// CLOUDINARY CONFIGURATION
+configureCloudinary();
 
-// Verify Cloudinary configuration
-logger.info("===== CLOUDINARY CONFIG CHECK =====");
-logger.info("Cloud Name:", process.env.CLOUDINARY_CLOUD_NAME || "MISSING");
-logger.info("API Key:", process.env.CLOUDINARY_API_KEY ? "EXISTS" : "MISSING");
-logger.info(
-  "API Secret:",
-  process.env.CLOUDINARY_API_SECRET ? "EXISTS" : "MISSING"
-);
-logger.info("===================================");
 
-// MULTER CONFIGURATION - Use memory storage for Cloudinary uploads
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB per file
-  },
-  fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype.startsWith("image/") ||
-      file.mimetype.startsWith("video/")
-    ) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only image and video files are allowed!"), false);
-    }
-  },
-});
 
 /* ROUTES - Mount route handlers */
 app.use("/auth", authRoutes);
@@ -266,10 +234,7 @@ if (process.env.NODE_ENV === "development") {
 /* MONGOOSE SETUP */
 const PORT = process.env.PORT || 6001;
 mongoose
-  .connect(process.env.MONGO_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGO_URL)
   .then(() => {
     app.listen(PORT, () => {
       logger.info(`✓ Server running on port ${PORT}`);

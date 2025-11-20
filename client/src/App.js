@@ -1,16 +1,18 @@
-import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
-import { useMemo } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useMemo, Suspense, lazy } from "react";
 import { useSelector } from "react-redux";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { ToastProvider } from "./components/ToastProvider";
-
-import HomePage from "scenes/homePage";
-import LoginPage from "scenes/loginPage";
-import ProfilePage from "scenes/profilePage";
 import { themeSettings } from "./theme";
 import ErrorBoundary from "./components/ErrorBoundary";
-import PostPage from "scenes/widgets/PostPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+const HomePage = lazy(() => import("scenes/homePage"));
+const LoginPage = lazy(() => import("scenes/loginPage"));
+const ProfilePage = lazy(() => import("scenes/profilePage"));
+const PostPage = lazy(() => import("scenes/widgets/PostPage"));
+const NotFoundPage = lazy(() => import("scenes/notFoundPage"));
 
 
 function App() {
@@ -29,18 +31,36 @@ function App() {
           <CssBaseline />
           <ToastProvider />
           <ErrorBoundary>
-            <Routes>
-              <Route path="/" element={<LoginPage />} />
-              <Route
-                path="/home"
-                element={isAuth ? <HomePage /> : <Navigate to="/" />}
-              />
-              <Route
-                path="/profile/:userId"
-                element={isAuth ? <ProfilePage /> : <Navigate to="/" />}
-              />
-              <Route path="/post/:postId" element={<PostPage />} />
-            </Routes>
+            <Suspense fallback={<div>Loading...</div>}>
+              <Routes>
+                <Route path="/" element={<LoginPage />} />
+                <Route
+                  path="/home"
+                  element={
+                    <ProtectedRoute>
+                      <HomePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile/:userId"
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/post/:postId"
+                  element={
+                    <ProtectedRoute>
+                      <PostPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Suspense>
           </ErrorBoundary>
         </ThemeProvider>
       </BrowserRouter>

@@ -7,9 +7,10 @@ import {
   deletePost,
   likeComment,
   deleteComment,
-  getSinglePost
+  getSinglePost,
+  createPost,
 } from "../controllers/posts.js";
-import multer from "multer";
+import { upload } from "../middleware/multer.js";
 import { verifyToken } from "../middleware/auth.js";
 import {
 
@@ -23,6 +24,9 @@ const router = express.Router();
 // ============================================
 // ROUTES
 // ============================================
+
+/* CREATE */
+router.post("/", verifyToken, upload.array("picture"), createPost);
 
 /* READ */
 router.get("/", verifyToken, validatePagination, getFeedPosts);
@@ -55,26 +59,6 @@ router.delete("/:id/delete", verifyToken, deletePost);
 // ============================================
 // MULTER ERROR HANDLER
 // ============================================
-router.use((error, req, res, next) => {
-  if (error instanceof multer.MulterError) {
-    if (error.code === "LIMIT_FILE_SIZE") {
-      return res.status(400).json({
-        message: "File too large. Maximum size is 50MB for videos.",
-      });
-    }
-    if (error.code === "LIMIT_FILE_COUNT") {
-      return res.status(400).json({
-        message: "Too many files. Maximum 20 files per post.",
-      });
-    }
-    return res.status(400).json({ message: error.message });
-  }
 
-  if (error) {
-    return res.status(400).json({ message: error.message });
-  }
-
-  next(error);
-});
 
 export default router;
