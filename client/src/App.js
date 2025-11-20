@@ -17,8 +17,6 @@ const NotFoundPage = lazy(() => import("scenes/notFoundPage"));
 
 function App() {
   const mode = useSelector((state) => state.mode || "light");
-  const token = useSelector((state) => state.token);
-  const isAuth = Boolean(token);
 
   const theme = useMemo(() => {
     return createTheme(themeSettings(mode));
