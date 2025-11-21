@@ -26,7 +26,7 @@ const router = express.Router();
 // ============================================
 
 /* CREATE */
-router.post("/", verifyToken, upload.array("picture"), createPost);
+router.post("/", verifyToken, upload.array("mediaFiles"), createPost);
 
 /* READ */
 router.get("/", verifyToken, validatePagination, getFeedPosts);
