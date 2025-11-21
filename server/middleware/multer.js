@@ -1,6 +1,16 @@
 import multer from "multer";
 
-const storage = multer.memoryStorage();
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "@fluidjs/multer-cloudinary";
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "social-media-app", // Optional: folder name in Cloudinary
+    allowed_formats: ["jpg", "png", "jpeg", "gif", "webp", "mp4", "mov", "avi", "mkv", "webm"],
+    resource_type: "auto", // Important for video uploads
+  },
+});
 
 export const upload = multer({
   storage,

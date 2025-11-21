@@ -1,4 +1,4 @@
-import {
+  import {
   DeleteOutlined,
   ImageOutlined,
 } from "@mui/icons-material";
