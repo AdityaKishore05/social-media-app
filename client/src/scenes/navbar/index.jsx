@@ -39,7 +39,7 @@ const Navbar = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchTimeoutRef = useRef(null);
-  const [showNavbar, setShowNavbar] = useState(true);
+ const [showNavbar, setShowNavbar] = useState(false);
 const lastScrollY = useRef(0);
 
 
@@ -80,9 +80,17 @@ const lastScrollY = useRef(0);
     }, 300);
   };
 
+
   useEffect(() => {
   const handleScroll = () => {
     const currentScrollY = window.scrollY;
+
+    // Always show navbar near top
+    if (currentScrollY < 50) {
+      setShowNavbar(false);
+      lastScrollY.current = currentScrollY;
+      return;
+    }
 
     if (currentScrollY > lastScrollY.current) {
       // scrolling DOWN → show navbar
@@ -95,8 +103,9 @@ const lastScrollY = useRef(0);
     lastScrollY.current = currentScrollY;
   };
 
-  window.addEventListener("scroll", handleScroll, { passive: true });
+  lastScrollY.current = window.scrollY;
 
+  window.addEventListener("scroll", handleScroll, { passive: true });
   return () => window.removeEventListener("scroll", handleScroll);
 }, []);
 
