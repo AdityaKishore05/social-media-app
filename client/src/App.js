@@ -3,7 +3,6 @@ import { useMemo, Suspense, lazy } from "react";
 import { useSelector } from "react-redux";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
-import { ToastProvider } from "./components/ToastProvider";
 import { themeSettings } from "./theme";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ProtectedRoute from "./components/ProtectedRoute";
