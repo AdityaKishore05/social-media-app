@@ -39,6 +39,9 @@ const Navbar = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchTimeoutRef = useRef(null);
+  const [showNavbar, setShowNavbar] = useState(true);
+const lastScrollY = useRef(0);
+
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -78,6 +81,27 @@ const Navbar = () => {
   };
 
   useEffect(() => {
+  const handleScroll = () => {
+    const currentScrollY = window.scrollY;
+
+    if (currentScrollY > lastScrollY.current) {
+      // scrolling DOWN → show navbar
+      setShowNavbar(true);
+    } else {
+      // scrolling UP → hide navbar
+      setShowNavbar(false);
+    }
+
+    lastScrollY.current = currentScrollY;
+  };
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+
+  return () => window.removeEventListener("scroll", handleScroll);
+}, []);
+
+
+  useEffect(() => {
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -92,11 +116,14 @@ const Navbar = () => {
       borderBottom="1px solid rgba(255, 255, 255, 0.15)"
       p="1rem 6%"
       sx={{
-        position: "sticky",
-        top: 0,
-        backdropFilter: "blur(12px)",
-        zIndex: 50,
-      }}
+  position: "sticky",
+  top: 0,
+  background: theme.palette.background.default,
+  zIndex: 50,
+  transform: showNavbar ? "translateY(-100%)" : "translateY(0)",
+  transition: "transform 0.3s ease-in-out",
+}}
+
     >
       {/* LOGO */}
       <FlexBetween gap="1.75rem">
@@ -224,7 +251,7 @@ const Navbar = () => {
             top: 0,
             right: 0,
             height: "100vh",
-            width: "75%",
+            width: "100%",
             zIndex: 2000,
             backgroundColor:
               theme.palette.mode === "dark" ? "#05051fff" : "#FFFFFF",
@@ -282,6 +309,7 @@ const Navbar = () => {
                   </ListItemAvatar>
                   <ListItemText
                     primary={`${option.firstName} ${option.lastName}`}
+                    secondary={option.email}
                   />
                 </ListItem>
               )}

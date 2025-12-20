@@ -27,7 +27,6 @@ function App() {
       <BrowserRouter>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <ToastProvider />
           <ErrorBoundary>
             <Suspense fallback={<div>Loading...</div>}>
               <Routes>
